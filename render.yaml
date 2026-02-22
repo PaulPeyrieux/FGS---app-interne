@@ -5,11 +5,15 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 60
     envVars:
-      - key: DATA_DIR
-        value: /data
+      - key: DATABASE_URL
+        fromDatabase:
+          name: fgs-db
+          property: connectionString
       - key: COMPTES
-        sync: false   # Render demandera la valeur manuellement — elle restera secrète
-    disk:
-      name: fgs-data
-      mountPath: /data
-      sizeGB: 1
+        sync: false
+
+databases:
+  - name: fgs-db
+    plan: free
+    databaseName: fgsapp
+    user: fgsapp
