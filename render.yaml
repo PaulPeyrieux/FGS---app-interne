@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: fgs-app
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 60
+    envVars:
+      - key: DATA_DIR
+        value: /data
+      - key: COMPTES
+        sync: false   # Render demandera la valeur manuellement — elle restera secrète
+    disk:
+      name: fgs-data
+      mountPath: /data
+      sizeGB: 1
