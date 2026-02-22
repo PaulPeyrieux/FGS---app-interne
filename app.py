@@ -70,7 +70,16 @@ def index():
 
 @app.route("/api/auth", methods=["POST"])
 def auth():
-    """Vérifie les identifiants — les comptes sont dans les variables d'environnement Render"""
+    """
+    Vérifie les identifiants.
+    
+    Chaque compte est une variable d'environnement séparée sur Render :
+      KEY   = identifiant de l'utilisateur  (ex: Admin, p.peyrieux)
+      VALUE = mot de passe                  (ex: MonMotDePasse)
+    
+    Le nom affiché dans l'app sera identique à la clé (identifiant).
+    Ajoutez autant de variables que d'utilisateurs dans Render.
+    """
     try:
         data = request.get_json(force=True, silent=True)
         if not data:
@@ -79,22 +88,14 @@ def auth():
         identifiant = data.get("identifiant", "").strip()
         mdp = data.get("mdp", "")
         
-        # Les comptes sont définis dans la variable d'environnement COMPTES
-        # Format dans Render : admin:motdepasse1,chef:motdepasse2,meca1:motdepasse3
-        comptes_env = os.environ.get("COMPTES", "")
+        if not identifiant or not mdp:
+            return jsonify({"ok": False}), 400
         
-        # Comptes de secours si variable non définie (à supprimer après config Render)
-        if not comptes_env:
-            comptes_env = "admin:FGS@2025!:Administrateur,chef:ChefChantier1:Chef de Chantier,meca1:Mecano#Lyon:Mecanicien Lyon,meca2:Mecano#Gre9:Mecanicien Grenoble,resp:Resp.Parc2025:Responsable Parc"
-        
-        for compte_str in comptes_env.split(","):
-            parts = compte_str.strip().split(":")
-            if len(parts) >= 2:
-                cid = parts[0].strip()
-                cmpd = parts[1].strip()
-                nom = parts[2].strip() if len(parts) >= 3 else cid
-                if cid == identifiant and cmpd == mdp:
-                    return jsonify({"ok": True, "nom": nom})
+        # Cherche une variable d'environnement dont le nom correspond à l'identifiant
+        # La comparaison est insensible à la casse (Admin == admin)
+        for key, value in os.environ.items():
+            if key.lower() == identifiant.lower() and value == mdp:
+                return jsonify({"ok": True, "nom": key})
         
         return jsonify({"ok": False})
     except Exception as e:
