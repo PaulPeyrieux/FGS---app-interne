@@ -38,12 +38,25 @@ def get_conn():
 
 # ── Schéma et données par défaut ──────────────────────────────────────────────
 
-SCHEMA = """
+SCHEMA_BD = """
 CREATE TABLE IF NOT EXISTS fgs_data (
     id     SERIAL PRIMARY KEY,
     cle    TEXT UNIQUE NOT NULL,
     valeur TEXT NOT NULL,
     maj    TIMESTAMPTZ DEFAULT NOW()
+)
+"""
+
+SCHEMA_POINTAGE = """
+CREATE TABLE IF NOT EXISTS pointages (
+    id          SERIAL PRIMARY KEY,
+    date_jour   DATE NOT NULL,
+    chantier    TEXT NOT NULL,
+    auteur      TEXT NOT NULL,
+    role_auteur TEXT NOT NULL DEFAULT 'chef',
+    lignes      JSONB NOT NULL DEFAULT '[]',
+    cree_le     TIMESTAMPTZ DEFAULT NOW(),
+    maj_le      TIMESTAMPTZ DEFAULT NOW()
 )
 """
 
@@ -86,7 +99,8 @@ DONNEES_DEFAUT = {
 
 def init_db():
     conn = get_conn()
-    conn.run(SCHEMA)
+    conn.run(SCHEMA_BD)
+    conn.run(SCHEMA_POINTAGE)
     rows = conn.run("SELECT COUNT(*) FROM fgs_data WHERE cle = 'bd'")
     if rows[0][0] == 0:
         conn.run(
@@ -95,7 +109,7 @@ def init_db():
             valeur=json.dumps(DONNEES_DEFAUT, ensure_ascii=False)
         )
     conn.close()
-    print("Base PostgreSQL initialisee.")
+    print("Base PostgreSQL initialisee (fgs_data + pointages).")
 
 # ── Lecture / écriture ────────────────────────────────────────────────────────
 
@@ -127,6 +141,24 @@ def ecrire(bd):
 def index():
     return send_from_directory(".", "app.html")
 
+
+def get_role(identifiant):
+    """
+    Retourne le rôle d'un utilisateur depuis ses variables d'environnement.
+    Format de la variable : identifiant=motdepasse:role
+    Rôles : admin, rh, chef
+    Exemple : Admin=MonMDP:admin  /  rh.martin=MDP:rh  /  chef.lyon=MDP:chef
+    Compatibilité ancien format (juste mot de passe sans rôle) = chef par défaut
+    """
+    for key, value in os.environ.items():
+        if key.lower() == identifiant.lower():
+            parts = value.split(":")
+            if len(parts) >= 2:
+                return parts[-1].strip().lower()  # dernier segment = rôle
+            return "chef"  # ancien format sans rôle = chef par défaut
+    return "chef"
+
+
 @app.route("/api/auth", methods=["POST"])
 def auth():
     try:
@@ -138,11 +170,118 @@ def auth():
         if not identifiant or not mdp:
             return jsonify({"ok": False}), 400
         for key, value in os.environ.items():
-            if key.lower() == identifiant.lower() and value == mdp:
-                return jsonify({"ok": True, "nom": key})
+            if key.lower() == identifiant.lower():
+                # Support format motdepasse:role et ancien format motdepasse seul
+                parts = value.split(":")
+                mdp_stocke = parts[0].strip()
+                role = parts[1].strip().lower() if len(parts) >= 2 else "chef"
+                if mdp_stocke == mdp:
+                    return jsonify({"ok": True, "nom": key, "role": role})
         return jsonify({"ok": False})
     except Exception as e:
         return jsonify({"ok": False, "erreur": str(e)}), 500
+
+
+@app.route("/api/pointages", methods=["GET"])
+def get_pointages():
+    """Retourne les pointages selon le rôle."""
+    try:
+        role   = request.args.get("role", "chef")
+        auteur = request.args.get("auteur", "")
+        date_debut = request.args.get("debut", "")
+        date_fin   = request.args.get("fin", "")
+
+        conn = get_conn()
+        if role in ("admin", "rh"):
+            if date_debut and date_fin:
+                rows = conn.run(
+                    "SELECT * FROM pointages WHERE date_jour BETWEEN :d AND :f ORDER BY date_jour DESC, cree_le DESC",
+                    d=date_debut, f=date_fin
+                )
+            else:
+                rows = conn.run("SELECT * FROM pointages ORDER BY date_jour DESC, cree_le DESC LIMIT 200")
+        else:
+            # Chef : uniquement ses propres pointages
+            if date_debut and date_fin:
+                rows = conn.run(
+                    "SELECT * FROM pointages WHERE auteur ILIKE :a AND date_jour BETWEEN :d AND :f ORDER BY date_jour DESC",
+                    a=auteur, d=date_debut, f=date_fin
+                )
+            else:
+                rows = conn.run(
+                    "SELECT * FROM pointages WHERE auteur ILIKE :a ORDER BY date_jour DESC LIMIT 100",
+                    a=auteur
+                )
+        conn.close()
+
+        cols = ["id","date_jour","chantier","auteur","role_auteur","lignes","cree_le","maj_le"]
+        result = []
+        for row in rows:
+            d = dict(zip(cols, row))
+            d["date_jour"] = str(d["date_jour"])
+            d["cree_le"]   = str(d["cree_le"])
+            d["maj_le"]    = str(d["maj_le"])
+            if isinstance(d["lignes"], str):
+                d["lignes"] = json.loads(d["lignes"])
+            result.append(d)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"erreur": str(e)}), 500
+
+
+@app.route("/api/pointages", methods=["POST"])
+def save_pointage():
+    """Crée ou met à jour un pointage."""
+    try:
+        data = request.get_json(force=True, silent=True)
+        if not data:
+            return jsonify({"erreur": "Données invalides"}), 400
+
+        pid        = data.get("id")
+        date_jour  = data.get("date_jour")
+        chantier   = data.get("chantier", "")
+        auteur     = data.get("auteur", "")
+        role_auteur= data.get("role_auteur", "chef")
+        lignes     = data.get("lignes", [])
+
+        conn = get_conn()
+        if pid:
+            conn.run(
+                "UPDATE pointages SET lignes=:l, chantier=:c, maj_le=NOW() WHERE id=:id",
+                l=json.dumps(lignes, ensure_ascii=False), c=chantier, id=pid
+            )
+            new_id = pid
+        else:
+            rows = conn.run(
+                """INSERT INTO pointages (date_jour, chantier, auteur, role_auteur, lignes)
+                   VALUES (:d, :c, :a, :r, :l) RETURNING id""",
+                d=date_jour, c=chantier, a=auteur, r=role_auteur,
+                l=json.dumps(lignes, ensure_ascii=False)
+            )
+            new_id = rows[0][0]
+        conn.close()
+        return jsonify({"ok": True, "id": new_id})
+    except Exception as e:
+        return jsonify({"erreur": str(e)}), 500
+
+
+@app.route("/api/pointages/<int:pid>", methods=["DELETE"])
+def delete_pointage(pid):
+    try:
+        role = request.args.get("role", "chef")
+        auteur = request.args.get("auteur", "")
+        conn = get_conn()
+        if role in ("admin", "rh"):
+            conn.run("DELETE FROM pointages WHERE id=:id", id=pid)
+        else:
+            conn.run("DELETE FROM pointages WHERE id=:id AND auteur ILIKE :a", id=pid, a=auteur)
+        conn.close()
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"erreur": str(e)}), 500
+
+
+
 
 @app.route("/api/bd", methods=["GET"])
 def get_bd():
