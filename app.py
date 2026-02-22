@@ -1,30 +1,40 @@
 #!/usr/bin/env python3
 """
 FGS App — Serveur avec base de données PostgreSQL
-==================================================
-
-Variables d'environnement requises sur Render :
-  DATABASE_URL  -> fournie automatiquement par Render PostgreSQL
-  PORT          -> fournie automatiquement par Render
-  [identifiant] -> une variable par utilisateur, valeur = mot de passe
+Utilise pg8000 (compatible Python 3.14+)
 """
 
-import json, os
-import psycopg2
-import psycopg2.extras
+import json, os, re
+import pg8000.native
 from flask import Flask, request, jsonify, send_from_directory
 
 app = Flask(__name__, static_folder=".")
 
 # ── Connexion ─────────────────────────────────────────────────────────────────
 
+def parse_db_url(url):
+    """Parse une DATABASE_URL en paramètres de connexion."""
+    if url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql://", 1)
+    m = re.match(r'postgresql://([^:]+):([^@]+)@([^:/]+):?(\d*)/(.+)', url)
+    if not m:
+        raise ValueError(f"DATABASE_URL invalide : {url}")
+    user, password, host, port, dbname = m.groups()
+    return {
+        "user": user,
+        "password": password,
+        "host": host,
+        "port": int(port) if port else 5432,
+        "database": dbname.split("?")[0],  # ignore ?sslmode=...
+        "ssl_context": True,               # Render exige SSL
+    }
+
 def get_conn():
     url = os.environ.get("DATABASE_URL", "")
     if not url:
         raise RuntimeError("DATABASE_URL manquante.")
-    if url.startswith("postgres://"):
-        url = url.replace("postgres://", "postgresql://", 1)
-    return psycopg2.connect(url)
+    p = parse_db_url(url)
+    return pg8000.native.Connection(**p)
 
 # ── Schéma et données par défaut ──────────────────────────────────────────────
 
@@ -32,9 +42,9 @@ SCHEMA = """
 CREATE TABLE IF NOT EXISTS fgs_data (
     id     SERIAL PRIMARY KEY,
     cle    TEXT UNIQUE NOT NULL,
-    valeur JSONB NOT NULL,
+    valeur TEXT NOT NULL,
     maj    TIMESTAMPTZ DEFAULT NOW()
-);
+)
 """
 
 DONNEES_DEFAUT = {
@@ -75,42 +85,41 @@ DONNEES_DEFAUT = {
 }
 
 def init_db():
-    with get_conn() as conn:
-        with conn.cursor() as cur:
-            cur.execute(SCHEMA)
-            cur.execute("SELECT COUNT(*) FROM fgs_data WHERE cle = 'bd'")
-            if cur.fetchone()[0] == 0:
-                cur.execute(
-                    "INSERT INTO fgs_data (cle, valeur) VALUES (%s, %s)",
-                    ("bd", json.dumps(DONNEES_DEFAUT, ensure_ascii=False))
-                )
-        conn.commit()
+    conn = get_conn()
+    conn.run(SCHEMA)
+    rows = conn.run("SELECT COUNT(*) FROM fgs_data WHERE cle = 'bd'")
+    if rows[0][0] == 0:
+        conn.run(
+            "INSERT INTO fgs_data (cle, valeur) VALUES (:cle, :valeur)",
+            cle="bd",
+            valeur=json.dumps(DONNEES_DEFAUT, ensure_ascii=False)
+        )
+    conn.close()
     print("Base PostgreSQL initialisee.")
 
 # ── Lecture / écriture ────────────────────────────────────────────────────────
 
 def lire():
-    with get_conn() as conn:
-        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-            cur.execute("SELECT valeur FROM fgs_data WHERE cle = 'bd'")
-            row = cur.fetchone()
-            if row is None:
-                init_db()
-                return DONNEES_DEFAUT
-            val = row["valeur"]
-            return val if isinstance(val, dict) else json.loads(val)
+    conn = get_conn()
+    rows = conn.run("SELECT valeur FROM fgs_data WHERE cle = 'bd'")
+    conn.close()
+    if not rows:
+        init_db()
+        return DONNEES_DEFAUT
+    val = rows[0][0]
+    return json.loads(val) if isinstance(val, str) else val
 
 def ecrire(bd):
-    with get_conn() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                INSERT INTO fgs_data (cle, valeur, maj) VALUES (%s, %s, NOW())
-                ON CONFLICT (cle) DO UPDATE SET valeur = EXCLUDED.valeur, maj = NOW()
-                """,
-                ("bd", json.dumps(bd, ensure_ascii=False))
-            )
-        conn.commit()
+    conn = get_conn()
+    conn.run(
+        """
+        INSERT INTO fgs_data (cle, valeur, maj) VALUES (:cle, :valeur, NOW())
+        ON CONFLICT (cle) DO UPDATE SET valeur = EXCLUDED.valeur, maj = NOW()
+        """,
+        cle="bd",
+        valeur=json.dumps(bd, ensure_ascii=False)
+    )
+    conn.close()
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 
@@ -155,13 +164,11 @@ def post_bd():
 
 @app.route("/api/sante")
 def sante():
-    """Diagnostic : verifie que la base repond."""
     try:
-        with get_conn() as conn:
-            with conn.cursor() as cur:
-                cur.execute("SELECT maj FROM fgs_data WHERE cle='bd'")
-                row = cur.fetchone()
-                derniere_maj = str(row[0]) if row else "jamais"
+        conn = get_conn()
+        rows = conn.run("SELECT maj FROM fgs_data WHERE cle='bd'")
+        conn.close()
+        derniere_maj = str(rows[0][0]) if rows else "jamais"
         return jsonify({"ok": True, "derniere_maj": derniere_maj})
     except Exception as e:
         return jsonify({"ok": False, "erreur": str(e)}), 500
