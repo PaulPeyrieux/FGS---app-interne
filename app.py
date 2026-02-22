@@ -162,6 +162,76 @@ def post_bd():
     except Exception as e:
         return jsonify({"erreur": str(e)}), 500
 
+
+@app.route("/api/backup")
+def backup():
+    """
+    Télécharge une sauvegarde complète des données au format JSON.
+    Protégé par une clé secrète : /api/backup?key=VOTRE_CLE
+    
+    Sur Render : ajoutez une variable d'environnement BACKUP_KEY = votre_mot_de_passe_secret
+    """
+    cle = request.args.get("key", "")
+    cle_attendue = os.environ.get("BACKUP_KEY", "")
+    
+    if not cle_attendue:
+        return jsonify({"erreur": "Variable BACKUP_KEY non configurée sur Render."}), 500
+    if cle != cle_attendue:
+        return jsonify({"erreur": "Clé incorrecte."}), 403
+    
+    try:
+        bd = lire()
+        from datetime import datetime
+        date_str = datetime.now().strftime("%Y-%m-%d_%H-%M")
+        nom_fichier = f"fgs-backup-{date_str}.json"
+        contenu = json.dumps(bd, ensure_ascii=False, indent=2)
+        
+        from flask import Response
+        return Response(
+            contenu,
+            mimetype="application/json",
+            headers={"Content-Disposition": f"attachment; filename={nom_fichier}"}
+        )
+    except Exception as e:
+        return jsonify({"erreur": str(e)}), 500
+
+
+@app.route("/api/restore", methods=["POST"])
+def restore():
+    """
+    Restaure les données depuis un fichier JSON.
+    Protégé par la même clé secrète BACKUP_KEY.
+    
+    Utilisation : POST /api/restore?key=VOTRE_CLE
+    Corps : le fichier JSON de sauvegarde
+    """
+    cle = request.args.get("key", "")
+    cle_attendue = os.environ.get("BACKUP_KEY", "")
+    
+    if not cle_attendue:
+        return jsonify({"erreur": "Variable BACKUP_KEY non configurée sur Render."}), 500
+    if cle != cle_attendue:
+        return jsonify({"erreur": "Clé incorrecte."}), 403
+    
+    try:
+        bd = request.get_json(force=True, silent=True)
+        if not bd:
+            return jsonify({"erreur": "Fichier JSON invalide ou vide."}), 400
+        
+        # Vérification basique que c'est bien une sauvegarde FGS
+        champs_requis = ["categories", "machines", "pieces", "interventions", "livraisons"]
+        for champ in champs_requis:
+            if champ not in bd:
+                return jsonify({"erreur": f"Sauvegarde invalide : champ '{champ}' manquant."}), 400
+        
+        ecrire(bd)
+        return jsonify({
+            "ok": True,
+            "message": f"Restauration réussie : {len(bd.get('machines',[]))} machines, {len(bd.get('pieces',[]))} pièces, {len(bd.get('interventions',[]))} interventions."
+        })
+    except Exception as e:
+        return jsonify({"erreur": str(e)}), 500
+
 @app.route("/api/sante")
 def sante():
     try:
