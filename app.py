@@ -245,8 +245,14 @@ def sante():
 
 # ── Démarrage ─────────────────────────────────────────────────────────────────
 
-if __name__ == "__main__":
+# ── Initialisation au démarrage (fonctionne avec Gunicorn ET python direct) ──
+# Appelé à l'import du module — crée la table si elle n'existe pas
+try:
     init_db()
+except Exception as e:
+    print(f"AVERTISSEMENT init_db: {e}")
+
+if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     print(f"Serveur demarre sur http://0.0.0.0:{port}")
     app.run(host="0.0.0.0", port=port, debug=False)
