@@ -228,6 +228,30 @@ textarea{resize:vertical;min-height:80px}
 .fab-cmd:active{transform:scale(.95)}
 .fab-cmd svg{width:18px;height:18px;stroke:#fff;stroke-width:2.5}
 @media(max-width:480px){.fab-cmd{right:16px}}
+
+/* ── POINTAGE ── */
+.pt-row{display:flex;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid var(--brd)}
+.pt-row:last-child{border-bottom:none}
+.pt-nom{flex:1.5;min-width:0}
+.pt-h{width:62px;flex-shrink:0}
+.pt-toggle{width:36px;height:36px;border-radius:8px;border:1.5px solid var(--brd);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;flex-shrink:0;transition:all .15s;background:var(--sur2)}
+.pt-toggle.on{background:var(--ok-bg);border-color:var(--ok-b)}
+.pt-toggle.pan.on{background:var(--wa-bg);border-color:var(--wa-b)}
+.pt-add{display:flex;gap:8px;margin-top:10px}
+.pt-add input{flex:1}
+.semaine-tab{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;padding-bottom:4px}
+.semaine-tab button{white-space:nowrap;padding:7px 14px;border-radius:20px;border:1.5px solid var(--brd);background:var(--sur);font-size:12px;font-weight:700;cursor:pointer;color:var(--tx2);transition:all .15s}
+.semaine-tab button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.hist-ptg{background:var(--sur);border:1px solid var(--brd);border-radius:var(--r);padding:14px;box-shadow:var(--sh2);cursor:pointer;transition:all .15s}
+.hist-ptg:hover{border-color:var(--acc);background:var(--acc-l)}
+.hist-ptg-top{display:flex;justify-content:space-between;align-items:center}
+.hist-ptg-dt{font-size:11px;color:var(--tx3);font-family:var(--mo)}
+.hist-ptg-ch{font-size:14px;font-weight:700}
+.hist-ptg-info{font-size:12px;color:var(--tx2);margin-top:4px}
+.role-badge{display:inline-flex;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.role-admin{background:#F5F3FF;color:#6D28D9;border:1px solid #DDD6FE}
+.role-rh{background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE}
+.role-chef{background:#F0FDF4;color:#166534;border:1px solid #BBF7D0}
 @media print{.nav,.fab,.np,.fmod{display:none!important}body{background:#fff}#app{max-width:100%}}
 </style>
 </head>
@@ -265,6 +289,8 @@ textarea{resize:vertical;min-height:80px}
       <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg><span>Pièces</span></div>
     <div class="ni" data-p="livraisons" onclick="nav('livraisons')">
       <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg><span>Réceptions</span></div>
+    <div class="ni" data-p="pointage" onclick="nav('pointage')">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M9 16l2 2 4-4"/></svg><span>Pointage</span></div>
   </nav>
   <button class="fab np" id="fab" onclick="fab()">
     <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -369,7 +395,7 @@ async function login(){
     });
     const data = await r.json();
     if(data.ok){
-      USER = {identifiant:id, nom:data.nom};
+      USER = {identifiant:id, nom:data.nom, role: data.role||'chef'};
       document.getElementById('login').style.display='none';
       document.getElementById('app').classList.add('on');
       init();
@@ -449,6 +475,7 @@ function render(){
   else if(PAGE==='entretien')m.innerHTML=pgEnt();
   else if(PAGE==='pieces')m.innerHTML=pgPc();
   else if(PAGE==='livraisons')m.innerHTML=pgLiv();
+  else if(PAGE==='pointage'){m.innerHTML=pgPointage();chargerPointages();}
 }
 
 // ── Calculs ──────────────────────────────────────────────────────────
@@ -608,6 +635,7 @@ function fab(){
   else if(PAGE==='entretien')openMI();
   else if(PAGE==='pieces')openMP();
   else if(PAGE==='livraisons')openML();
+  else if(PAGE==='pointage')nouveauPointage();
   else openMM();
 }
 
@@ -781,6 +809,32 @@ ${iv?.notes?`<h2>Notes</h2><div style="padding:10px 12px;background:#f9fafb;bord
 <div class="g2"><div><h2>Validation mécanicien</h2><div style="font-size:12px;color:#444">Nom :</div><div class="sbox"></div><div style="font-size:12px;color:#444;margin-top:10px">Heures :</div><div class="sbox"></div><div style="font-size:12px;color:#444;margin-top:10px">Signature :</div><div class="sarea">Signature</div></div>
 <div><h2>Validation responsable</h2><div style="font-size:12px;color:#444">Nom :</div><div class="sbox"></div><div style="font-size:12px;color:#444;margin-top:10px">Date :</div><div class="sbox"></div><div style="font-size:12px;color:#444;margin-top:10px">Signature :</div><div class="sarea">Signature</div></div></div>
 <div class="note">Généré le ${new Date().toLocaleDateString('fr-FR')} — FGS App, usage interne</div>
+
+<!-- MODAL POINTAGE -->
+<div class="fmod" id="mpt"><div class="mod" style="max-height:95vh">
+  <div class="poignee"></div>
+  <div class="mod-tit" id="mpt-tit">Nouveau pointage</div>
+  <div class="gch"><label>Date</label><input id="pt-date" type="date"/></div>
+  <div class="gch"><label>Chantier</label>
+    <input id="pt-chantier" list="pt-chantier-list" placeholder="Nom du chantier..." autocomplete="off"/>
+    <datalist id="pt-chantier-list"></datalist>
+  </div>
+  <div class="carte" style="margin-top:4px">
+    <div class="carte-ent"><div class="carte-tit">Employés</div></div>
+    <div id="pt-lignes"></div>
+    <div class="pt-add">
+      <input id="pt-new-emp" placeholder="Nom de l'employé..." onkeydown="if(event.key==='Enter')ajouterEmp()"/>
+      <button class="btn bp np" style="width:auto;padding:10px 14px" onclick="ajouterEmp()">+</button>
+    </div>
+  </div>
+  <div class="gch"><label>Notes générales</label><textarea id="pt-notes" placeholder="Observations..."></textarea></div>
+  <div class="rbtn np">
+    <button class="btn bs" onclick="fm('mpt')">Annuler</button>
+    <button class="btn bp" onclick="savPointage()">Enregistrer</button>
+  </div>
+  <button class="btn bd np" id="del-mpt" style="margin-top:10px;display:none" onclick="delPointage()">Supprimer ce pointage</button>
+</div></div>
+
 <!-- OVERLAY COMMANDES -->
 <div class="cmd-overlay" id="cmd-overlay">
   <div class="cmd-header">
@@ -813,6 +867,32 @@ ${pas.length?`<table><tr><th>Pièce</th><th>Réf.</th><th>Installée à</th><th>
 <h2>Historique des interventions</h2>
 ${ivs.length?`<table><tr><th>Date</th><th>Type</th><th>Heures</th><th>Pièces</th><th>Notes</th></tr>${ivs.map(i=>{const noms=(i.piecesChangees||[]).map(pid=>{const p=BD.pieces.find(x=>x.id===pid);return p?p.nom:'';}).filter(Boolean).join(', ')||'—';return`<tr><td>${fdt(i.date)}</td><td>${lblTy(i.type)}</td><td>${i.heures||'—'}h</td><td>${noms}</td><td>${i.notes||'—'}</td></tr>`;}).join('')}</table>`:'<p style="color:#666;margin-top:6px">Aucune intervention</p>'}
 <div class="note">Généré le ${new Date().toLocaleDateString('fr-FR')} — FGS App, usage interne</div>
+
+<!-- MODAL POINTAGE -->
+<div class="fmod" id="mpt"><div class="mod" style="max-height:95vh">
+  <div class="poignee"></div>
+  <div class="mod-tit" id="mpt-tit">Nouveau pointage</div>
+  <div class="gch"><label>Date</label><input id="pt-date" type="date"/></div>
+  <div class="gch"><label>Chantier</label>
+    <input id="pt-chantier" list="pt-chantier-list" placeholder="Nom du chantier..." autocomplete="off"/>
+    <datalist id="pt-chantier-list"></datalist>
+  </div>
+  <div class="carte" style="margin-top:4px">
+    <div class="carte-ent"><div class="carte-tit">Employés</div></div>
+    <div id="pt-lignes"></div>
+    <div class="pt-add">
+      <input id="pt-new-emp" placeholder="Nom de l'employé..." onkeydown="if(event.key==='Enter')ajouterEmp()"/>
+      <button class="btn bp np" style="width:auto;padding:10px 14px" onclick="ajouterEmp()">+</button>
+    </div>
+  </div>
+  <div class="gch"><label>Notes générales</label><textarea id="pt-notes" placeholder="Observations..."></textarea></div>
+  <div class="rbtn np">
+    <button class="btn bs" onclick="fm('mpt')">Annuler</button>
+    <button class="btn bp" onclick="savPointage()">Enregistrer</button>
+  </div>
+  <button class="btn bd np" id="del-mpt" style="margin-top:10px;display:none" onclick="delPointage()">Supprimer ce pointage</button>
+</div></div>
+
 <!-- OVERLAY COMMANDES -->
 <div class="cmd-overlay" id="cmd-overlay">
   <div class="cmd-header">
@@ -1045,6 +1125,406 @@ function exportCommandesPDF() {
   setTimeout(() => w.print(), 400);
 }
 
+
+// ══════════════════════════════════════════════════════════════════
+// POINTAGE
+// ══════════════════════════════════════════════════════════════════
+
+let POINTAGES = [];
+let PT_EDIT_ID = null;
+let PT_LIGNES = [];
+
+// ── Page pointage ─────────────────────────────────────────────────
+function pgPointage() {
+  const isRH    = USER?.role === 'rh';
+  const isAdmin = USER?.role === 'admin';
+  const canAll  = isRH || isAdmin;
+  const roleLbl = isAdmin ? 'admin' : isRH ? 'rh' : 'chef';
+  const roleCls = `role-${roleLbl}`;
+
+  const filtreH = canAll ? `
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <input type="date" id="pt-f-debut" style="flex:1;min-width:120px" onchange="chargerPointages()"/>
+      <span style="color:var(--tx3);font-size:13px">→</span>
+      <input type="date" id="pt-f-fin" style="flex:1;min-width:120px" onchange="chargerPointages()"/>
+    </div>` : '';
+
+  return `<div class="ent">
+    <div style="flex:1"><h1>Pointage</h1><div style="margin-top:3px"><span class="role-badge ${roleCls}">${roleLbl}</span> <span style="font-size:12px;color:var(--tx3)">${USER?.nom}</span></div></div>
+    <div class="ent-act">
+      ${canAll ? `<div class="ico-btn np" onclick="exportExcelSemaine()" title="Export Excel semaine"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg></div>` : ''}
+      ${canAll ? `<div class="ico-btn np" onclick="exportExcelJour()" title="Export Excel jour"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>` : ''}
+    </div>
+  </div>
+  <div class="pg on">
+    ${filtreH}
+    <div id="pt-liste"><div class="spin-c"><div class="spin"></div>Chargement...</div></div>
+  </div>`;
+}
+
+async function chargerPointages() {
+  const debut = document.getElementById('pt-f-debut')?.value || '';
+  const fin   = document.getElementById('pt-f-fin')?.value   || '';
+  const role  = USER?.role || 'chef';
+  const auteur= USER?.nom  || '';
+  let url = `/api/pointages?role=${encodeURIComponent(role)}&auteur=${encodeURIComponent(auteur)}`;
+  if (debut && fin) url += `&debut=${debut}&fin=${fin}`;
+  try {
+    const r = await fetch(url);
+    POINTAGES = await r.json();
+    renderListePointages();
+  } catch(e) {
+    document.getElementById('pt-liste').innerHTML = `<div class="vide"><h3>Erreur de chargement</h3><p>${e.message}</p></div>`;
+  }
+}
+
+function renderListePointages() {
+  const el = document.getElementById('pt-liste');
+  if (!el) return;
+  if (!POINTAGES.length) {
+    el.innerHTML = `<div class="vide">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <h3>Aucun pointage</h3>
+      <p>Appuyez sur + pour saisir le pointage du jour.</p>
+    </div>`;
+    return;
+  }
+  el.innerHTML = POINTAGES.map(p => {
+    const nbEmp = (p.lignes||[]).length;
+    const totalH = (p.lignes||[]).reduce((s,l) => s+(parseFloat(l.heures)||0), 0);
+    const nbGD   = (p.lignes||[]).filter(l=>l.gd).length;
+    const nbPan  = (p.lignes||[]).filter(l=>l.panier).length;
+    const dt = new Date(p.date_jour+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+    return `<div class="hist-ptg" onclick="ouvrirPointage('${p.id}')">
+      <div class="hist-ptg-top">
+        <div>
+          <div class="hist-ptg-dt">${dt}</div>
+          <div class="hist-ptg-ch">📍 ${p.chantier}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:18px;font-weight:700;font-family:var(--mo)">${totalH}h</div>
+          <div style="font-size:10px;color:var(--tx3)">${nbEmp} employé${nbEmp>1?'s':''}</div>
+        </div>
+      </div>
+      <div class="hist-ptg-info">
+        Saisi par <b>${p.auteur}</b>
+        ${nbGD?` · <span style="color:var(--in);font-weight:600">${nbGD} GD</span>`:''}
+        ${nbPan?` · <span style="color:var(--wa);font-weight:600">${nbPan} panier${nbPan>1?'s':''}</span>`:''}
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+        <button class="btn bb np" style="width:auto;padding:6px 12px;font-size:12px" onclick="event.stopPropagation();printPointagePDF('${p.id}')">PDF</button>
+        <button class="btn bs np" style="width:auto;padding:6px 12px;font-size:12px" onclick="event.stopPropagation();exportPointageExcelJour('${p.id}')">Excel</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Ouvrir / éditer pointage ──────────────────────────────────────
+function ouvrirPointage(id) {
+  const p = POINTAGES.find(x => String(x.id) === String(id));
+  if (!p) return;
+  PT_EDIT_ID = p.id;
+  PT_LIGNES = JSON.parse(JSON.stringify(p.lignes || []));
+  document.getElementById('mpt-tit').textContent = 'Modifier le pointage';
+  document.getElementById('del-mpt').style.display = 'flex';
+  document.getElementById('pt-date').value = p.date_jour;
+  fillPtChantier(p.chantier);
+  document.getElementById('pt-notes').value = p.notes || '';
+  renderLignes();
+  om('mpt');
+}
+
+function nouveauPointage() {
+  PT_EDIT_ID = null;
+  document.getElementById('mpt-tit').textContent = 'Nouveau pointage';
+  document.getElementById('del-mpt').style.display = 'none';
+  document.getElementById('pt-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('pt-notes').value = '';
+  document.getElementById('pt-new-emp').value = '';
+
+  // Préremplir avec les employés du dernier pointage de cet auteur
+  const dernierPtg = POINTAGES.find(p => p.auteur === USER?.nom);
+  if (dernierPtg && dernierPtg.lignes && dernierPtg.lignes.length) {
+    // Copie des employés avec heures remises à 8, GD/panier remis à false
+    PT_LIGNES = dernierPtg.lignes.map(l => ({
+      nom: l.nom,
+      heures: 8,
+      gd: false,
+      panier: false,
+      notes: ''
+    }));
+    fillPtChantier(dernierPtg.chantier); // pré-remplir aussi le chantier
+  } else {
+    PT_LIGNES = [];
+    fillPtChantier();
+  }
+  renderLignes();
+  om('mpt');
+}
+
+function fillPtChantier(sel) {
+  // Autocomplete : chantiers déjà utilisés dans les pointages passés
+  const chantiersPasses = [...new Set(POINTAGES.map(p => p.chantier).filter(Boolean))];
+  const dl = document.getElementById('pt-chantier-list');
+  if (dl) dl.innerHTML = chantiersPasses.map(c => `<option value="${c}"/>`).join('');
+  const inp = document.getElementById('pt-chantier');
+  if (inp) inp.value = sel || '';
+}
+
+// ── Lignes employés ───────────────────────────────────────────────
+function renderLignes() {
+  const el = document.getElementById('pt-lignes');
+  if (!PT_LIGNES.length) {
+    el.innerHTML = '<div style="color:var(--tx3);font-size:13px;padding:8px 0">Aucun employé — ajoutez-en ci-dessous</div>';
+    return;
+  }
+  el.innerHTML = PT_LIGNES.map((l, i) => `
+    <div class="pt-row">
+      <div class="pt-nom">
+        <div style="font-size:14px;font-weight:600">${l.nom}</div>
+        ${l.notes?`<div style="font-size:11px;color:var(--tx3)">${l.notes}</div>`:''}
+      </div>
+      <input class="pt-h" type="number" min="0" max="24" step="0.5" value="${l.heures||0}"
+        style="text-align:center;font-weight:700;font-size:15px"
+        onchange="PT_LIGNES[${i}].heures=parseFloat(this.value)||0"/>
+      <div class="pt-toggle ${l.gd?'on':''}" title="Grand déplacement" onclick="tglGD(${i})">🏕️</div>
+      <div class="pt-toggle pan ${l.panier?'on':''}" title="Panier repas" onclick="tglPanier(${i})">🍽️</div>
+      <div class="ico-btn" style="width:30px;height:30px;flex-shrink:0" onclick="suppEmp(${i})">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--da)" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </div>
+    </div>`).join('');
+}
+
+function tglGD(i)     { PT_LIGNES[i].gd     = !PT_LIGNES[i].gd;     renderLignes(); }
+function tglPanier(i) { PT_LIGNES[i].panier = !PT_LIGNES[i].panier; renderLignes(); }
+function suppEmp(i)   { PT_LIGNES.splice(i,1); renderLignes(); }
+
+function ajouterEmp() {
+  const inp = document.getElementById('pt-new-emp');
+  const nom = inp.value.trim();
+  if (!nom) return;
+  PT_LIGNES.push({ nom, heures: 8, gd: false, panier: false, notes: '' });
+  inp.value = '';
+  renderLignes();
+  inp.focus();
+}
+
+// ── Sauvegarde ────────────────────────────────────────────────────
+async function savPointage() {
+  const date = document.getElementById('pt-date').value;
+  if (!date) { toast('La date est obligatoire'); return; }
+  if (!PT_LIGNES.length) { toast('Ajoutez au moins un employé'); return; }
+  const chantier = document.getElementById('pt-chantier').value;
+  const notes    = document.getElementById('pt-notes').value.trim();
+  const payload  = {
+    id: PT_EDIT_ID || null,
+    date_jour: date,
+    chantier,
+    auteur: USER?.nom || '',
+    role_auteur: USER?.role || 'chef',
+    lignes: PT_LIGNES.map(l => ({ ...l, notes: l.notes || '' })),
+    notes,
+  };
+  try {
+    const r = await fetch('/api/pointages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const d = await r.json();
+    if (d.ok) {
+      toast(PT_EDIT_ID ? 'Pointage mis à jour ✓' : 'Pointage enregistré ✓');
+      fm('mpt');
+      await chargerPointages();
+    } else {
+      toast('Erreur : ' + (d.erreur || 'inconnue'));
+    }
+  } catch(e) { toast('Erreur réseau : ' + e.message); }
+}
+
+async function delPointage() {
+  if (!confirm('Supprimer ce pointage ?')) return;
+  try {
+    const role  = USER?.role || 'chef';
+    const auteur= USER?.nom  || '';
+    await fetch(`/api/pointages/${PT_EDIT_ID}?role=${encodeURIComponent(role)}&auteur=${encodeURIComponent(auteur)}`, { method: 'DELETE' });
+    toast('Pointage supprimé');
+    fm('mpt');
+    await chargerPointages();
+  } catch(e) { toast('Erreur : ' + e.message); }
+}
+
+// ── PDF ───────────────────────────────────────────────────────────
+function printPointagePDF(id) {
+  const p = POINTAGES.find(x => String(x.id) === String(id));
+  if (!p) return;
+  const dt = new Date(p.date_jour+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+  const totalH = (p.lignes||[]).reduce((s,l)=>s+(parseFloat(l.heures)||0),0);
+  const rowsH = (p.lignes||[]).map(l=>`
+    <tr>
+      <td style="font-weight:600">${l.nom}</td>
+      <td style="text-align:center;font-weight:700;font-size:15px">${l.heures||0}h</td>
+      <td style="text-align:center">${l.gd?'<span style="color:#7C3AED;font-weight:700">✓ Oui</span>':'<span style="color:#ccc">Non</span>'}</td>
+      <td style="text-align:center">${l.panier?'<span style="color:#D97706;font-weight:700">✓ Oui</span>':'<span style="color:#ccc">Non</span>'}</td>
+      <td style="color:#555">${l.notes||'—'}</td>
+    </tr>`).join('');
+  const w = window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
+<title>Pointage — ${p.chantier} — ${p.date_jour}</title>
+<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;padding:24px;font-size:13px}
+.cartouche{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border:2px solid #C0392B;border-radius:10px;margin-bottom:20px;background:#FEF5F4}
+.cart-logo img{height:48px;object-fit:contain}
+.cart-centre h1{font-size:20px;font-weight:700;color:#C0392B;text-align:center}
+.cart-centre p{font-size:13px;color:#666;text-align:center;margin-top:3px}
+.cart-right{text-align:right;font-size:12px;color:#555;line-height:1.8}
+table{width:100%;border-collapse:collapse;margin-top:16px}
+th{background:#f9fafb;padding:9px 10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#666;border:1px solid #e5e7eb;text-align:left}
+td{padding:10px;border:1px solid #e5e7eb;vertical-align:middle}
+tr:nth-child(even){background:#fafafa}
+.totaux{margin-top:16px;display:flex;gap:16px}
+.tot{flex:1;padding:12px;border-radius:8px;text-align:center}
+.tot.rouge{background:#FEF2F2;border:1px solid #FECACA}
+.tot.violet{background:#F5F3FF;border:1px solid #DDD6FE}
+.tot.orange{background:#FFFBEB;border:1px solid #FDE68A}
+.tot-n{font-size:24px;font-weight:700}
+.tot.rouge .tot-n{color:#C0392B}.tot.violet .tot-n{color:#7C3AED}.tot.orange .tot-n{color:#D97706}
+.tot-l{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#666;margin-top:3px}
+.sign{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:24px}
+.sbox{border:1px solid #d1d5db;border-radius:6px;padding:14px;height:80px}
+.slbl{font-size:11px;font-weight:700;color:#666;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
+.footer{margin-top:20px;font-size:10px;color:#9ca3af;border-top:1px solid #e5e7eb;padding-top:10px;display:flex;justify-content:space-between}
+@media print{body{padding:16px}}</style>
+</head><body>
+<div class="cartouche">
+  <div class="cart-logo"><img src="${LOGO}" alt="FGS"/></div>
+  <div class="cart-centre"><h1>Feuille de pointage</h1><p>${p.chantier} — ${dt}</p></div>
+  <div class="cart-right"><div><b>Saisi par :</b> ${p.auteur}</div><div><b>Imprimé le :</b> ${new Date().toLocaleDateString('fr-FR')}</div></div>
+</div>
+<table>
+  <tr><th>Employé</th><th style="text-align:center;width:80px">Heures</th><th style="text-align:center;width:110px">Grand dépl.</th><th style="text-align:center;width:110px">Panier repas</th><th>Observations</th></tr>
+  ${rowsH}
+  <tr style="background:#F9FAFB;font-weight:700"><td>TOTAL</td><td style="text-align:center;font-size:16px;color:#C0392B">${totalH}h</td><td style="text-align:center">${(p.lignes||[]).filter(l=>l.gd).length}</td><td style="text-align:center">${(p.lignes||[]).filter(l=>l.panier).length}</td><td></td></tr>
+</table>
+<div class="totaux">
+  <div class="tot rouge"><div class="tot-n">${totalH}h</div><div class="tot-l">Total heures</div></div>
+  <div class="tot violet"><div class="tot-n">${(p.lignes||[]).filter(l=>l.gd).length}</div><div class="tot-l">Grands déplacements</div></div>
+  <div class="tot orange"><div class="tot-n">${(p.lignes||[]).filter(l=>l.panier).length}</div><div class="tot-l">Paniers repas</div></div>
+</div>
+${p.notes?`<div style="margin-top:16px;padding:12px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;font-size:13px"><b>Notes :</b> ${p.notes}</div>`:''}
+<div class="sign">
+  <div><div class="slbl">Signature chef de chantier</div><div class="sbox"></div></div>
+  <div><div class="slbl">Signature RH</div><div class="sbox"></div></div>
+</div>
+<div class="footer"><span>FGS App — Pointage interne</span><span>FGS Travaux Spéciaux</span></div>
+</body></html>`);
+  w.document.close(); w.focus(); setTimeout(()=>w.print(), 400);
+}
+
+// ── EXCEL jour (un seul pointage) ────────────────────────────────
+function exportPointageExcelJour(id) {
+  const p = POINTAGES.find(x => String(x.id) === String(id));
+  if (!p) return;
+  genererExcelJour([p], `pointage-${p.date_jour}-${p.chantier}`);
+}
+
+function exportExcelJour() {
+  // Tous les pointages filtrés
+  if (!POINTAGES.length) { toast('Aucun pointage à exporter'); return; }
+  genererExcelJour(POINTAGES, 'pointages-jour');
+}
+
+function genererExcelJour(pts, nomFichier) {
+  // Génère un CSV Excel-compatible (UTF-8 BOM)
+  const sep = ';';
+  const lignes = [
+    ['FGS Travaux Spéciaux — Pointage journalier'],
+    [`Exporté le ${new Date().toLocaleDateString('fr-FR')}`],
+    [],
+    ['Date','Chantier','Saisi par','Employé','Heures','Grand déplacement','Panier repas'],
+  ];
+  pts.forEach(p => {
+    const dt = new Date(p.date_jour+'T12:00:00').toLocaleDateString('fr-FR');
+    (p.lignes||[]).forEach(l => {
+      lignes.push([dt, p.chantier, p.auteur, l.nom, l.heures||0, l.gd?'Oui':'Non', l.panier?'Oui':'Non']);
+    });
+    // Ligne total
+    const totalH = (p.lignes||[]).reduce((s,l)=>s+(parseFloat(l.heures)||0),0);
+    lignes.push([dt, p.chantier, '', 'TOTAL', totalH, (p.lignes||[]).filter(l=>l.gd).length+' GD', (p.lignes||[]).filter(l=>l.panier).length+' paniers']);
+    lignes.push([]);
+  });
+  const csv = '﻿' + lignes.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(sep)).join('
+');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = nomFichier + '.csv';
+  a.click();
+  toast('Export Excel ✓');
+}
+
+function exportExcelSemaine() {
+  if (!POINTAGES.length) { toast('Aucun pointage à exporter'); return; }
+  
+  // Regrouper par semaine (lundi → dimanche)
+  const semaines = {};
+  POINTAGES.forEach(p => {
+    const d = new Date(p.date_jour+'T12:00:00');
+    const lundi = new Date(d);
+    lundi.setDate(d.getDate() - ((d.getDay()+6)%7));
+    const cleSem = lundi.toISOString().split('T')[0];
+    if (!semaines[cleSem]) semaines[cleSem] = [];
+    semaines[cleSem].push(p);
+  });
+
+  const sep = ';';
+  const lignes = [
+    ['FGS Travaux Spéciaux — Pointage hebdomadaire'],
+    [`Exporté le ${new Date().toLocaleDateString('fr-FR')}`],
+    [],
+  ];
+
+  Object.keys(semaines).sort().reverse().forEach(cleSem => {
+    const pts = semaines[cleSem];
+    const finSem = new Date(cleSem);
+    finSem.setDate(finSem.getDate()+6);
+    const lblSem = `Semaine du ${new Date(cleSem).toLocaleDateString('fr-FR')} au ${finSem.toLocaleDateString('fr-FR')}`;
+    lignes.push([lblSem]);
+    lignes.push(['Employé','Chantier','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche','Total heures','Jours GD','Paniers repas']);
+    
+    // Agréger par employé
+    const employes = {};
+    pts.forEach(p => {
+      const jourIdx = (new Date(p.date_jour+'T12:00:00').getDay()+6)%7; // 0=lundi
+      (p.lignes||[]).forEach(l => {
+        const k = l.nom + '||' + p.chantier;
+        if (!employes[k]) employes[k] = { nom:l.nom, chantier:p.chantier, jours:Array(7).fill(''), gd:0, panier:0, totalH:0 };
+        employes[k].jours[jourIdx] = l.heures || 0;
+        employes[k].totalH += parseFloat(l.heures)||0;
+        if (l.gd) employes[k].gd++;
+        if (l.panier) employes[k].panier++;
+      });
+    });
+    
+    Object.values(employes).forEach(e => {
+      lignes.push([e.nom, e.chantier, ...e.jours, e.totalH, e.gd, e.panier]);
+    });
+    
+    // Totaux semaine
+    const totH = Object.values(employes).reduce((s,e)=>s+e.totalH,0);
+    const totGD = Object.values(employes).reduce((s,e)=>s+e.gd,0);
+    const totPan = Object.values(employes).reduce((s,e)=>s+e.panier,0);
+    lignes.push(['TOTAL SEMAINE','','','','','','','','',totH,totGD,totPan]);
+    lignes.push([]);
+  });
+
+  const csv = '﻿' + lignes.map(r=>r.map(v=>`"${String(v===''?'':v).replace(/"/g,'""')}"`).join(sep)).join('
+');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'pointages-semaine.csv';
+  a.click();
+  toast('Export Excel semaine ✓');
+}
+
 // ── Utilitaires ───────────────────────────────────────────────────────
 function om(id){document.getElementById(id).classList.add('on');}
 function fm(id){document.getElementById(id).classList.remove('on');}
@@ -1052,6 +1532,32 @@ document.querySelectorAll('.fmod').forEach(o=>o.addEventListener('click',e=>{if(
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2800);}
 window.addEventListener('load',()=>document.getElementById('lid').focus());
 </script>
+
+
+<!-- MODAL POINTAGE -->
+<div class="fmod" id="mpt"><div class="mod" style="max-height:95vh">
+  <div class="poignee"></div>
+  <div class="mod-tit" id="mpt-tit">Nouveau pointage</div>
+  <div class="gch"><label>Date</label><input id="pt-date" type="date"/></div>
+  <div class="gch"><label>Chantier</label>
+    <input id="pt-chantier" list="pt-chantier-list" placeholder="Nom du chantier..." autocomplete="off"/>
+    <datalist id="pt-chantier-list"></datalist>
+  </div>
+  <div class="carte" style="margin-top:4px">
+    <div class="carte-ent"><div class="carte-tit">Employés</div></div>
+    <div id="pt-lignes"></div>
+    <div class="pt-add">
+      <input id="pt-new-emp" placeholder="Nom de l'employé..." onkeydown="if(event.key==='Enter')ajouterEmp()"/>
+      <button class="btn bp np" style="width:auto;padding:10px 14px" onclick="ajouterEmp()">+</button>
+    </div>
+  </div>
+  <div class="gch"><label>Notes générales</label><textarea id="pt-notes" placeholder="Observations..."></textarea></div>
+  <div class="rbtn np">
+    <button class="btn bs" onclick="fm('mpt')">Annuler</button>
+    <button class="btn bp" onclick="savPointage()">Enregistrer</button>
+  </div>
+  <button class="btn bd np" id="del-mpt" style="margin-top:10px;display:none" onclick="delPointage()">Supprimer ce pointage</button>
+</div></div>
 
 <!-- OVERLAY COMMANDES -->
 <div class="cmd-overlay" id="cmd-overlay">
