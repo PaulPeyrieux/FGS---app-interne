@@ -394,8 +394,32 @@ function decon(){ if(!confirm('Se déconnecter ?'))return; USER=null; BD=null; d
 // ── BD via API Flask ──────────────────────────────────────────────────
 let BD=null;
 async function load(){
-  try{const r=await fetch('/api/bd'); if(!r.ok)throw new Error(r.status); BD=await r.json();}
-  catch(e){toast('❌ Impossible de charger les données — le serveur est-il lancé ?');}
+  try{
+    const r=await fetch('/api/bd');
+    if(!r.ok){
+      const err=await r.json().catch(()=>({}));
+      throw new Error(err.erreur||('HTTP '+r.status));
+    }
+    const data=await r.json();
+    if(data.erreur) throw new Error(data.erreur);
+    BD=data;
+  } catch(e){
+    const msg = e.message||'Erreur inconnue';
+    document.getElementById('main').innerHTML=`
+      <div style="padding:24px 20px;display:flex;flex-direction:column;gap:16px">
+        <div style="background:#FEF2F2;border:1.5px solid #FECACA;border-radius:14px;padding:20px">
+          <div style="font-size:15px;font-weight:700;color:#DC2626;margin-bottom:8px">❌ Impossible de charger les données</div>
+          <div style="font-size:13px;color:#7F1D1D;font-family:monospace;background:#fff;padding:10px;border-radius:8px;word-break:break-all">${msg}</div>
+        </div>
+        <div style="background:#F0FDF4;border:1.5px solid #BBF7D0;border-radius:14px;padding:16px;font-size:13px;color:#166534;line-height:1.7">
+          <b>À vérifier sur Render :</b><br>
+          1. La variable <b>DATABASE_URL</b> est-elle bien définie ?<br>
+          2. La base PostgreSQL est-elle dans la <b>même région</b> que le service web ?<br>
+          3. Allez sur <b>/api/sante</b> pour diagnostiquer la connexion.
+        </div>
+        <button onclick="location.reload()" style="background:#C0392B;color:#fff;border:none;border-radius:10px;padding:13px;font-size:15px;font-weight:700;cursor:pointer">🔄 Réessayer</button>
+      </div>`;
+  }
 }
 async function save(){
   try{
