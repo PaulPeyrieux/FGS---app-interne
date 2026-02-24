@@ -170,13 +170,32 @@ def auth():
         if not identifiant or not mdp:
             return jsonify({"ok": False}), 400
         for key, value in os.environ.items():
-            if key.lower() == identifiant.lower():
-                # Support format motdepasse:role et ancien format motdepasse seul
-                parts = value.split(":")
-                mdp_stocke = parts[0].strip()
-                role = parts[1].strip().lower() if len(parts) >= 2 else "chef"
-                if mdp_stocke == mdp:
-                    return jsonify({"ok": True, "nom": key, "role": role})
+            if key.lower() != identifiant.lower():
+                continue
+            value = value.strip()
+            # Format nouveau : motdepasse:role (ex: MonMDP:chef ou MonMDP:admin)
+            # Format ancien  : motdepasse seul (ex: Illite@8020)
+            # Cas spécial    : le mdp lui-même contient des ":" (ex: Illite@8020)
+            # => on vérifie d'abord si la valeur entière correspond au mdp (ancien format)
+            # => sinon on sépare sur le dernier ":" pour extraire le rôle
+            role = "chef"  # défaut
+            if value == mdp:
+                # Ancien format exact — pas de rôle défini
+                mdp_stocke = value
+            elif ":" in value:
+                # Nouveau format : le rôle est le dernier segment après ":"
+                last_colon = value.rfind(":")
+                mdp_stocke = value[:last_colon]
+                role_candidat = value[last_colon+1:].strip().lower()
+                if role_candidat in ("chef", "admin", "rh"):
+                    role = role_candidat
+                else:
+                    # Le ":" fait partie du mot de passe (ex: MonM:DP sans role)
+                    mdp_stocke = value
+            else:
+                mdp_stocke = value
+            if mdp_stocke == mdp:
+                return jsonify({"ok": True, "nom": key, "role": role})
         return jsonify({"ok": False})
     except Exception as e:
         return jsonify({"ok": False, "erreur": str(e)}), 500
