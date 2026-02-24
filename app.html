@@ -1452,8 +1452,7 @@ function genererExcelJour(pts, nomFichier) {
     lignes.push([dt, p.chantier, '', 'TOTAL', totalH, (p.lignes||[]).filter(l=>l.gd).length+' GD', (p.lignes||[]).filter(l=>l.panier).length+' paniers']);
     lignes.push([]);
   });
-  const csv = '﻿' + lignes.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(sep)).join('
-');
+  const csv = '\uFEFF' + lignes.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(sep)).join('\n');
   const a = document.createElement('a');
   a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
   a.download = nomFichier + '.csv';
@@ -1516,8 +1515,7 @@ function exportExcelSemaine() {
     lignes.push([]);
   });
 
-  const csv = '﻿' + lignes.map(r=>r.map(v=>`"${String(v===''?'':v).replace(/"/g,'""')}"`).join(sep)).join('
-');
+  const csv = '\uFEFF' + lignes.map(r=>r.map(v=>`"${String(v===''?'':v).replace(/"/g,'""')}"`).join(sep)).join('\n');
   const a = document.createElement('a');
   a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
   a.download = 'pointages-semaine.csv';
