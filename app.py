@@ -60,6 +60,31 @@ CREATE TABLE IF NOT EXISTS pointages (
 )
 """
 
+SCHEMA_LIVCHANTIER = """
+CREATE TABLE IF NOT EXISTS livraisons_chantier (
+    id           SERIAL PRIMARY KEY,
+    date_liv     DATE NOT NULL,
+    chantier     TEXT NOT NULL,
+    auteur       TEXT NOT NULL,
+    element      TEXT NOT NULL,
+    quantite     NUMERIC(12,3) NOT NULL DEFAULT 0,
+    unite        TEXT NOT NULL DEFAULT 'm3',
+    notes        TEXT DEFAULT '',
+    cree_le      TIMESTAMPTZ DEFAULT NOW()
+)
+"""
+
+SCHEMA_PRIX_REF = """
+CREATE TABLE IF NOT EXISTS prix_reference (
+    id        SERIAL PRIMARY KEY,
+    chantier  TEXT NOT NULL,
+    element   TEXT NOT NULL,
+    prix_unitaire NUMERIC(12,2) NOT NULL,
+    maj_le    TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(chantier, element)
+)
+"""
+
 DONNEES_DEFAUT = {
     "categories": [
         {"id":"c1","nom":"Pelles","icone":"🦾"},
@@ -101,6 +126,8 @@ def init_db():
     conn = get_conn()
     conn.run(SCHEMA_BD)
     conn.run(SCHEMA_POINTAGE)
+    conn.run(SCHEMA_LIVCHANTIER)
+    conn.run(SCHEMA_PRIX_REF)
     rows = conn.run("SELECT COUNT(*) FROM fgs_data WHERE cle = 'bd'")
     if rows[0][0] == 0:
         conn.run(
@@ -387,6 +414,159 @@ def restore():
             "ok": True,
             "message": f"Restauration réussie : {len(bd.get('machines',[]))} machines, {len(bd.get('pieces',[]))} pièces, {len(bd.get('interventions',[]))} interventions."
         })
+    except Exception as e:
+        return jsonify({"erreur": str(e)}), 500
+
+
+@app.route("/api/livchantier", methods=["GET"])
+def get_livchantier():
+    try:
+        role    = request.args.get("role", "chef")
+        auteur  = request.args.get("auteur", "")
+        chantier= request.args.get("chantier", "")
+        element = request.args.get("element", "")
+        chef_f  = request.args.get("chef", "")
+        debut   = request.args.get("debut", "")
+        fin     = request.args.get("fin", "")
+
+        where = []
+        params = {}
+        if role not in ("admin", "rh"):
+            where.append("auteur ILIKE :auteur")
+            params["auteur"] = auteur
+        if chantier:
+            where.append("chantier ILIKE :chantier")
+            params["chantier"] = f"%{chantier}%"
+        if element:
+            where.append("element = :element")
+            params["element"] = element
+        if chef_f:
+            where.append("auteur ILIKE :chef_f")
+            params["chef_f"] = f"%{chef_f}%"
+        if debut and fin:
+            where.append("date_liv BETWEEN :debut AND :fin")
+            params["debut"] = debut
+            params["fin"] = fin
+
+        sql = """SELECT l.id, l.date_liv, l.chantier, l.auteur, l.element,
+                        l.quantite, l.unite, p.prix_unitaire, l.notes, l.cree_le
+                 FROM livraisons_chantier l
+                 LEFT JOIN prix_reference p ON p.chantier=l.chantier AND p.element=l.element"""
+        if where:
+            sql += " WHERE " + " AND ".join(where)
+        sql += " ORDER BY date_liv DESC, cree_le DESC"
+
+        conn = get_conn()
+        rows = conn.run(sql, **params) if params else conn.run(sql)
+        conn.close()
+
+        cols = ["id","date_liv","chantier","auteur","element","quantite","unite","prix_unitaire","notes","cree_le"]
+        result = []
+        for row in rows:
+            d = dict(zip(cols, row))
+            d["date_liv"] = str(d["date_liv"])
+            d["cree_le"]  = str(d["cree_le"])
+            d["quantite"] = float(d["quantite"]) if d["quantite"] is not None else 0
+            d["prix_unitaire"] = float(d["prix_unitaire"]) if d["prix_unitaire"] is not None else None
+            result.append(d)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"erreur": str(e)}), 500
+
+
+@app.route("/api/livchantier", methods=["POST"])
+def save_livchantier():
+    try:
+        data = request.get_json(force=True, silent=True)
+        if not data:
+            return jsonify({"erreur": "Données invalides"}), 400
+        lid      = data.get("id")
+        date_liv = data.get("date_liv")
+        chantier = data.get("chantier", "")
+        auteur   = data.get("auteur", "")
+        element  = data.get("element", "béton")
+        quantite = float(data.get("quantite", 0))
+        unite    = data.get("unite", "m3")
+        notes    = data.get("notes", "")
+        conn = get_conn()
+        if lid:
+            conn.run(
+                """UPDATE livraisons_chantier
+                   SET date_liv=:d, chantier=:c, element=:e, quantite=:q, unite=:u, notes=:n
+                   WHERE id=:id""",
+                d=date_liv, c=chantier, e=element, q=quantite, u=unite, n=notes, id=lid
+            )
+            new_id = lid
+        else:
+            rows = conn.run(
+                """INSERT INTO livraisons_chantier
+                   (date_liv,chantier,auteur,element,quantite,unite,notes)
+                   VALUES (:d,:c,:a,:e,:q,:u,:n) RETURNING id""",
+                d=date_liv, c=chantier, a=auteur, e=element, q=quantite, u=unite, n=notes
+            )
+            new_id = rows[0][0]
+        conn.close()
+        return jsonify({"ok": True, "id": new_id})
+    except Exception as e:
+        return jsonify({"erreur": str(e)}), 500
+
+
+@app.route("/api/livchantier/<int:lid>", methods=["DELETE"])
+def delete_livchantier(lid):
+    try:
+        role   = request.args.get("role", "chef")
+        auteur = request.args.get("auteur", "")
+        conn = get_conn()
+        if role in ("admin", "rh"):
+            conn.run("DELETE FROM livraisons_chantier WHERE id=:id", id=lid)
+        else:
+            conn.run("DELETE FROM livraisons_chantier WHERE id=:id AND auteur ILIKE :a",
+                     id=lid, a=auteur)
+        conn.close()
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"erreur": str(e)}), 500
+
+
+@app.route("/api/prix_reference", methods=["GET"])
+def get_prix_ref():
+    """Retourne tous les prix de référence (chantier x element)."""
+    try:
+        conn = get_conn()
+        rows = conn.run("SELECT id, chantier, element, prix_unitaire, maj_le FROM prix_reference ORDER BY chantier, element")
+        conn.close()
+        cols = ["id","chantier","element","prix_unitaire","maj_le"]
+        result = []
+        for row in rows:
+            d = dict(zip(cols, row))
+            d["prix_unitaire"] = float(d["prix_unitaire"]) if d["prix_unitaire"] else None
+            d["maj_le"] = str(d["maj_le"])
+            result.append(d)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"erreur": str(e)}), 500
+
+
+@app.route("/api/prix_reference", methods=["POST"])
+def save_prix_ref():
+    """Upsert un prix de référence pour un couple chantier+element."""
+    try:
+        data = request.get_json(force=True, silent=True)
+        chantier = data.get("chantier", "").strip()
+        element  = data.get("element", "").strip()
+        prix     = float(data.get("prix_unitaire", 0))
+        if not chantier or not element:
+            return jsonify({"erreur": "chantier et element requis"}), 400
+        conn = get_conn()
+        conn.run(
+            """INSERT INTO prix_reference (chantier, element, prix_unitaire, maj_le)
+               VALUES (:c, :e, :p, NOW())
+               ON CONFLICT (chantier, element)
+               DO UPDATE SET prix_unitaire=EXCLUDED.prix_unitaire, maj_le=NOW()""",
+            c=chantier, e=element, p=prix
+        )
+        conn.close()
+        return jsonify({"ok": True})
     except Exception as e:
         return jsonify({"erreur": str(e)}), 500
 
