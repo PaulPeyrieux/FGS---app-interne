@@ -8,18 +8,19 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
-  --bg:#F0F2F5;--sur:#FFF;--sur2:#F7F8FA;--sur3:#EEF0F4;
-  --brd:#E2E5EC;--brd2:#CDD1DA;
-  --tx:#1A1D27;--tx2:#5A6070;--tx3:#9098A8;
-  --acc:#C0392B;--acc2:#96281B;--acc-l:#FEF5F4;
-  --ok:#16A34A;--ok-bg:#F0FDF4;--ok-b:#BBF7D0;
-  --wa:#D97706;--wa-bg:#FFFBEB;--wa-b:#FDE68A;
-  --da:#DC2626;--da-bg:#FEF2F2;--da-b:#FECACA;
-  --in:#7C3AED;--in-bg:#F5F3FF;--in-b:#DDD6FE;
-  --bl:#2563EB;--bl-bg:#EFF4FF;--bl-b:#BFDBFE;
-  --r:14px;--r2:10px;
-  --sh:0 1px 4px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.06);
-  --sh2:0 1px 3px rgba(0,0,0,.08);
+  --bg:#ECEEF2;--sur:#FFF;--sur2:#F5F6F9;--sur3:#ECEEF2;
+  --brd:#DDE0E8;--brd2:#C8CDD8;
+  --tx:#12151F;--tx2:#4A5265;--tx3:#8890A4;
+  --acc:#C0392B;--acc2:#96281B;--acc-l:#FEF4F3;--acc-rgb:192,57,43;
+  --ok:#15803D;--ok-bg:#F0FDF4;--ok-b:#86EFAC;
+  --wa:#B45309;--wa-bg:#FFFBEB;--wa-b:#FCD34D;
+  --da:#DC2626;--da-bg:#FEF2F2;--da-b:#FCA5A5;
+  --in:#6D28D9;--in-bg:#F5F3FF;--in-b:#C4B5FD;
+  --bl:#1D4ED8;--bl-bg:#EFF6FF;--bl-b:#93C5FD;
+  --r:16px;--r2:10px;--r3:8px;
+  --sh:0 1px 3px rgba(0,0,0,.05),0 6px 20px rgba(0,0,0,.07);
+  --sh2:0 1px 2px rgba(0,0,0,.06),0 2px 8px rgba(0,0,0,.05);
+  --sh3:0 0 0 3px rgba(var(--acc-rgb),.12);
   --fn:'DM Sans',sans-serif;--mo:'DM Mono',monospace;
 }
 body{font-family:var(--fn);background:var(--bg);color:var(--tx);min-height:100vh;overflow-x:hidden}
@@ -47,11 +48,14 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);min-height:100vh
 .main{flex:1;overflow-y:auto;padding-bottom:84px}
 
 /* ── NAV ── */
-.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--sur);border-top:1px solid var(--brd);display:flex;z-index:100;padding:8px 0 14px;box-shadow:0 -2px 12px rgba(0,0,0,.06)}
-.ni{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:4px 0}
-.ni svg{width:22px;height:22px;stroke:var(--tx3);transition:stroke .15s}
-.ni span{font-size:10px;color:var(--tx3);font-weight:600;letter-spacing:.2px;transition:color .15s}
-.ni.on svg{stroke:var(--acc)}.ni.on span{color:var(--acc)}
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:rgba(255,255,255,.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(--brd);display:flex;z-index:100;padding:6px 4px 16px;box-shadow:0 -1px 0 var(--brd),0 -8px 24px rgba(0,0,0,.06)}
+.ni{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:6px 2px;border-radius:12px;margin:0 2px;transition:background .15s}
+.ni svg{width:21px;height:21px;stroke:var(--tx3);transition:all .2s;fill:none}
+.ni span{font-size:9.5px;color:var(--tx3);font-weight:600;letter-spacing:.3px;transition:color .2s}
+.ni.on{background:var(--acc-l)}
+.ni.on svg{stroke:var(--acc);filter:drop-shadow(0 1px 3px rgba(var(--acc-rgb),.3))}
+.ni.on span{color:var(--acc)}
+.ni:active{transform:scale(.93)}
 
 /* ── ENTÊTE ── */
 .ent{padding:12px 16px 10px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--bg);z-index:50;border-bottom:1px solid var(--brd)}
@@ -80,7 +84,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);min-height:100vh
 .kpi-l{font-size:11px;color:var(--tx3);font-weight:600;margin-bottom:6px;text-transform:uppercase;letter-spacing:.6px}
 .kpi-v{font-size:30px;font-weight:700;font-family:var(--mo);line-height:1}
 .kpi-s{font-size:11px;color:var(--tx3);margin-top:4px}
-.kpi.al{border-color:var(--da-b);background:var(--da-bg)}.kpi.al .kpi-v{color:var(--da)}
+.kpi.al{border-color:var(--da-b);background:var(--da-bg);box-shadow:0 2px 8px rgba(220,38,38,.12)}.kpi.al .kpi-v{color:var(--da)}
 .kpi.at{border-color:var(--wa-b);background:var(--wa-bg)}.kpi.at .kpi-v{color:var(--wa)}
 
 /* ── BADGE ── */
@@ -117,7 +121,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);min-height:100vh
 /* ── MODALES ── */
 .fmod{position:fixed;inset:0;background:rgba(15,17,26,.45);backdrop-filter:blur(2px);z-index:200;display:none;align-items:flex-end;justify-content:center}
 .fmod.on{display:flex}
-.mod{background:var(--sur);border-radius:20px 20px 0 0;width:100%;max-width:480px;max-height:92vh;overflow-y:auto;padding:20px 16px 36px;box-shadow:0 -8px 40px rgba(0,0,0,.15)}
+.mod{background:var(--sur);border-radius:24px 24px 0 0;width:100%;max-width:480px;max-height:92vh;overflow-y:auto;padding:20px 16px 40px;box-shadow:0 -12px 40px rgba(0,0,0,.18)}
 .poignee{width:36px;height:4px;background:var(--brd2);border-radius:2px;margin:0 auto 18px}
 .mod-tit{font-size:19px;font-weight:700;margin-bottom:18px}
 
@@ -129,7 +133,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--acc);box-shadow:0 0 0
 textarea{resize:vertical;min-height:80px}
 
 /* ── BOUTONS ── */
-.btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 20px;border-radius:var(--r2);font-family:var(--fn);font-size:15px;font-weight:600;cursor:pointer;border:none;transition:all .15s;width:100%}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 20px;border-radius:var(--r2);font-family:var(--fn);font-size:15px;font-weight:600;cursor:pointer;border:none;transition:all .15s;width:100%}.btn:active{transform:scale(.97)}
 .bp{background:var(--acc);color:#fff;box-shadow:0 2px 8px rgba(192,57,43,.25)}.bp:active{background:var(--acc2)}
 .bd{background:var(--da-bg);color:var(--da);border:1.5px solid var(--da-b)}
 .bs{background:var(--sur2);color:var(--tx);border:1.5px solid var(--brd)}
@@ -159,7 +163,7 @@ textarea{resize:vertical;min-height:80px}
 .pu-det{display:flex;justify-content:space-between;font-size:11px;color:var(--tx3);margin-bottom:6px}
 
 /* ── INTERVENTIONS ── */
-.eint{background:var(--sur);border:1px solid var(--brd);border-radius:var(--r);padding:14px;display:flex;gap:12px;cursor:pointer;transition:all .15s;box-shadow:var(--sh2)}
+.eint{background:var(--sur);border:1px solid var(--brd);border-radius:var(--r);padding:14px;display:flex;gap:12px;cursor:pointer;transition:all .2s;box-shadow:var(--sh2)}
 .eint:hover{background:var(--sur2)}
 .pt-int{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:4px}
 .info-int{flex:1}
@@ -202,8 +206,8 @@ textarea{resize:vertical;min-height:80px}
 /* ── MISC ── */
 .etiq{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;background:var(--acc-l);color:var(--acc)}
 .sr{display:flex;gap:8px;align-items:center}.sr input{flex:1}.unite{font-size:13px;color:var(--tx3);white-space:nowrap}
-.toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:var(--tx);color:#fff;border-radius:var(--r2);padding:10px 18px;font-size:13px;font-weight:600;z-index:9999;box-shadow:var(--sh);opacity:0;transition:opacity .25s;pointer-events:none;max-width:340px;text-align:center}
-.toast.on{opacity:1}
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-4px);background:var(--tx);color:#fff;border-radius:24px;padding:11px 20px;font-size:13px;font-weight:600;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.25);opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;max-width:340px;text-align:center}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 .vide{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px;gap:12px;text-align:center}
 .vide svg{width:48px;height:48px;stroke:var(--brd2)}.vide h3{font-size:16px;font-weight:700;color:var(--tx2)}.vide p{font-size:13px;color:var(--tx3);line-height:1.6}
 .spin-c{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 24px;gap:16px;color:var(--tx3);font-size:14px}
@@ -228,6 +232,36 @@ textarea{resize:vertical;min-height:80px}
 .fab-cmd:active{transform:scale(.95)}
 .fab-cmd svg{width:18px;height:18px;stroke:#fff;stroke-width:2.5}
 @media(max-width:480px){.fab-cmd{right:16px}}
+
+
+/* ── SOUS-ONGLETS CHANTIER ── */
+.sub-nav{display:flex;gap:0;background:var(--sur);border-radius:var(--r);border:1px solid var(--brd);padding:4px;margin-bottom:14px;box-shadow:var(--sh2)}
+.sub-ni{flex:1;padding:9px 12px;border-radius:var(--r2);font-size:13px;font-weight:700;text-align:center;cursor:pointer;color:var(--tx3);transition:all .2s;letter-spacing:.1px}
+.sub-ni.on{background:var(--acc);color:#fff;box-shadow:0 2px 8px rgba(var(--acc-rgb),.3)}
+.sub-ni:not(.on):hover{background:var(--sur2);color:var(--tx2)}
+
+/* ── VUE ADMIN CHANTIER ── */
+.chantier-selector{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.chantier-chip{padding:8px 16px;border-radius:20px;border:1.5px solid var(--brd);background:var(--sur);font-size:13px;font-weight:700;cursor:pointer;color:var(--tx2);transition:all .2s;white-space:nowrap}
+.chantier-chip.on{background:var(--acc);color:#fff;border-color:var(--acc);box-shadow:0 2px 8px rgba(var(--acc-rgb),.3)}
+.chantier-chip:not(.on):hover{border-color:var(--acc);color:var(--acc)}
+.semaine-selector{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px;scrollbar-width:none}
+.semaine-selector::-webkit-scrollbar{display:none}
+.sem-chip{padding:6px 14px;border-radius:20px;border:1.5px solid var(--brd);background:var(--sur);font-size:12px;font-weight:700;cursor:pointer;color:var(--tx2);transition:all .18s;white-space:nowrap;flex-shrink:0}
+.sem-chip.on{background:var(--acc-l);color:var(--acc);border-color:var(--acc)}
+.cout-total{background:linear-gradient(135deg,var(--acc) 0%,var(--acc2) 100%);border-radius:var(--r);padding:18px;color:#fff;margin-bottom:14px;box-shadow:0 4px 16px rgba(var(--acc-rgb),.35)}
+.cout-total-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;opacity:.8;margin-bottom:4px}
+.cout-total-val{font-size:32px;font-weight:700;font-family:var(--mo);line-height:1}
+.cout-total-sub{font-size:12px;opacity:.7;margin-top:4px}
+.mat-row{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--brd)}
+.mat-row:last-child{border-bottom:none}
+.mat-info{flex:1;min-width:0}
+.mat-nom{font-size:14px;font-weight:700;color:var(--tx)}
+.mat-qty{font-size:13px;color:var(--tx2);margin-top:2px;font-family:var(--mo)}
+.mat-prix-wrap{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.mat-prix-inp{width:80px;text-align:right;font-weight:700;font-family:var(--mo);padding:7px 10px;font-size:14px}
+.mat-total{font-size:15px;font-weight:700;font-family:var(--mo);color:var(--ok);min-width:70px;text-align:right;flex-shrink:0}
+.mat-total.vide{color:var(--tx3);font-size:13px;font-weight:400}
 
 /* ── POINTAGE ── */
 .pt-row{display:flex;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid var(--brd)}
@@ -270,9 +304,94 @@ textarea{resize:vertical;min-height:80px}
 .recap-table td{padding:9px 12px;border-bottom:1px solid var(--brd)}
 .recap-table tr:nth-child(even) td{background:var(--sur2)}
 .recap-table .total-row td{font-weight:700;background:var(--sur);border-top:2px solid var(--acc)}
-.filtre-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;padding:12px;background:var(--sur);border:1px solid var(--brd);border-radius:var(--r)}
+.filtre-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;padding:12px;background:var(--sur);border:1px solid var(--brd);border-radius:var(--r);box-shadow:var(--sh2)}
 .filtre-bar select,.filtre-bar input{flex:1;min-width:100px;font-size:13px}
 .lc-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--tx3);padding:8px 0 4px;margin-top:8px}
+
+/* ── SOUS-ONGLETS CHANTIER ── */
+.subnav{display:flex;background:var(--sur);border-bottom:1px solid var(--brd);padding:0 16px;gap:0;position:sticky;top:57px;z-index:49}
+.sni{flex:1;padding:12px 8px;text-align:center;font-size:13px;font-weight:700;color:var(--tx3);cursor:pointer;border-bottom:3px solid transparent;transition:all .15s;letter-spacing:.2px}
+.sni.on{color:var(--acc);border-bottom-color:var(--acc)}
+/* Vue admin chantier */
+.chantier-selector{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px}
+.chantier-card{background:var(--sur);border:2px solid var(--brd);border-radius:var(--r);padding:16px 12px;text-align:center;cursor:pointer;transition:all .2s;box-shadow:var(--sh2)}
+.chantier-card:hover,.chantier-card.sel{border-color:var(--acc);background:var(--acc-l)}
+.chantier-card.sel .cc-nom{color:var(--acc)}
+.cc-ico{font-size:24px;margin-bottom:6px}
+.cc-nom{font-size:13px;font-weight:700;color:var(--tx)}
+.cc-sub{font-size:11px;color:var(--tx3);margin-top:3px}
+/* Tableau bilan chantier */
+.bilan-table{width:100%;border-collapse:collapse;font-size:13px}
+.bilan-table th{background:var(--acc);color:#fff;padding:10px 12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;text-align:left}
+.bilan-table td{padding:10px 12px;border-bottom:1px solid var(--brd);vertical-align:middle}
+.bilan-table tr:last-child td{border-bottom:none}
+.bilan-table tr:nth-child(even) td{background:var(--sur2)}
+.bilan-total{background:var(--acc)!important;color:#fff!important;font-weight:700}
+.prix-inline{width:80px;text-align:right;padding:6px 8px!important;font-size:14px;font-weight:700;font-family:var(--mo)}
+/* Semaines */
+.sem-pills{display:flex;gap:6px;overflow-x:auto;padding:4px 0 8px;-webkit-overflow-scrolling:touch}
+.sem-pill{white-space:nowrap;padding:7px 14px;border-radius:20px;border:1.5px solid var(--brd);background:var(--sur);font-size:12px;font-weight:700;cursor:pointer;color:var(--tx2);transition:all .15s;flex-shrink:0}
+.sem-pill.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+
+/* ── SOUS-ONGLETS CHANTIER ── */
+.subtab-bar{display:flex;gap:0;background:var(--sur);border-bottom:2px solid var(--brd);margin-bottom:14px;position:sticky;top:0;z-index:10}
+.subtab{flex:1;padding:12px 0;text-align:center;font-size:14px;font-weight:600;color:var(--tx3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s}
+.subtab.on{color:var(--acc);border-bottom-color:var(--acc)}
+.subtab:hover{color:var(--tx)}
+
+/* ── ADMIN CHANTIER SELECTOR ── */
+.chantier-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:0}
+.chantier-chip{background:var(--sur);border:1.5px solid var(--brd);border-radius:var(--r);padding:14px 12px;cursor:pointer;transition:all .15s;text-align:center}
+.chantier-chip:hover{border-color:var(--acc);background:var(--acc-l)}
+.chantier-chip.on{border-color:var(--acc);background:var(--acc-l)}
+.chantier-chip-name{font-size:14px;font-weight:700;color:var(--tx)}
+.chantier-chip-sub{font-size:11px;color:var(--tx3);margin-top:3px}
+
+/* ── TABLEAU COÛTS ADMIN ── */
+.cout-table{width:100%;border-collapse:collapse;font-size:13px}
+.cout-table th{background:var(--acc);color:#fff;padding:10px 12px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.5px;font-weight:700}
+.cout-table td{padding:10px 12px;border-bottom:1px solid var(--brd);vertical-align:middle}
+.cout-table tr:last-child td{border-bottom:none}
+.cout-table .tot-row td{font-weight:700;background:var(--sur2);border-top:2px solid var(--acc);font-size:14px}
+.prix-inp{width:80px;text-align:right;font-family:var(--mo);font-size:13px;padding:5px 8px;border:1.5px solid var(--brd);border-radius:6px;background:var(--sur2)}
+.prix-inp:focus{border-color:var(--acc);outline:none;background:#fff}
+
+/* ── SEMAINE TABS ── */
+.sem-tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:12px;scrollbar-width:none}
+.sem-tabs::-webkit-scrollbar{display:none}
+.sem-tab{white-space:nowrap;padding:7px 14px;border-radius:20px;border:1.5px solid var(--brd);background:var(--sur);font-size:12px;font-weight:700;cursor:pointer;color:var(--tx2);transition:all .15s;flex-shrink:0}
+.sem-tab.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+
+/* ── DESIGN GLOBAL IMPROVEMENTS ── */
+.pg{padding:14px 16px;overflow-y:auto;flex:1}
+.ent{display:flex;align-items:center;gap:10px;padding:14px 16px 0;min-height:52px}
+.ent h1{font-size:20px;font-weight:700;flex:1;margin:0}
+.ent-act{display:flex;gap:6px;align-items:center}
+.ico-btn{width:36px;height:36px;border-radius:9px;border:1.5px solid var(--brd);background:var(--sur);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;flex-shrink:0}
+.ico-btn:hover{border-color:var(--acc);background:var(--acc-l)}
+.ico-btn svg{width:17px;height:17px;stroke:var(--tx2)}
+.vide{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 20px;gap:12px;color:var(--tx3);text-align:center}
+.vide svg{width:48px;height:48px;stroke:var(--brd2)}
+.vide h3{font-size:16px;font-weight:600;color:var(--tx2);margin:0}
+.vide p{font-size:14px;margin:0}
+.spin-c{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:48px;color:var(--tx3);font-size:14px}
+.spin{width:28px;height:28px;border:3px solid var(--brd);border-top-color:var(--acc);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── STAT CARDS HOME ── */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.stat-card{background:var(--sur);border:1px solid var(--brd);border-radius:var(--r);padding:14px;box-shadow:var(--sh2)}
+.stat-val{font-size:26px;font-weight:700;font-family:var(--mo);line-height:1}
+.stat-lbl{font-size:12px;color:var(--tx3);margin-top:4px}
+.stat-card.alert .stat-val{color:var(--da)}
+.stat-card.warn  .stat-val{color:var(--wa)}
+.stat-card.ok    .stat-val{color:var(--ok)}
+
+/* ── ALERT PILLS ── */
+.alert-pill{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:var(--r2);margin-bottom:8px;font-size:13px}
+.alert-pill.red{background:var(--da-bg);border:1px solid var(--da-b);color:#7F1D1D}
+.alert-pill.orange{background:var(--wa-bg);border:1px solid var(--wa-b);color:#92400E}
+.alert-pill svg{flex-shrink:0;width:16px;height:16px}
 @media print{.nav,.fab,.np,.fmod{display:none!important}body{background:#fff}#app{max-width:100%}}
 </style>
 </head>
@@ -310,10 +429,8 @@ textarea{resize:vertical;min-height:80px}
       <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg><span>Pièces</span></div>
     <div class="ni" data-p="livraisons" onclick="nav('livraisons')">
       <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg><span>Réceptions</span></div>
-    <div class="ni" data-p="pointage" onclick="nav('pointage')">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M9 16l2 2 4-4"/></svg><span>Pointage</span></div>
-    <div class="ni" data-p="livchantier" onclick="nav('livchantier')">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg><span>Livraisons</span></div>
+    <div class="ni" data-p="chantier" onclick="nav('chantier')">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><path d="M9 22V12h6v10"/><line x1="12" y1="2" x2="12" y2="6"/></svg><span>Chantier</span></div>
   </nav>
   <button class="fab np" id="fab" onclick="fab()">
     <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -498,8 +615,7 @@ function render(){
   else if(PAGE==='entretien')m.innerHTML=pgEnt();
   else if(PAGE==='pieces')m.innerHTML=pgPc();
   else if(PAGE==='livraisons')m.innerHTML=pgLiv();
-  else if(PAGE==='pointage'){m.innerHTML=pgPointage();chargerPointages();}
-  else if(PAGE==='livchantier'){m.innerHTML=pgLivChantier();chargerLC();}
+  else if(PAGE==='chantier'){m.innerHTML=pgChantier();initChantierTab();}
 }
 
 // ── Calculs ──────────────────────────────────────────────────────────
@@ -659,8 +775,7 @@ function fab(){
   else if(PAGE==='entretien')openMI();
   else if(PAGE==='pieces')openMP();
   else if(PAGE==='livraisons')openML();
-  else if(PAGE==='pointage')nouveauPointage();
-  else if(PAGE==='livchantier')nouvelleLivChantier();
+  else if(PAGE==='chantier')chantierFab();
   else openMM();
 }
 
@@ -825,7 +940,32 @@ function dorintInt(iv,m){
     `<tr><td>Contrôle général</td><td colspan="2" style="color:#888">—</td><td style="text-align:center"><div style="width:16px;height:16px;border:1.5px solid #999;border-radius:3px;margin:auto"></div></td></tr>`,
   ].join('');
   const w=window.open('','_blank');
-  w.document.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Fiche — ${m.nom}</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;padding:24px;font-size:13px}.top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;padding-bottom:14px;border-bottom:3px solid #C0392B}.lb{display:flex;align-items:center;gap:12px}.lb img{height:44px;object-fit:contain}.bdg{display:inline-block;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:700}.ok{background:#dcfce7;color:#166534}.wa{background:#fef9c3;color:#854d0e}.da{background:#fee2e2;color:#991b1b}h2{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#C0392B;margin:16px 0 7px;padding-bottom:4px;border-bottom:1px solid #e5e7eb}table{width:100%;border-collapse:collapse}th{text-align:left;font-size:11px;font-weight:700;color:#666;text-transform:uppercase;padding:6px 8px;background:#f9fafb;border:1px solid #e5e7eb}td{padding:8px;border:1px solid #e5e7eb;vertical-align:middle}.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}.sbox{border:1px solid #d1d5db;border-radius:4px;height:34px;margin-top:5px}.sarea{border:1px solid #d1d5db;border-radius:4px;height:70px;margin-top:5px;display:flex;align-items:flex-end;padding:6px;font-size:10px;color:#ccc}.note{margin-top:20px;padding-top:12px;border-top:1px solid #e5e7eb;font-size:10px;color:#9ca3af}@media print{body{padding:16px}}</style></head><body>
+  w.document.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Fiche — ${m.nom}</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;padding:24px;font-size:13px}.top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;padding-bottom:14px;border-bottom:3px solid #C0392B}.lb{display:flex;align-items:center;gap:12px}.lb img{height:44px;object-fit:contain}.bdg{display:inline-block;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:700}.ok{background:#dcfce7;color:#166534}.wa{background:#fef9c3;color:#854d0e}.da{background:#fee2e2;color:#991b1b}h2{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#C0392B;margin:16px 0 7px;padding-bottom:4px;border-bottom:1px solid #e5e7eb}table{width:100%;border-collapse:collapse}th{text-align:left;font-size:11px;font-weight:700;color:#666;text-transform:uppercase;padding:6px 8px;background:#f9fafb;border:1px solid #e5e7eb}td{padding:8px;border:1px solid #e5e7eb;vertical-align:middle}.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}.sbox{border:1px solid #d1d5db;border-radius:4px;height:34px;margin-top:5px}.sarea{border:1px solid #d1d5db;border-radius:4px;height:70px;margin-top:5px;display:flex;align-items:flex-end;padding:6px;font-size:10px;color:#ccc}.note{margin-top:20px;padding-top:12px;border-top:1px solid #e5e7eb;font-size:10px;color:#9ca3af}
+/* ── SOUS-ONGLETS CHANTIER ── */
+.subnav{display:flex;background:var(--sur);border-bottom:1px solid var(--brd);padding:0 16px;gap:0;position:sticky;top:57px;z-index:49}
+.sni{flex:1;padding:12px 8px;text-align:center;font-size:13px;font-weight:700;color:var(--tx3);cursor:pointer;border-bottom:3px solid transparent;transition:all .15s;letter-spacing:.2px}
+.sni.on{color:var(--acc);border-bottom-color:var(--acc)}
+/* Vue admin chantier */
+.chantier-selector{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px}
+.chantier-card{background:var(--sur);border:2px solid var(--brd);border-radius:var(--r);padding:16px 12px;text-align:center;cursor:pointer;transition:all .2s;box-shadow:var(--sh2)}
+.chantier-card:hover,.chantier-card.sel{border-color:var(--acc);background:var(--acc-l)}
+.chantier-card.sel .cc-nom{color:var(--acc)}
+.cc-ico{font-size:24px;margin-bottom:6px}
+.cc-nom{font-size:13px;font-weight:700;color:var(--tx)}
+.cc-sub{font-size:11px;color:var(--tx3);margin-top:3px}
+/* Tableau bilan chantier */
+.bilan-table{width:100%;border-collapse:collapse;font-size:13px}
+.bilan-table th{background:var(--acc);color:#fff;padding:10px 12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;text-align:left}
+.bilan-table td{padding:10px 12px;border-bottom:1px solid var(--brd);vertical-align:middle}
+.bilan-table tr:last-child td{border-bottom:none}
+.bilan-table tr:nth-child(even) td{background:var(--sur2)}
+.bilan-total{background:var(--acc)!important;color:#fff!important;font-weight:700}
+.prix-inline{width:80px;text-align:right;padding:6px 8px!important;font-size:14px;font-weight:700;font-family:var(--mo)}
+/* Semaines */
+.sem-pills{display:flex;gap:6px;overflow-x:auto;padding:4px 0 8px;-webkit-overflow-scrolling:touch}
+.sem-pill{white-space:nowrap;padding:7px 14px;border-radius:20px;border:1.5px solid var(--brd);background:var(--sur);font-size:12px;font-weight:700;cursor:pointer;color:var(--tx2);transition:all .15s;flex-shrink:0}
+.sem-pill.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+@media print{body{padding:16px}}</style></head><body>
 <div class="top"><div class="lb"><img src="${LOGO}" alt="FGS"/><div><div style="font-size:18px;font-weight:700;color:#C0392B">Fiche d'entretien</div><div style="font-size:13px;color:#555">${m.nom} — ${m.modele||''}${m.site?' · '+m.site:''}</div></div></div><div style="text-align:right;font-size:12px;color:#555;line-height:1.8"><div><b>Créée le :</b> ${new Date().toLocaleDateString('fr-FR')}</div>${iv?.datePrevue?`<div><b>Date prévue :</b> ${fdt(iv.datePrevue)}</div>`:''}<div><b>Type :</b> ${iv?lblTy(iv.type):'Entretien'}</div><span class="bdg ${s}">${lblSt(s)}</span></div></div>
 <div class="g2"><div><h2>Machine</h2><table><tr><th>Champ</th><th>Valeur</th></tr><tr><td>Modèle</td><td style="font-weight:600">${m.modele||'—'}</td></tr><tr><td>N° série</td><td style="font-weight:600">${m.serie||'—'}</td></tr><tr><td>Site</td><td style="font-weight:600">${m.site||'—'}</td></tr></table></div>
 <div><h2>Heures</h2><table><tr><th>Champ</th><th>Valeur</th></tr><tr><td>Actuelles</td><td style="font-weight:600">${m.heures}h</td></tr><tr><td>Dernier entretien</td><td style="font-weight:600">${m.hEntretien}h</td></tr><tr><td>Écart</td><td style="font-weight:600;color:${s==='da'?'#dc2626':s==='wa'?'#d97706':'#16a34a'}">${d}h / ${seuil}h</td></tr></table></div></div>
@@ -850,9 +990,10 @@ ${iv?.notes?`<h2>Notes</h2><div style="padding:10px 12px;background:#f9fafb;bord
       <option value="béton">Béton</option>
       <option value="treillis">Treillis</option>
       <option value="enkadrain">Enkadrain</option>
-      <option value="autre">Autre</option>
+      <option value="autre">Autre (préciser)</option>
     </select>
   </div>
+  <div class="gch" id="lc-autre-wrap" style="display:none"><label>Nom de la fourniture</label><input id="lc-autre-nom" placeholder="Ex: gabions, géotextile, PVC DN400..."/></div>
   <div style="display:flex;gap:10px">
     <div class="gch" style="flex:1"><label>Quantité</label><input id="lc-qty" type="number" min="0" step="0.01" placeholder="0"/></div>
     <div class="gch" style="flex:1"><label>Unité</label>
@@ -910,7 +1051,7 @@ ${iv?.notes?`<h2>Notes</h2><div style="padding:10px 12px;background:#f9fafb;bord
   <div class="cmd-body" id="cmd-body"></div>
 </div>
 
-</body></html>`);
+<\/body><\/html>`);
   w.document.close();w.focus();setTimeout(()=>w.print(),400);
 }
 function printMach(id){
@@ -919,7 +1060,32 @@ function printMach(id){
   const ivs=BD.interventions.filter(i=>i.machineId===id).sort((a,b)=>new Date(b.date)-new Date(a.date));
   const pas=m.piecesAssociees||[];
   const w=window.open('','_blank');
-  w.document.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Fiche machine — ${m.nom}</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;padding:24px;font-size:13px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:14px;border-bottom:3px solid #C0392B}.lb{display:flex;align-items:center;gap:12px}.lb img{height:44px;object-fit:contain}.bdg{display:inline-block;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:700}.ok{background:#dcfce7;color:#166534}.wa{background:#fef9c3;color:#854d0e}.da{background:#fee2e2;color:#991b1b}h2{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#C0392B;margin:16px 0 7px;padding-bottom:4px;border-bottom:1px solid #e5e7eb}table{width:100%;border-collapse:collapse}th{text-align:left;font-size:11px;font-weight:700;color:#666;text-transform:uppercase;padding:6px 8px;background:#f9fafb;border:1px solid #e5e7eb}td{padding:8px;border:1px solid #e5e7eb}.note{margin-top:20px;padding-top:12px;border-top:1px solid #e5e7eb;font-size:10px;color:#9ca3af}@media print{body{padding:16px}}</style></head><body>
+  w.document.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Fiche machine — ${m.nom}</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;padding:24px;font-size:13px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:14px;border-bottom:3px solid #C0392B}.lb{display:flex;align-items:center;gap:12px}.lb img{height:44px;object-fit:contain}.bdg{display:inline-block;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:700}.ok{background:#dcfce7;color:#166534}.wa{background:#fef9c3;color:#854d0e}.da{background:#fee2e2;color:#991b1b}h2{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#C0392B;margin:16px 0 7px;padding-bottom:4px;border-bottom:1px solid #e5e7eb}table{width:100%;border-collapse:collapse}th{text-align:left;font-size:11px;font-weight:700;color:#666;text-transform:uppercase;padding:6px 8px;background:#f9fafb;border:1px solid #e5e7eb}td{padding:8px;border:1px solid #e5e7eb}.note{margin-top:20px;padding-top:12px;border-top:1px solid #e5e7eb;font-size:10px;color:#9ca3af}
+/* ── SOUS-ONGLETS CHANTIER ── */
+.subnav{display:flex;background:var(--sur);border-bottom:1px solid var(--brd);padding:0 16px;gap:0;position:sticky;top:57px;z-index:49}
+.sni{flex:1;padding:12px 8px;text-align:center;font-size:13px;font-weight:700;color:var(--tx3);cursor:pointer;border-bottom:3px solid transparent;transition:all .15s;letter-spacing:.2px}
+.sni.on{color:var(--acc);border-bottom-color:var(--acc)}
+/* Vue admin chantier */
+.chantier-selector{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px}
+.chantier-card{background:var(--sur);border:2px solid var(--brd);border-radius:var(--r);padding:16px 12px;text-align:center;cursor:pointer;transition:all .2s;box-shadow:var(--sh2)}
+.chantier-card:hover,.chantier-card.sel{border-color:var(--acc);background:var(--acc-l)}
+.chantier-card.sel .cc-nom{color:var(--acc)}
+.cc-ico{font-size:24px;margin-bottom:6px}
+.cc-nom{font-size:13px;font-weight:700;color:var(--tx)}
+.cc-sub{font-size:11px;color:var(--tx3);margin-top:3px}
+/* Tableau bilan chantier */
+.bilan-table{width:100%;border-collapse:collapse;font-size:13px}
+.bilan-table th{background:var(--acc);color:#fff;padding:10px 12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;text-align:left}
+.bilan-table td{padding:10px 12px;border-bottom:1px solid var(--brd);vertical-align:middle}
+.bilan-table tr:last-child td{border-bottom:none}
+.bilan-table tr:nth-child(even) td{background:var(--sur2)}
+.bilan-total{background:var(--acc)!important;color:#fff!important;font-weight:700}
+.prix-inline{width:80px;text-align:right;padding:6px 8px!important;font-size:14px;font-weight:700;font-family:var(--mo)}
+/* Semaines */
+.sem-pills{display:flex;gap:6px;overflow-x:auto;padding:4px 0 8px;-webkit-overflow-scrolling:touch}
+.sem-pill{white-space:nowrap;padding:7px 14px;border-radius:20px;border:1.5px solid var(--brd);background:var(--sur);font-size:12px;font-weight:700;cursor:pointer;color:var(--tx2);transition:all .15s;flex-shrink:0}
+.sem-pill.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+@media print{body{padding:16px}}</style></head><body>
 <div class="top"><div class="lb"><img src="${LOGO}" alt="FGS"/><div><div style="font-size:18px;font-weight:700;color:#C0392B">${m.nom}</div><div style="font-size:13px;color:#555">${m.modele||''}${m.site?' · '+m.site:''}</div></div></div><span class="bdg ${s}">${lblSt(s)}</span></div>
 <h2>Informations</h2><table><tr><th>Champ</th><th>Valeur</th></tr><tr><td>Catégorie</td><td style="font-weight:600">${ncat(m.catId)}</td></tr><tr><td>Modèle</td><td style="font-weight:600">${m.modele||'—'}</td></tr><tr><td>Année</td><td style="font-weight:600">${m.annee||'—'}</td></tr><tr><td>N° série</td><td style="font-weight:600">${m.serie||'—'}</td></tr><tr><td>Site</td><td style="font-weight:600">${m.site||'—'}</td></tr><tr><td>Poids</td><td style="font-weight:600">${m.poids?m.poids+' kg':'—'}</td></tr></table>
 <h2>Heures & Entretien</h2><table><tr><th>Champ</th><th>Valeur</th></tr><tr><td>Heures actuelles</td><td style="font-weight:600">${m.heures}h</td></tr><tr><td>Dernier entretien</td><td style="font-weight:600">${m.hEntretien}h</td></tr><tr><td>Depuis dernier entretien</td><td style="font-weight:600;color:${s==='da'?'#dc2626':s==='wa'?'#d97706':'#16a34a'}">${d}h / ${seuil}h (${Math.round(Math.min(d/seuil,1)*100)}%)</td></tr></table>
@@ -945,9 +1111,10 @@ ${ivs.length?`<table><tr><th>Date</th><th>Type</th><th>Heures</th><th>Pièces</t
       <option value="béton">Béton</option>
       <option value="treillis">Treillis</option>
       <option value="enkadrain">Enkadrain</option>
-      <option value="autre">Autre</option>
+      <option value="autre">Autre (préciser)</option>
     </select>
   </div>
+  <div class="gch" id="lc-autre-wrap" style="display:none"><label>Nom de la fourniture</label><input id="lc-autre-nom" placeholder="Ex: gabions, géotextile, PVC DN400..."/></div>
   <div style="display:flex;gap:10px">
     <div class="gch" style="flex:1"><label>Quantité</label><input id="lc-qty" type="number" min="0" step="0.01" placeholder="0"/></div>
     <div class="gch" style="flex:1"><label>Unité</label>
@@ -1005,7 +1172,7 @@ ${ivs.length?`<table><tr><th>Date</th><th>Type</th><th>Heures</th><th>Pièces</t
   <div class="cmd-body" id="cmd-body"></div>
 </div>
 
-</body></html>`);
+<\/body><\/html>`);
   w.document.close();w.focus();setTimeout(()=>w.print(),400);
 }
 
@@ -1019,571 +1186,64 @@ function exportCSV(){
 
 
 
+
 // ══════════════════════════════════════════════════════════════════
-// LIVRAISONS CHANTIER
+// MODULE CHANTIER (Pointage + Livraisons)
 // ══════════════════════════════════════════════════════════════════
 
-let LC_DATA = [];      // livraisons brutes
-let PRIX_REF = [];     // prix de référence par chantier+element
-let LC_EDIT_ID = null;
+let SOUS_ONGLET = 'pointage'; // 'pointage' | 'livraison'
 
-const LC_ELEMENTS = {
-  'béton':     { unite:'m3', badge:'lc-beton',    emoji:'🏗️', fixe:true  },
-  'treillis':  { unite:'m2', badge:'lc-treillis', emoji:'🔩', fixe:true  },
-  'enkadrain': { unite:'m2', badge:'lc-enkadrain',emoji:'🌊', fixe:true  },
-  'autre':     { unite:'',   badge:'lc-autre',    emoji:'📦', fixe:false },
-};
-
-function lcBadge(el) {
-  const info = LC_ELEMENTS[el] || LC_ELEMENTS['autre'];
-  return `<span class="lc-badge ${info.badge}">${info.emoji} ${el}</span>`;
-}
-
-function getPrix(chantier, element) {
-  const ref = PRIX_REF.find(p => p.chantier === chantier && p.element === element);
-  return ref ? ref.prix_unitaire : null;
-}
-
-// ── Page principale ───────────────────────────────────────────────
-function pgLivChantier() {
-  const isAdmin = USER?.role === 'admin' || USER?.role === 'rh';
-  const filtres = isAdmin ? `
-    <div class="filtre-bar">
-      <input id="lc-f-chantier" placeholder="🔍 Chantier..." oninput="renderLC()" style="max-width:150px"/>
-      <select id="lc-f-element" onchange="renderLC()">
-        <option value="">Tous les éléments</option>
-        <option value="béton">Béton</option>
-        <option value="treillis">Treillis</option>
-        <option value="enkadrain">Enkadrain</option>
-        <option value="autre">Autre</option>
-      </select>
-      <input id="lc-f-chef" placeholder="👤 Chef..." oninput="renderLC()" style="max-width:130px"/>
-      <input id="lc-f-debut" type="date" onchange="renderLC()" title="Date début"/>
-      <input id="lc-f-fin"   type="date" onchange="renderLC()" title="Date fin"/>
-      <button class="btn bs np" style="width:auto;padding:8px 12px;font-size:12px" onclick="resetFiltresLC()">✕</button>
-      <button class="btn bp np" style="width:auto;padding:8px 14px;font-size:12px" onclick="exportLCExcel()">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Excel
-      </button>
-    </div>` : '';
-
-  return `<div class="ent"><h1>Livraisons chantier</h1></div>
-  <div class="pg on">
-    ${filtres}
-    ${isAdmin ? '<div id="lc-recap"></div>' : ''}
-    <div id="lc-liste"><div class="spin-c"><div class="spin"></div>Chargement...</div></div>
-    <div style="height:80px"></div>
-  </div>`;
-}
-
-async function chargerLC() {
-  const role   = USER?.role || 'chef';
-  const auteur = USER?.nom  || '';
-  try {
-    const [rLiv, rPrix] = await Promise.all([
-      fetch(`/api/livchantier?role=${encodeURIComponent(role)}&auteur=${encodeURIComponent(auteur)}`),
-      fetch('/api/prix_reference'),
-    ]);
-    LC_DATA  = await rLiv.json();
-    PRIX_REF = await rPrix.json();
-    if (LC_DATA.erreur) throw new Error(LC_DATA.erreur);
-    renderLC();
-  } catch(e) {
-    const el = document.getElementById('lc-liste');
-    if (el) el.innerHTML = `<div class="vide"><h3>Erreur</h3><p>${e.message}</p></div>`;
-  }
-}
-
-function getLCFiltres() {
-  return {
-    chantier: document.getElementById('lc-f-chantier')?.value.toLowerCase() || '',
-    element:  document.getElementById('lc-f-element')?.value  || '',
-    chef:     document.getElementById('lc-f-chef')?.value.toLowerCase() || '',
-    debut:    document.getElementById('lc-f-debut')?.value || '',
-    fin:      document.getElementById('lc-f-fin')?.value   || '',
-  };
-}
-
-function filtrerLC() {
-  const f = getLCFiltres();
-  return LC_DATA.filter(l => {
-    if (f.chantier && !l.chantier.toLowerCase().includes(f.chantier)) return false;
-    if (f.element  && l.element !== f.element) return false;
-    if (f.chef     && !l.auteur.toLowerCase().includes(f.chef))   return false;
-    if (f.debut    && l.date_liv < f.debut) return false;
-    if (f.fin      && l.date_liv > f.fin)   return false;
-    return true;
-  });
-}
-
-function resetFiltresLC() {
-  ['lc-f-chantier','lc-f-element','lc-f-chef','lc-f-debut','lc-f-fin'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.value = '';
-  });
-  renderLC();
-}
-
-// ── Rendu ─────────────────────────────────────────────────────────
-function renderLC() {
-  const isAdmin = USER?.role === 'admin' || USER?.role === 'rh';
-  const data = filtrerLC();
-
-  if (isAdmin) renderRecap(data);
-  renderListeLC(data, isAdmin);
-}
-
-function renderRecap(data) {
-  const recap = document.getElementById('lc-recap');
-  if (!recap) return;
-
-  // Agréger par chantier+element avec prix de référence
-  const agg = {}; // clé: "chantier||element"
-  data.forEach(l => {
-    const k = `${l.chantier}||${l.element}`;
-    if (!agg[k]) agg[k] = { chantier:l.chantier, element:l.element, unite:l.unite, qte:0, nb:0 };
-    agg[k].qte += l.quantite;
-    agg[k].nb++;
-  });
-
-  // Colonnes : Chantier | Element | Qté | Unité | Prix/u (éditable) | Total
-  const rows = Object.values(agg).sort((a,b) => a.chantier.localeCompare(b.chantier) || a.element.localeCompare(b.element)).map(v => {
-    const prix = getPrix(v.chantier, v.element);
-    const total = prix ? (v.qte * prix) : null;
-    return `<tr>
-      <td style="font-weight:600">${v.chantier}</td>
-      <td>${lcBadge(v.element)}</td>
-      <td style="text-align:right;font-weight:700;font-family:var(--mo)">${v.qte.toLocaleString('fr-FR',{maximumFractionDigits:2})} ${v.unite}</td>
-      <td style="text-align:right">
-        <div style="display:flex;align-items:center;gap:4px;justify-content:flex-end">
-          <input class="lc-prix-input" type="number" step="0.01" min="0"
-            value="${prix||''}" placeholder="—"
-            title="Prix unitaire pour ${v.element} sur ${v.chantier}"
-            onchange="savePrixRef('${v.chantier.replace(/'/g,"\'")}','${v.element}',this.value)"/>
-          <span style="font-size:11px;color:var(--tx3)">€/${v.unite}</span>
-        </div>
-      </td>
-      <td style="text-align:right;font-weight:700;color:${total?'var(--ok)':'var(--tx3)'}">
-        ${total ? total.toLocaleString('fr-FR',{style:'currency',currency:'EUR'}) : '—'}
-      </td>
-    </tr>`;
-  });
-
-  const totalGeneral = Object.values(agg).reduce((s,v) => {
-    const prix = getPrix(v.chantier, v.element);
-    return s + (prix ? v.qte * prix : 0);
-  }, 0);
-
-  recap.innerHTML = `
-    <div class="carte" style="margin-bottom:14px">
-      <div class="carte-ent">
-        <div class="carte-tit">📊 Récapitulatif — Prix par chantier et élément</div>
-        <div class="carte-sub">${data.length} livraison${data.length>1?'s':''}</div>
-      </div>
-      <div style="overflow-x:auto">
-      <table class="recap-table">
-        <tr><th>Chantier</th><th>Élément</th><th style="text-align:right">Quantité</th><th style="text-align:right">Prix unitaire</th><th style="text-align:right">Total</th></tr>
-        ${rows || '<tr><td colspan="5" style="color:var(--tx3);text-align:center;padding:16px">Aucune livraison</td></tr>'}
-        ${totalGeneral>0?`<tr class="total-row"><td colspan="4">TOTAL GÉNÉRAL</td><td style="text-align:right">${totalGeneral.toLocaleString('fr-FR',{style:'currency',currency:'EUR'})}</td></tr>`:''}
-      </table>
-      </div>
-    </div>`;
-}
-
-function renderListeLC(data, isAdmin) {
-  const liste = document.getElementById('lc-liste');
-  if (!liste) return;
-  if (!data.length) {
-    liste.innerHTML = `<div class="vide">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7V8z"/></svg>
-      <h3>Aucune livraison</h3><p>Appuyez sur + pour enregistrer une livraison.</p>
-    </div>`;
-    return;
-  }
-  const parDate = {};
-  data.forEach(l => {
-    if (!parDate[l.date_liv]) parDate[l.date_liv] = [];
-    parDate[l.date_liv].push(l);
-  });
-
-  liste.innerHTML = Object.keys(parDate).sort().reverse().map(date => {
-    const dt = new Date(date+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
-    return `<div class="lc-section-title">${dt}</div>` +
-      parDate[date].map(l => {
-        const prix  = getPrix(l.chantier, l.element);
-        const total = prix ? (l.quantite * prix) : null;
-        return `<div class="lc-card" onclick="ouvrirLC('${l.id}')">
-          <div class="lc-card-top">
-            <div>
-              ${lcBadge(l.element)}
-              <div style="font-size:13px;color:var(--tx2);margin-top:5px">📍 ${l.chantier}</div>
-              <div style="font-size:12px;color:var(--tx3);margin-top:2px">👤 ${l.auteur}</div>
-              ${l.notes?`<div style="font-size:12px;color:var(--tx3);margin-top:3px;font-style:italic">${l.notes}</div>`:''}
-            </div>
-            <div style="text-align:right">
-              <span class="lc-qty">${l.quantite.toLocaleString('fr-FR',{maximumFractionDigits:2})}</span>
-              <span class="lc-unit">${l.unite}</span>
-              ${prix ? `<div style="font-size:11px;color:var(--tx3);margin-top:4px">${prix}€/${l.unite}</div>` : ''}
-              ${total ? `<div style="font-size:13px;font-weight:700;color:var(--ok)">${total.toLocaleString('fr-FR',{style:'currency',currency:'EUR'})}</div>` : ''}
-            </div>
-          </div>
-        </div>`;
-      }).join('');
-  }).join('');
-}
-
-// ── Prix de référence ─────────────────────────────────────────────
-async function savePrixRef(chantier, element, val) {
-  const prix = val === '' ? 0 : parseFloat(val);
-  try {
-    const r = await fetch('/api/prix_reference', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({chantier, element, prix_unitaire: prix}),
-    });
-    const d = await r.json();
-    if (d.ok) {
-      // Mettre à jour local
-      const idx = PRIX_REF.findIndex(p => p.chantier===chantier && p.element===element);
-      if (idx >= 0) PRIX_REF[idx].prix_unitaire = prix;
-      else PRIX_REF.push({chantier, element, prix_unitaire: prix});
-      renderLC();
-      toast('Prix enregistré ✓');
-    }
-  } catch(e) { toast('Erreur sauvegarde prix'); }
-}
-
-// ── CRUD livraisons ───────────────────────────────────────────────
-function lcElementChange() {
-  const el    = document.getElementById('lc-element').value;
-  const unite = document.getElementById('lc-unite');
-  const info  = LC_ELEMENTS[el];
-  if (info && info.fixe) {
-    unite.value    = info.unite;
-    unite.disabled = true;
-  } else {
-    unite.disabled = false;
-  }
-}
-
-function nouvelleLivChantier() {
-  LC_EDIT_ID = null;
-  document.getElementById('mlc-tit').textContent = 'Nouvelle livraison';
-  document.getElementById('del-mlc').style.display = 'none';
-  document.getElementById('lc-date').value = new Date().toISOString().split('T')[0];
-  document.getElementById('lc-element').value = 'béton';
-  document.getElementById('lc-qty').value = '';
-  document.getElementById('lc-notes').value = '';
-  lcElementChange();
-  const chantiersPasses = [...new Set([...LC_DATA.map(l=>l.chantier),...POINTAGES.map(p=>p.chantier)].filter(Boolean))];
-  const dl = document.getElementById('lc-chantier-list');
-  if (dl) dl.innerHTML = chantiersPasses.map(c=>`<option value="${c}"/>`).join('');
-  const derniere = LC_DATA.find(l => l.auteur === USER?.nom);
-  document.getElementById('lc-chantier').value = derniere?.chantier || '';
-  om('mlc');
-}
-
-function ouvrirLC(id) {
-  const l = LC_DATA.find(x => String(x.id) === String(id));
-  if (!l) return;
-  LC_EDIT_ID = l.id;
-  document.getElementById('mlc-tit').textContent = 'Modifier la livraison';
-  document.getElementById('del-mlc').style.display = 'flex';
-  document.getElementById('lc-date').value    = l.date_liv;
-  document.getElementById('lc-chantier').value= l.chantier;
-  document.getElementById('lc-element').value = l.element;
-  document.getElementById('lc-qty').value     = l.quantite;
-  document.getElementById('lc-notes').value   = l.notes || '';
-  lcElementChange();
-  om('mlc');
-}
-
-async function savLivChantier() {
-  const date     = document.getElementById('lc-date').value;
-  const chantier = document.getElementById('lc-chantier').value.trim();
-  const qty      = parseFloat(document.getElementById('lc-qty').value);
-  if (!date || !chantier) { toast('Date et chantier obligatoires'); return; }
-  if (!qty || qty <= 0)   { toast('Quantité invalide'); return; }
-  const payload = {
-    id:       LC_EDIT_ID || null,
-    date_liv: date, chantier,
-    auteur:   USER?.nom || '',
-    element:  document.getElementById('lc-element').value,
-    quantite: qty,
-    unite:    document.getElementById('lc-unite').value,
-    notes:    document.getElementById('lc-notes').value.trim(),
-  };
-  try {
-    const r = await fetch('/api/livchantier', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify(payload),
-    });
-    const d = await r.json();
-    if (d.ok) { toast(LC_EDIT_ID?'Livraison mise à jour ✓':'Livraison enregistrée ✓'); fm('mlc'); await chargerLC(); }
-    else toast('Erreur : '+(d.erreur||'inconnue'));
-  } catch(e) { toast('Erreur réseau'); }
-}
-
-async function delLivChantier() {
-  if (!confirm('Supprimer cette livraison ?')) return;
-  try {
-    await fetch(`/api/livchantier/${LC_EDIT_ID}?role=${encodeURIComponent(USER?.role||'chef')}&auteur=${encodeURIComponent(USER?.nom||'')}`, {method:'DELETE'});
-    toast('Livraison supprimée'); fm('mlc'); await chargerLC();
-  } catch(e) { toast('Erreur'); }
-}
-
-// ── Export Excel ──────────────────────────────────────────────────
-function exportLCExcel() {
-  const data = filtrerLC();
-  if (!data.length) { toast('Aucune livraison à exporter'); return; }
-  const sep = ';';
-
-  // Recap par chantier+element
-  const agg = {};
-  data.forEach(l => {
-    const k = `${l.chantier}||${l.element}`;
-    if (!agg[k]) agg[k] = { chantier:l.chantier, element:l.element, unite:l.unite, qte:0 };
-    agg[k].qte += l.quantite;
-  });
-
-  const lignes = [
-    ['FGS Travaux Spéciaux — Livraisons chantier'],
-    [`Exporté le ${new Date().toLocaleDateString('fr-FR')} par ${USER?.nom||''}`],
-    [],
-    ['RÉCAPITULATIF PAR CHANTIER ET ÉLÉMENT'],
-    ['Chantier','Élément','Quantité totale','Unité','Prix unitaire (€)','Coût total (€)'],
-    ...Object.values(agg).map(v => {
-      const prix  = getPrix(v.chantier, v.element);
-      const total = prix ? (v.qte * prix).toFixed(2) : '';
-      return [v.chantier, v.element, v.qte, v.unite, prix||'', total];
-    }),
-    [],
-    ['DÉTAIL DES LIVRAISONS'],
-    ['Date','Chantier','Chef de chantier','Élément','Quantité','Unité','Prix unitaire (€)','Coût (€)','Notes'],
-    ...data.map(l => {
-      const prix  = getPrix(l.chantier, l.element);
-      const cout  = prix ? (l.quantite * prix).toFixed(2) : '';
-      return [
-        new Date(l.date_liv+'T12:00:00').toLocaleDateString('fr-FR'),
-        l.chantier, l.auteur, l.element,
-        l.quantite, l.unite, prix||'', cout, l.notes||'',
-      ];
-    }),
-  ];
-
-  const csv = '\uFEFF' + lignes.map(r=>r.map(v=>`"${String(v===null||v===undefined?'':v).replace(/"/g,'""')}"`).join(sep)).join('\n');
-  const a = document.createElement('a');
-  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-  a.download = `livraisons-chantier-${new Date().toISOString().split('T')[0]}.csv`;
-  a.click();
-  toast('Export Excel ✓');
-}
-
-// ── COMMANDES ─────────────────────────────────────────────────────────
-
-function calculerBesoinsPiece(pieceId) {
-  // Trouve tous les engins qui utilisent cette pièce
-  const engins = BD.machines.filter(m =>
-    (m.piecesAssociees || []).some(pa => pa.pieceId === pieceId)
-  );
-  return { besoin: engins.length, engins };
-}
-
-function calculerBesoins() {
-  // Pour chaque pièce, calcule combien il en faut (1 par engin qui l'utilise)
-  // et combien manque par rapport au stock
-  let total = 0, manquants = 0;
-  BD.pieces.forEach(p => {
-    const b = calculerBesoinsPiece(p.id);
-    if (b.besoin > 0) {
-      total++;
-      if ((p.stock || 0) < b.besoin) manquants++;
-    }
-  });
-  return { total, manquants };
-}
-
-function ouvrirCommandes() {
-  const body = document.getElementById('cmd-body');
-  const lignes = [];
-
-  BD.pieces.forEach(p => {
-    const b = calculerBesoinsPiece(p.id);
-    if (b.besoin === 0) return; // pièce non rattachée à un engin, pas de besoin calculé
-    const stock = p.stock || 0;
-    const aCommander = Math.max(b.besoin - stock, 0);
-    lignes.push({ piece: p, besoin: b.besoin, stock, aCommander, engins: b.engins });
-  });
-
-  // Trier : pièces à commander en premier (urgentes), puis les autres
-  lignes.sort((a, b) => b.aCommander - a.aCommander);
-
-  if (lignes.length === 0) {
-    body.innerHTML = `<div class="vide" style="padding:60px 24px">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
-      <h3>Aucune pièce rattachée à des engins</h3>
-      <p>Associez des pièces à vos engins via la fiche de chaque machine pour calculer les besoins.</p>
-    </div>`;
-  } else {
-    const aCommander = lignes.filter(l => l.aCommander > 0);
-    const ok = lignes.filter(l => l.aCommander === 0);
-
-    let html = '';
-    if (aCommander.length > 0) {
-      html += `<div class="ts" style="color:var(--da)">⚠ ${aCommander.length} référence${aCommander.length>1?'s':''} à commander</div>`;
-      html += aCommander.map(l => rowCommande(l)).join('');
-    }
-    if (ok.length > 0) {
-      html += `<div class="ts" style="margin-top:8px;color:var(--ok)">✓ ${ok.length} référence${ok.length>1?'s':''} en stock suffisant</div>`;
-      html += ok.map(l => rowCommande(l)).join('');
-    }
-    body.innerHTML = html;
-  }
-
-  document.getElementById('cmd-overlay').classList.add('on');
-}
-
-function rowCommande(l) {
-  const urgent = l.aCommander > 0;
-  const nomsEngins = l.engins.map(m => m.nom).join(', ');
-  return `<div class="cmd-row ${urgent ? 'urgent' : ''}">
-    <div class="cmd-row-top">
+// ── Page unifiée ──────────────────────────────────────────────────
+function pgChantier() {
+  return `
+    <div class="ent">
       <div>
-        <div class="cmd-nom">${l.piece.nom}</div>
-        <div class="cmd-ref">Réf : ${l.piece.ref}</div>
+        <h1>Chantier</h1>
+        <div style="margin-top:3px">
+          <span class="role-badge role-${USER?.role||'chef'}">${USER?.role||'chef'}</span>
+          <span style="font-size:12px;color:var(--tx3);margin-left:6px">${USER?.nom||''}</span>
+        </div>
       </div>
-      ${urgent
-        ? `<div style="text-align:right"><div class="cmd-qty">${l.aCommander}</div><div style="font-size:10px;color:var(--da);font-weight:700">À COMMANDER</div></div>`
-        : `<div style="text-align:right"><div style="font-size:18px;font-weight:700;color:var(--ok)">✓</div><div style="font-size:10px;color:var(--ok);font-weight:700">SUFFISANT</div></div>`
-      }
     </div>
-    <div class="cmd-detail">
-      <span>Besoin : <b>${l.besoin}</b></span>
-      <span>Stock : <b style="color:${l.stock >= l.besoin ? 'var(--ok)' : 'var(--da)'}">${l.stock}</b></span>
-      ${urgent ? `<span style="background:var(--da-bg);border-color:var(--da-b);color:var(--da)">Manque : <b>${l.aCommander}</b></span>` : ''}
+    <div class="subnav">
+      <div class="sni ${SOUS_ONGLET==='pointage'?'on':''}" onclick="switchSousOnglet('pointage')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:4px;vertical-align:-2px"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M9 16l2 2 4-4"/></svg>Pointage
+      </div>
+      <div class="sni ${SOUS_ONGLET==='livraison'?'on':''}" onclick="switchSousOnglet('livraison')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:4px;vertical-align:-2px"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7V8z"/></svg>Livraisons
+      </div>
     </div>
-    <div class="cmd-engins">🔧 Utilisée par : ${nomsEngins}</div>
-  </div>`;
+    <div id="chantier-content"></div>`;
 }
 
-function fermerCommandes() {
-  document.getElementById('cmd-overlay').classList.remove('on');
-}
-
-function exportCommandesPDF() {
-  const lignes = [];
-  BD.pieces.forEach(p => {
-    const b = calculerBesoinsPiece(p.id);
-    if (b.besoin === 0) return;
-    const stock = p.stock || 0;
-    const aCommander = Math.max(b.besoin - stock, 0);
-    lignes.push({ piece: p, besoin: b.besoin, stock, aCommander, engins: b.engins });
+function switchSousOnglet(s) {
+  SOUS_ONGLET = s;
+  // Update tab styles
+  document.querySelectorAll('.sni').forEach((el,i) => {
+    el.classList.toggle('on', (i===0&&s==='pointage')||(i===1&&s==='livraison'));
   });
-  lignes.sort((a, b) => b.aCommander - a.aCommander);
-
-  const dateStr = new Date().toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' });
-  const aCommander = lignes.filter(l => l.aCommander > 0);
-  const okLignes = lignes.filter(l => l.aCommander === 0);
-
-  const rowsHTML = [
-    ...aCommander.map(l => `
-      <tr style="background:#FEF2F2">
-        <td style="font-weight:700">${l.piece.nom}</td>
-        <td style="font-family:monospace">${l.piece.ref}</td>
-        <td style="text-align:center">${l.besoin}</td>
-        <td style="text-align:center;color:#dc2626;font-weight:700">${l.stock}</td>
-        <td style="text-align:center;color:#dc2626;font-weight:700;font-size:16px">${l.aCommander}</td>
-        <td style="font-size:11px;color:#555">${l.engins.map(m=>m.nom).join(', ')}</td>
-      </tr>`),
-    ...okLignes.map(l => `
-      <tr>
-        <td>${l.piece.nom}</td>
-        <td style="font-family:monospace">${l.piece.ref}</td>
-        <td style="text-align:center">${l.besoin}</td>
-        <td style="text-align:center;color:#16a34a;font-weight:700">${l.stock}</td>
-        <td style="text-align:center;color:#16a34a;font-weight:700">—</td>
-        <td style="font-size:11px;color:#555">${l.engins.map(m=>m.nom).join(', ')}</td>
-      </tr>`)
-  ].join('');
-
-  const w = window.open('', '_blank');
-  w.document.write(`<!DOCTYPE html>
-<html lang="fr"><head><meta charset="UTF-8">
-<title>Commandes de filtres — ${dateStr}</title>
-<style>
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:Arial,sans-serif;padding:28px;font-size:13px;color:#1a1a1a}
-  .cartouche{display:flex;justify-content:space-between;align-items:center;padding:18px 20px;border:2px solid #C0392B;border-radius:10px;margin-bottom:24px;background:#FEF5F4}
-  .cart-logo img{height:52px;object-fit:contain}
-  .cart-titre{text-align:center}
-  .cart-titre h1{font-size:22px;font-weight:700;color:#C0392B;letter-spacing:-.5px}
-  .cart-titre p{font-size:13px;color:#666;margin-top:4px}
-  .cart-date{text-align:right;font-size:12px;color:#555;line-height:1.8}
-  .stat-bloc{display:flex;gap:16px;margin-bottom:20px}
-  .stat{flex:1;padding:12px 16px;border-radius:8px;text-align:center}
-  .stat.rouge{background:#FEF2F2;border:1px solid #FECACA}
-  .stat.vert{background:#F0FDF4;border:1px solid #BBF7D0}
-  .stat-n{font-size:28px;font-weight:700;font-family:monospace}
-  .stat.rouge .stat-n{color:#dc2626}.stat.vert .stat-n{color:#16a34a}
-  .stat-l{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#666;margin-top:2px}
-  table{width:100%;border-collapse:collapse}
-  th{text-align:left;font-size:11px;font-weight:700;color:#666;text-transform:uppercase;padding:8px 10px;background:#f9fafb;border:1px solid #e5e7eb}
-  td{padding:9px 10px;border:1px solid #e5e7eb;vertical-align:middle}
-  .footer{margin-top:24px;padding-top:12px;border-top:1px solid #e5e7eb;font-size:10px;color:#9ca3af;display:flex;justify-content:space-between}
-  @media print{body{padding:16px}}
-</style>
-</head><body>
-
-<div class="cartouche">
-  <div class="cart-logo"><img src="${LOGO}" alt="FGS"/></div>
-  <div class="cart-titre">
-    <h1>Commandes de filtres</h1>
-    <p>Analyse automatique des besoins par engin</p>
-  </div>
-  <div class="cart-date">
-    <div><b>Date :</b> ${dateStr}</div>
-    <div><b>Pièces analysées :</b> ${lignes.length}</div>
-    <div><b>Établi par :</b> ${USER?.nom || '—'}</div>
-  </div>
-</div>
-
-<div class="stat-bloc">
-  <div class="stat rouge">
-    <div class="stat-n">${aCommander.length}</div>
-    <div class="stat-l">Références à commander</div>
-  </div>
-  <div class="stat vert">
-    <div class="stat-n">${okLignes.length}</div>
-    <div class="stat-l">Références suffisantes</div>
-  </div>
-  <div class="stat rouge">
-    <div class="stat-n">${aCommander.reduce((s,l)=>s+l.aCommander,0)}</div>
-    <div class="stat-l">Pièces total à commander</div>
-  </div>
-</div>
-
-<table>
-  <tr>
-    <th>Désignation</th>
-    <th>Référence</th>
-    <th style="text-align:center">Besoin</th>
-    <th style="text-align:center">Stock</th>
-    <th style="text-align:center">À commander</th>
-    <th>Engins concernés</th>
-  </tr>
-  ${rowsHTML}
-</table>
-
-<div class="footer">
-  <span>Généré le ${dateStr} — FGS App, usage interne</span>
-  <span>FGS Travaux Spéciaux</span>
-</div>
-
-</body></html>`);
-  w.document.close();
-  w.focus();
-  setTimeout(() => w.print(), 400);
+  renderSousOnglet();
 }
 
+async function initChantier() {
+  await Promise.all([chargerPointages(), chargerLC()]);
+  renderSousOnglet();
+}
+
+function renderSousOnglet() {
+  const el = document.getElementById('chantier-content');
+  if (!el) return;
+  if (SOUS_ONGLET === 'pointage') {
+    el.innerHTML = renderPointageContent();
+  } else {
+    el.innerHTML = renderLCContent();
+  }
+}
+
+function chantierFab() {
+  if (SOUS_ONGLET === 'pointage') nouveauPointage();
+  else nouvelleLivChantier();
+}
 
 // ══════════════════════════════════════════════════════════════════
 // POINTAGE
@@ -1593,102 +1253,115 @@ let POINTAGES = [];
 let PT_EDIT_ID = null;
 let PT_LIGNES = [];
 
-// ── Page pointage ─────────────────────────────────────────────────
-function pgPointage() {
-  const isRH    = USER?.role === 'rh';
-  const isAdmin = USER?.role === 'admin';
-  const canAll  = isRH || isAdmin;
-  const roleLbl = isAdmin ? 'admin' : isRH ? 'rh' : 'chef';
-  const roleCls = `role-${roleLbl}`;
+function renderPointageContent() {
+  const isAdmin = USER?.role === 'admin' || USER?.role === 'rh';
+  const filtreH = isAdmin ? `
+    <div class="filtre-bar" style="margin:12px 16px 0">
+      <input type="date" id="pt-f-debut" style="flex:1;min-width:120px" onchange="renderPointageListe()"/>
+      <span style="color:var(--tx3);font-size:13px;align-self:center">→</span>
+      <input type="date" id="pt-f-fin" style="flex:1;min-width:120px" onchange="renderPointageListe()"/>
+    </div>` : '';
+  const exports = isAdmin ? `
+    <div style="display:flex;gap:8px;padding:10px 16px 0">
+      <button class="btn bs np" style="flex:1;padding:9px;font-size:12px" onclick="exportExcelSemaine()">📅 Excel semaine</button>
+      <button class="btn bs np" style="flex:1;padding:9px;font-size:12px" onclick="exportExcelJour()">📄 Excel jour</button>
+    </div>` : '';
+  return `${filtreH}${exports}
+    <div id="pt-liste" style="padding:12px 16px;display:flex;flex-direction:column;gap:10px">
+      <div class="spin-c"><div class="spin"></div>Chargement...</div>
+    </div>
+    <div style="height:80px"></div>`;
+}
+
+
+function renderChantierPointage() {
+  const el = document.getElementById('chantier-content');
+  if (!el) return;
+  const isAdmin = USER?.role === 'admin' || USER?.role === 'rh';
+  const canAll  = isAdmin;
+  const roleLbl = isAdmin ? 'admin' : USER?.role === 'rh' ? 'rh' : 'chef';
 
   const filtreH = canAll ? `
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
       <input type="date" id="pt-f-debut" style="flex:1;min-width:120px" onchange="chargerPointages()"/>
       <span style="color:var(--tx3);font-size:13px">→</span>
       <input type="date" id="pt-f-fin" style="flex:1;min-width:120px" onchange="chargerPointages()"/>
     </div>` : '';
 
-  return `<div class="ent">
-    <div style="flex:1"><h1>Pointage</h1><div style="margin-top:3px"><span class="role-badge ${roleCls}">${roleLbl}</span> <span style="font-size:12px;color:var(--tx3)">${USER?.nom}</span></div></div>
-    <div class="ent-act">
-      ${canAll ? `<div class="ico-btn np" onclick="exportExcelSemaine()" title="Export Excel semaine"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg></div>` : ''}
-      ${canAll ? `<div class="ico-btn np" onclick="exportExcelJour()" title="Export Excel jour"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>` : ''}
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+      <span class="role-badge role-${roleLbl}">${roleLbl}</span>
+      <span style="font-size:12px;color:var(--tx3)">${USER?.nom}</span>
     </div>
-  </div>
-  <div class="pg on">
     ${filtreH}
-    <div id="pt-liste"><div class="spin-c"><div class="spin"></div>Chargement...</div></div>
-  </div>`;
+    <div id="pt-liste"><div class="spin-c"><div class="spin"></div>Chargement...</div></div>`;
+  chargerPointages();
 }
-
 async function chargerPointages() {
-  const debut = document.getElementById('pt-f-debut')?.value || '';
-  const fin   = document.getElementById('pt-f-fin')?.value   || '';
-  const role  = USER?.role || 'chef';
-  const auteur= USER?.nom  || '';
-  let url = `/api/pointages?role=${encodeURIComponent(role)}&auteur=${encodeURIComponent(auteur)}`;
-  if (debut && fin) url += `&debut=${debut}&fin=${fin}`;
+  const role   = USER?.role || 'chef';
+  const auteur = USER?.nom  || '';
   try {
-    const r = await fetch(url);
+    const r = await fetch(`/api/pointages?role=${encodeURIComponent(role)}&auteur=${encodeURIComponent(auteur)}`);
     POINTAGES = await r.json();
-    renderListePointages();
-  } catch(e) {
-    document.getElementById('pt-liste').innerHTML = `<div class="vide"><h3>Erreur de chargement</h3><p>${e.message}</p></div>`;
-  }
+    if (POINTAGES.erreur) throw new Error(POINTAGES.erreur);
+    renderPointageListe();
+  } catch(e) { console.error('Pointages:', e); }
 }
 
-function renderListePointages() {
+function renderPointageListe() {
   const el = document.getElementById('pt-liste');
   if (!el) return;
-  if (!POINTAGES.length) {
+  const debut = document.getElementById('pt-f-debut')?.value || '';
+  const fin   = document.getElementById('pt-f-fin')?.value   || '';
+  let data = POINTAGES;
+  if (debut && fin) data = data.filter(p => p.date_jour >= debut && p.date_jour <= fin);
+
+  if (!data.length) {
     el.innerHTML = `<div class="vide">
       <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-      <h3>Aucun pointage</h3>
-      <p>Appuyez sur + pour saisir le pointage du jour.</p>
+      <h3>Aucun pointage</h3><p>Appuyez sur + pour saisir le pointage du jour.</p>
     </div>`;
     return;
   }
-  el.innerHTML = POINTAGES.map(p => {
-    const nbEmp = (p.lignes||[]).length;
-    const totalH = (p.lignes||[]).reduce((s,l) => s+(parseFloat(l.heures)||0), 0);
+  el.innerHTML = data.map(p => {
+    const nbEmp  = (p.lignes||[]).length;
+    const totalH = (p.lignes||[]).reduce((s,l)=>s+(parseFloat(l.heures)||0),0);
     const nbGD   = (p.lignes||[]).filter(l=>l.gd).length;
     const nbPan  = (p.lignes||[]).filter(l=>l.panier).length;
-    const dt = new Date(p.date_jour+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+    const dt = new Date(p.date_jour+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'2-digit',month:'short'});
     return `<div class="hist-ptg" onclick="ouvrirPointage('${p.id}')">
       <div class="hist-ptg-top">
         <div>
           <div class="hist-ptg-dt">${dt}</div>
           <div class="hist-ptg-ch">📍 ${p.chantier}</div>
+          <div class="hist-ptg-info">par <b>${p.auteur}</b>
+            ${nbGD?` · <span style="color:var(--in);font-weight:600">${nbGD} GD</span>`:''}
+            ${nbPan?` · <span style="color:var(--wa);font-weight:600">${nbPan} 🍽️</span>`:''}
+          </div>
         </div>
         <div style="text-align:right">
-          <div style="font-size:18px;font-weight:700;font-family:var(--mo)">${totalH}h</div>
-          <div style="font-size:10px;color:var(--tx3)">${nbEmp} employé${nbEmp>1?'s':''}</div>
+          <div style="font-size:24px;font-weight:700;font-family:var(--mo);color:var(--acc);line-height:1">${totalH}h</div>
+          <div style="font-size:11px;color:var(--tx3);margin-top:2px">${nbEmp} pers.</div>
         </div>
       </div>
-      <div class="hist-ptg-info">
-        Saisi par <b>${p.auteur}</b>
-        ${nbGD?` · <span style="color:var(--in);font-weight:600">${nbGD} GD</span>`:''}
-        ${nbPan?` · <span style="color:var(--wa);font-weight:600">${nbPan} panier${nbPan>1?'s':''}</span>`:''}
-      </div>
-      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
-        <button class="btn bb np" style="width:auto;padding:6px 12px;font-size:12px" onclick="event.stopPropagation();printPointagePDF('${p.id}')">PDF</button>
-        <button class="btn bs np" style="width:auto;padding:6px 12px;font-size:12px" onclick="event.stopPropagation();exportPointageExcelJour('${p.id}')">Excel</button>
+      <div style="display:flex;gap:6px;margin-top:10px">
+        <button class="btn bb np" style="flex:1;padding:7px;font-size:12px" onclick="event.stopPropagation();printPointagePDF('${p.id}')">🖨️ PDF</button>
+        <button class="btn bs np" style="flex:1;padding:7px;font-size:12px" onclick="event.stopPropagation();exportPointageExcelJour('${p.id}')">📊 Excel</button>
       </div>
     </div>`;
   }).join('');
 }
 
-// ── Ouvrir / éditer pointage ──────────────────────────────────────
 function ouvrirPointage(id) {
   const p = POINTAGES.find(x => String(x.id) === String(id));
   if (!p) return;
   PT_EDIT_ID = p.id;
-  PT_LIGNES = JSON.parse(JSON.stringify(p.lignes || []));
+  PT_LIGNES = JSON.parse(JSON.stringify(p.lignes||[]));
   document.getElementById('mpt-tit').textContent = 'Modifier le pointage';
   document.getElementById('del-mpt').style.display = 'flex';
   document.getElementById('pt-date').value = p.date_jour;
   fillPtChantier(p.chantier);
-  document.getElementById('pt-notes').value = p.notes || '';
+  document.getElementById('pt-notes').value = p.notes||'';
   renderLignes();
   om('mpt');
 }
@@ -1700,19 +1373,10 @@ function nouveauPointage() {
   document.getElementById('pt-date').value = new Date().toISOString().split('T')[0];
   document.getElementById('pt-notes').value = '';
   document.getElementById('pt-new-emp').value = '';
-
-  // Préremplir avec les employés du dernier pointage de cet auteur
   const dernierPtg = POINTAGES.find(p => p.auteur === USER?.nom);
-  if (dernierPtg && dernierPtg.lignes && dernierPtg.lignes.length) {
-    // Copie des employés avec heures remises à 8, GD/panier remis à false
-    PT_LIGNES = dernierPtg.lignes.map(l => ({
-      nom: l.nom,
-      heures: 8,
-      gd: false,
-      panier: false,
-      notes: ''
-    }));
-    fillPtChantier(dernierPtg.chantier); // pré-remplir aussi le chantier
+  if (dernierPtg?.lignes?.length) {
+    PT_LIGNES = dernierPtg.lignes.map(l=>({nom:l.nom,heures:8,gd:false,panier:false,notes:''}));
+    fillPtChantier(dernierPtg.chantier);
   } else {
     PT_LIGNES = [];
     fillPtChantier();
@@ -1722,27 +1386,23 @@ function nouveauPointage() {
 }
 
 function fillPtChantier(sel) {
-  // Autocomplete : chantiers déjà utilisés dans les pointages passés
-  const chantiersPasses = [...new Set(POINTAGES.map(p => p.chantier).filter(Boolean))];
+  const chantiersPasses = [...new Set([...POINTAGES.map(p=>p.chantier),...LC_DATA.map(l=>l.chantier)].filter(Boolean))];
   const dl = document.getElementById('pt-chantier-list');
-  if (dl) dl.innerHTML = chantiersPasses.map(c => `<option value="${c}"/>`).join('');
+  if (dl) dl.innerHTML = chantiersPasses.map(c=>`<option value="${c}"/>`).join('');
   const inp = document.getElementById('pt-chantier');
-  if (inp) inp.value = sel || '';
+  if (inp) inp.value = sel||'';
 }
 
-// ── Lignes employés ───────────────────────────────────────────────
 function renderLignes() {
   const el = document.getElementById('pt-lignes');
+  if (!el) return;
   if (!PT_LIGNES.length) {
-    el.innerHTML = '<div style="color:var(--tx3);font-size:13px;padding:8px 0">Aucun employé — ajoutez-en ci-dessous</div>';
+    el.innerHTML = '<div style="color:var(--tx3);font-size:13px;padding:10px 0;text-align:center">Aucun employé — ajoutez-en ci-dessous</div>';
     return;
   }
-  el.innerHTML = PT_LIGNES.map((l, i) => `
+  el.innerHTML = PT_LIGNES.map((l,i) => `
     <div class="pt-row">
-      <div class="pt-nom">
-        <div style="font-size:14px;font-weight:600">${l.nom}</div>
-        ${l.notes?`<div style="font-size:11px;color:var(--tx3)">${l.notes}</div>`:''}
-      </div>
+      <div class="pt-nom" style="font-size:14px;font-weight:600">${l.nom}</div>
       <input class="pt-h" type="number" min="0" max="24" step="0.5" value="${l.heures||0}"
         style="text-align:center;font-weight:700;font-size:15px"
         onchange="PT_LIGNES[${i}].heures=parseFloat(this.value)||0"/>
@@ -1762,309 +1422,637 @@ function ajouterEmp() {
   const inp = document.getElementById('pt-new-emp');
   const nom = inp.value.trim();
   if (!nom) return;
-  PT_LIGNES.push({ nom, heures: 8, gd: false, panier: false, notes: '' });
+  PT_LIGNES.push({nom,heures:8,gd:false,panier:false,notes:''});
   inp.value = '';
   renderLignes();
   inp.focus();
 }
 
-// ── Sauvegarde ────────────────────────────────────────────────────
 async function savPointage() {
   const date = document.getElementById('pt-date').value;
   if (!date) { toast('La date est obligatoire'); return; }
   if (!PT_LIGNES.length) { toast('Ajoutez au moins un employé'); return; }
   const chantier = document.getElementById('pt-chantier').value;
-  const notes    = document.getElementById('pt-notes').value.trim();
-  const payload  = {
-    id: PT_EDIT_ID || null,
-    date_jour: date,
-    chantier,
-    auteur: USER?.nom || '',
-    role_auteur: USER?.role || 'chef',
-    lignes: PT_LIGNES.map(l => ({ ...l, notes: l.notes || '' })),
-    notes,
+  const payload = {
+    id: PT_EDIT_ID||null, date_jour:date, chantier,
+    auteur:USER?.nom||'', role_auteur:USER?.role||'chef',
+    lignes:PT_LIGNES, notes:document.getElementById('pt-notes').value.trim(),
   };
   try {
-    const r = await fetch('/api/pointages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
+    const r = await fetch('/api/pointages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
     const d = await r.json();
-    if (d.ok) {
-      toast(PT_EDIT_ID ? 'Pointage mis à jour ✓' : 'Pointage enregistré ✓');
-      fm('mpt');
-      await chargerPointages();
-    } else {
-      toast('Erreur : ' + (d.erreur || 'inconnue'));
-    }
-  } catch(e) { toast('Erreur réseau : ' + e.message); }
+    if (d.ok) { toast(PT_EDIT_ID?'Pointage mis à jour ✓':'Pointage enregistré ✓'); fm('mpt'); await chargerPointages(); renderSousOnglet(); }
+    else toast('Erreur : '+(d.erreur||'inconnue'));
+  } catch(e) { toast('Erreur réseau'); }
 }
 
 async function delPointage() {
   if (!confirm('Supprimer ce pointage ?')) return;
   try {
-    const role  = USER?.role || 'chef';
-    const auteur= USER?.nom  || '';
-    await fetch(`/api/pointages/${PT_EDIT_ID}?role=${encodeURIComponent(role)}&auteur=${encodeURIComponent(auteur)}`, { method: 'DELETE' });
-    toast('Pointage supprimé');
-    fm('mpt');
-    await chargerPointages();
-  } catch(e) { toast('Erreur : ' + e.message); }
+    await fetch(`/api/pointages/${PT_EDIT_ID}?role=${encodeURIComponent(USER?.role||'chef')}&auteur=${encodeURIComponent(USER?.nom||'')}`,{method:'DELETE'});
+    toast('Pointage supprimé'); fm('mpt'); await chargerPointages(); renderSousOnglet();
+  } catch(e) { toast('Erreur'); }
 }
 
-// ── PDF ───────────────────────────────────────────────────────────
+// ── PDF pointage ──────────────────────────────────────────────────
 function printPointagePDF(id) {
-  const p = POINTAGES.find(x => String(x.id) === String(id));
+  const p = POINTAGES.find(x=>String(x.id)===String(id));
   if (!p) return;
   const dt = new Date(p.date_jour+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
   const totalH = (p.lignes||[]).reduce((s,l)=>s+(parseFloat(l.heures)||0),0);
-  const rowsH = (p.lignes||[]).map(l=>`
-    <tr>
-      <td style="font-weight:600">${l.nom}</td>
-      <td style="text-align:center;font-weight:700;font-size:15px">${l.heures||0}h</td>
-      <td style="text-align:center">${l.gd?'<span style="color:#7C3AED;font-weight:700">✓ Oui</span>':'<span style="color:#ccc">Non</span>'}</td>
-      <td style="text-align:center">${l.panier?'<span style="color:#D97706;font-weight:700">✓ Oui</span>':'<span style="color:#ccc">Non</span>'}</td>
-      <td style="color:#555">${l.notes||'—'}</td>
-    </tr>`).join('');
+  const rows = (p.lignes||[]).map(l=>`<tr>
+    <td style="font-weight:600">${l.nom}</td>
+    <td style="text-align:center;font-weight:700;font-size:15px">${l.heures||0}h</td>
+    <td style="text-align:center">${l.gd?'<span style="color:#7C3AED;font-weight:700">✓ Oui</span>':'<span style="color:#ccc">Non</span>'}</td>
+    <td style="text-align:center">${l.panier?'<span style="color:#D97706;font-weight:700">✓ Oui</span>':'<span style="color:#ccc">Non</span>'}</td>
+  </tr>`).join('');
   const w = window.open('','_blank');
-  w.document.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
-<title>Pointage — ${p.chantier} — ${p.date_jour}</title>
-<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;padding:24px;font-size:13px}
-.cartouche{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border:2px solid #C0392B;border-radius:10px;margin-bottom:20px;background:#FEF5F4}
-.cart-logo img{height:48px;object-fit:contain}
-.cart-centre h1{font-size:20px;font-weight:700;color:#C0392B;text-align:center}
-.cart-centre p{font-size:13px;color:#666;text-align:center;margin-top:3px}
-.cart-right{text-align:right;font-size:12px;color:#555;line-height:1.8}
-table{width:100%;border-collapse:collapse;margin-top:16px}
-th{background:#f9fafb;padding:9px 10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#666;border:1px solid #e5e7eb;text-align:left}
-td{padding:10px;border:1px solid #e5e7eb;vertical-align:middle}
-tr:nth-child(even){background:#fafafa}
-.totaux{margin-top:16px;display:flex;gap:16px}
-.tot{flex:1;padding:12px;border-radius:8px;text-align:center}
-.tot.rouge{background:#FEF2F2;border:1px solid #FECACA}
-.tot.violet{background:#F5F3FF;border:1px solid #DDD6FE}
-.tot.orange{background:#FFFBEB;border:1px solid #FDE68A}
-.tot-n{font-size:24px;font-weight:700}
-.tot.rouge .tot-n{color:#C0392B}.tot.violet .tot-n{color:#7C3AED}.tot.orange .tot-n{color:#D97706}
-.tot-l{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#666;margin-top:3px}
-.sign{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:24px}
-.sbox{border:1px solid #d1d5db;border-radius:6px;padding:14px;height:80px}
-.slbl{font-size:11px;font-weight:700;color:#666;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
-.footer{margin-top:20px;font-size:10px;color:#9ca3af;border-top:1px solid #e5e7eb;padding-top:10px;display:flex;justify-content:space-between}
-@media print{body{padding:16px}}</style>
-</head><body>
-<div class="cartouche">
-  <div class="cart-logo"><img src="${LOGO}" alt="FGS"/></div>
-  <div class="cart-centre"><h1>Feuille de pointage</h1><p>${p.chantier} — ${dt}</p></div>
-  <div class="cart-right"><div><b>Saisi par :</b> ${p.auteur}</div><div><b>Imprimé le :</b> ${new Date().toLocaleDateString('fr-FR')}</div></div>
+  w.document.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Pointage ${p.chantier}</title>
+<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;padding:20px;font-size:13px}
+.cart{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border:2px solid #C0392B;border-radius:10px;margin-bottom:18px;background:#FEF5F4}
+.cart img{height:44px;object-fit:contain}
+.cart h1{font-size:18px;font-weight:700;color:#C0392B;text-align:center}
+.cart p{font-size:12px;color:#666;text-align:center;margin-top:2px}
+.cart-r{text-align:right;font-size:11px;color:#555;line-height:1.8}
+table{width:100%;border-collapse:collapse;margin-top:14px}
+th{background:#f3f4f6;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;color:#666;border:1px solid #e5e7eb}
+td{padding:9px 10px;border:1px solid #e5e7eb}tr:nth-child(even){background:#fafafa}
+.tot{margin-top:12px;display:flex;gap:12px}
+.tot-box{flex:1;padding:10px;border-radius:8px;text-align:center;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+.tot-box .n{font-size:20px;font-weight:700;display:block;margin-bottom:3px}
+.sign{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:20px}
+.sbox{border:1px solid #d1d5db;border-radius:6px;padding:12px;height:70px}
+.slbl{font-size:10px;font-weight:700;color:#666;margin-bottom:6px;text-transform:uppercase}
+</style></head><body>
+<div class="cart">
+  <img src="${LOGO}" alt="FGS"/>
+  <div><h1>Feuille de pointage</h1><p>${p.chantier} — ${dt}</p></div>
+  <div class="cart-r"><div><b>Saisi par :</b> ${p.auteur}</div><div><b>Le :</b> ${new Date().toLocaleDateString('fr-FR')}</div></div>
 </div>
 <table>
-  <tr><th>Employé</th><th style="text-align:center;width:80px">Heures</th><th style="text-align:center;width:110px">Grand dépl.</th><th style="text-align:center;width:110px">Panier repas</th><th>Observations</th></tr>
-  ${rowsH}
-  <tr style="background:#F9FAFB;font-weight:700"><td>TOTAL</td><td style="text-align:center;font-size:16px;color:#C0392B">${totalH}h</td><td style="text-align:center">${(p.lignes||[]).filter(l=>l.gd).length}</td><td style="text-align:center">${(p.lignes||[]).filter(l=>l.panier).length}</td><td></td></tr>
+  <tr><th>Employé</th><th style="width:80px;text-align:center">Heures</th><th style="width:100px;text-align:center">Grand dépl.</th><th style="width:100px;text-align:center">Panier</th></tr>
+  ${rows}
+  <tr style="background:#f9fafb;font-weight:700"><td>TOTAL</td><td style="text-align:center;font-size:15px;color:#C0392B">${totalH}h</td><td style="text-align:center">${(p.lignes||[]).filter(l=>l.gd).length}</td><td style="text-align:center">${(p.lignes||[]).filter(l=>l.panier).length}</td></tr>
 </table>
-<div class="totaux">
-  <div class="tot rouge"><div class="tot-n">${totalH}h</div><div class="tot-l">Total heures</div></div>
-  <div class="tot violet"><div class="tot-n">${(p.lignes||[]).filter(l=>l.gd).length}</div><div class="tot-l">Grands déplacements</div></div>
-  <div class="tot orange"><div class="tot-n">${(p.lignes||[]).filter(l=>l.panier).length}</div><div class="tot-l">Paniers repas</div></div>
+<div class="tot">
+  <div class="tot-box" style="background:#FEF2F2"><span class="n" style="color:#C0392B">${totalH}h</span>Total heures</div>
+  <div class="tot-box" style="background:#F5F3FF"><span class="n" style="color:#7C3AED">${(p.lignes||[]).filter(l=>l.gd).length}</span>Grands dépl.</div>
+  <div class="tot-box" style="background:#FFFBEB"><span class="n" style="color:#D97706">${(p.lignes||[]).filter(l=>l.panier).length}</span>Paniers repas</div>
 </div>
-${p.notes?`<div style="margin-top:16px;padding:12px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;font-size:13px"><b>Notes :</b> ${p.notes}</div>`:''}
+${p.notes?`<div style="margin-top:14px;padding:10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;font-size:12px"><b>Notes :</b> ${p.notes}</div>`:''}
 <div class="sign">
   <div><div class="slbl">Signature chef de chantier</div><div class="sbox"></div></div>
   <div><div class="slbl">Signature RH</div><div class="sbox"></div></div>
 </div>
-<div class="footer"><span>FGS App — Pointage interne</span><span>FGS Travaux Spéciaux</span></div>
-</body></html>`);
-  w.document.close(); w.focus(); setTimeout(()=>w.print(), 400);
+<\/body><\/html>`);
+  w.document.close(); w.focus(); setTimeout(()=>w.print(),400);
 }
 
-// ── EXCEL jour (un seul pointage) ────────────────────────────────
 function exportPointageExcelJour(id) {
-  const p = POINTAGES.find(x => String(x.id) === String(id));
+  const p = POINTAGES.find(x=>String(x.id)===String(id));
   if (!p) return;
-  genererExcelJour([p], `pointage-${p.date_jour}-${p.chantier}`);
+  genererExcelJour([p],`pointage-${p.date_jour}-${p.chantier}`);
 }
 
 function exportExcelJour() {
-  // Tous les pointages filtrés
-  if (!POINTAGES.length) { toast('Aucun pointage à exporter'); return; }
-  genererExcelJour(POINTAGES, 'pointages-jour');
+  if (!POINTAGES.length) { toast('Aucun pointage'); return; }
+  genererExcelJour(POINTAGES,'pointages-jour');
 }
 
-function genererExcelJour(pts, nomFichier) {
-  // Génère un CSV Excel-compatible (UTF-8 BOM)
-  const sep = ';';
-  const lignes = [
+function genererExcelJour(pts,nomFichier) {
+  const sep=';';
+  const lignes=[
     ['FGS Travaux Spéciaux — Pointage journalier'],
-    [`Exporté le ${new Date().toLocaleDateString('fr-FR')}`],
-    [],
+    [`Exporté le ${new Date().toLocaleDateString('fr-FR')}`],[],
     ['Date','Chantier','Saisi par','Employé','Heures','Grand déplacement','Panier repas'],
   ];
-  pts.forEach(p => {
-    const dt = new Date(p.date_jour+'T12:00:00').toLocaleDateString('fr-FR');
-    (p.lignes||[]).forEach(l => {
-      lignes.push([dt, p.chantier, p.auteur, l.nom, l.heures||0, l.gd?'Oui':'Non', l.panier?'Oui':'Non']);
-    });
-    // Ligne total
-    const totalH = (p.lignes||[]).reduce((s,l)=>s+(parseFloat(l.heures)||0),0);
-    lignes.push([dt, p.chantier, '', 'TOTAL', totalH, (p.lignes||[]).filter(l=>l.gd).length+' GD', (p.lignes||[]).filter(l=>l.panier).length+' paniers']);
+  pts.forEach(p=>{
+    const dt=new Date(p.date_jour+'T12:00:00').toLocaleDateString('fr-FR');
+    (p.lignes||[]).forEach(l=>lignes.push([dt,p.chantier,p.auteur,l.nom,l.heures||0,l.gd?'Oui':'Non',l.panier?'Oui':'Non']));
+    const tH=(p.lignes||[]).reduce((s,l)=>s+(parseFloat(l.heures)||0),0);
+    lignes.push([dt,p.chantier,'','TOTAL',tH,(p.lignes||[]).filter(l=>l.gd).length+' GD',(p.lignes||[]).filter(l=>l.panier).length+' paniers']);
     lignes.push([]);
   });
-  const csv = '\uFEFF' + lignes.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(sep)).join('\n');
-  const a = document.createElement('a');
-  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-  a.download = nomFichier + '.csv';
-  a.click();
+  const csv='\uFEFF'+lignes.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(sep)).join('\n');
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download=nomFichier+'.csv';a.click();
   toast('Export Excel ✓');
 }
 
 function exportExcelSemaine() {
-  if (!POINTAGES.length) { toast('Aucun pointage à exporter'); return; }
-  
-  // Regrouper par semaine (lundi → dimanche)
-  const semaines = {};
-  POINTAGES.forEach(p => {
-    const d = new Date(p.date_jour+'T12:00:00');
-    const lundi = new Date(d);
-    lundi.setDate(d.getDate() - ((d.getDay()+6)%7));
-    const cleSem = lundi.toISOString().split('T')[0];
-    if (!semaines[cleSem]) semaines[cleSem] = [];
-    semaines[cleSem].push(p);
+  if (!POINTAGES.length) { toast('Aucun pointage'); return; }
+  const semaines={};
+  POINTAGES.forEach(p=>{
+    const d=new Date(p.date_jour+'T12:00:00');
+    const lundi=new Date(d);lundi.setDate(d.getDate()-((d.getDay()+6)%7));
+    const k=lundi.toISOString().split('T')[0];
+    if(!semaines[k])semaines[k]=[];semaines[k].push(p);
   });
-
-  const sep = ';';
-  const lignes = [
-    ['FGS Travaux Spéciaux — Pointage hebdomadaire'],
-    [`Exporté le ${new Date().toLocaleDateString('fr-FR')}`],
-    [],
-  ];
-
-  Object.keys(semaines).sort().reverse().forEach(cleSem => {
-    const pts = semaines[cleSem];
-    const finSem = new Date(cleSem);
-    finSem.setDate(finSem.getDate()+6);
-    const lblSem = `Semaine du ${new Date(cleSem).toLocaleDateString('fr-FR')} au ${finSem.toLocaleDateString('fr-FR')}`;
-    lignes.push([lblSem]);
-    lignes.push(['Employé','Chantier','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche','Total heures','Jours GD','Paniers repas']);
-    
-    // Agréger par employé
-    const employes = {};
-    pts.forEach(p => {
-      const jourIdx = (new Date(p.date_jour+'T12:00:00').getDay()+6)%7; // 0=lundi
-      (p.lignes||[]).forEach(l => {
-        const k = l.nom + '||' + p.chantier;
-        if (!employes[k]) employes[k] = { nom:l.nom, chantier:p.chantier, jours:Array(7).fill(''), gd:0, panier:0, totalH:0 };
-        employes[k].jours[jourIdx] = l.heures || 0;
-        employes[k].totalH += parseFloat(l.heures)||0;
-        if (l.gd) employes[k].gd++;
-        if (l.panier) employes[k].panier++;
+  const sep=';';
+  const lignes=[['FGS Travaux Spéciaux — Pointage hebdomadaire'],[`Exporté le ${new Date().toLocaleDateString('fr-FR')}`],[]];
+  Object.keys(semaines).sort().reverse().forEach(k=>{
+    const pts=semaines[k];
+    const fin=new Date(k);fin.setDate(fin.getDate()+6);
+    lignes.push([`Semaine du ${new Date(k).toLocaleDateString('fr-FR')} au ${fin.toLocaleDateString('fr-FR')}`]);
+    lignes.push(['Employé','Chantier','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche','Total h','Jours GD','Paniers']);
+    const emp={};
+    pts.forEach(p=>{
+      const j=(new Date(p.date_jour+'T12:00:00').getDay()+6)%7;
+      (p.lignes||[]).forEach(l=>{
+        const key=l.nom+'||'+p.chantier;
+        if(!emp[key])emp[key]={nom:l.nom,chantier:p.chantier,jours:Array(7).fill(''),gd:0,panier:0,total:0};
+        emp[key].jours[j]=l.heures||0;emp[key].total+=parseFloat(l.heures)||0;
+        if(l.gd)emp[key].gd++;if(l.panier)emp[key].panier++;
       });
     });
-    
-    Object.values(employes).forEach(e => {
-      lignes.push([e.nom, e.chantier, ...e.jours, e.totalH, e.gd, e.panier]);
-    });
-    
-    // Totaux semaine
-    const totH = Object.values(employes).reduce((s,e)=>s+e.totalH,0);
-    const totGD = Object.values(employes).reduce((s,e)=>s+e.gd,0);
-    const totPan = Object.values(employes).reduce((s,e)=>s+e.panier,0);
-    lignes.push(['TOTAL SEMAINE','','','','','','','','',totH,totGD,totPan]);
+    Object.values(emp).forEach(e=>lignes.push([e.nom,e.chantier,...e.jours,e.total,e.gd,e.panier]));
+    const tH=Object.values(emp).reduce((s,e)=>s+e.total,0);
+    const tG=Object.values(emp).reduce((s,e)=>s+e.gd,0);
+    const tP=Object.values(emp).reduce((s,e)=>s+e.panier,0);
+    lignes.push(['TOTAL SEMAINE','','','','','','','','',tH,tG,tP]);
     lignes.push([]);
   });
-
-  const csv = '\uFEFF' + lignes.map(r=>r.map(v=>`"${String(v===''?'':v).replace(/"/g,'""')}"`).join(sep)).join('\n');
-  const a = document.createElement('a');
-  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-  a.download = 'pointages-semaine.csv';
-  a.click();
-  toast('Export Excel semaine ✓');
+  const csv='\uFEFF'+lignes.map(r=>r.map(v=>`"${String(v===''?'':v).replace(/"/g,'""')}"`).join(sep)).join('\n');
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='pointages-semaine.csv';a.click();
+  toast('Export semaine ✓');
 }
 
-// ── Utilitaires ───────────────────────────────────────────────────────
-function om(id){document.getElementById(id).classList.add('on');}
-function fm(id){document.getElementById(id).classList.remove('on');}
-document.querySelectorAll('.fmod').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('on');}));
-function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2800);}
-window.addEventListener('load',()=>document.getElementById('lid').focus());
+// ══════════════════════════════════════════════════════════════════
+// MODULE CHANTIER (Pointage + Livraisons)
+// ══════════════════════════════════════════════════════════════════
+
+let CHANTIER_TAB = 'pointage'; // 'pointage' | 'livraisons'
+
+function pgChantier() {
+  const isAdmin = USER?.role === 'admin' || USER?.role === 'rh';
+  return `
+  <div class="ent">
+    <div><h1>Chantier</h1></div>
+    <div class="ent-act" id="chantier-act"></div>
+  </div>
+  <div class="pg on">
+    <div class="sub-nav">
+      <div class="sub-ni ${CHANTIER_TAB==='pointage'?'on':''}" onclick="switchChantierTab('pointage')">📋 Pointage</div>
+      <div class="sub-ni ${CHANTIER_TAB==='livraisons'?'on':''}" onclick="switchChantierTab('livraisons')">🚚 Livraisons</div>
+    </div>
+    <div id="chantier-content"></div>
+    <div style="height:80px"></div>
+  </div>`;
+}
+
+function switchChantierTab(tab) {
+  CHANTIER_TAB = tab;
+  // Update sub-nav styling
+  document.querySelectorAll('.sub-ni').forEach((el,i) => {
+    el.classList.toggle('on', (i===0 && tab==='pointage') || (i===1 && tab==='livraisons'));
+  });
+  renderChantierContent();
+  // Update FAB behavior
+}
+
+async function initChantierTab() {
+  // Load both datasets in parallel
+  await Promise.all([chargerPointages(), chargerLC()]);
+  renderChantierContent();
+}
+
+function renderChantierContent() {
+  const el = document.getElementById('chantier-content');
+  if (!el) return;
+  if (CHANTIER_TAB === 'pointage') {
+    renderChantierPointage();
+  } else {
+    renderChantierLivraisons();
+  }
+  // Update action buttons in header
+  updateChantierActions();
+}
+
+function updateChantierActions() {
+  const el = document.getElementById('chantier-act');
+  if (!el) return;
+  const isAdmin = USER?.role === 'admin' || USER?.role === 'rh';
+  if (CHANTIER_TAB === 'livraisons' && isAdmin) {
+    el.innerHTML = `
+      <div class="ico-btn" onclick="exportLCExcel()" title="Export Excel">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>
+      </div>`;
+  } else {
+    el.innerHTML = '';
+  }
+}
+
+function chantierFab() {
+  if (CHANTIER_TAB === 'pointage') nouveauPointage();
+  else nouvelleLivChantier();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// LIVRAISONS CHANTIER
+// ══════════════════════════════════════════════════════════════════
+
+let LC_DATA   = [];
+let PRIX_REF  = [];
+let LC_EDIT_ID= null;
+let LC_CHANTIER_SEL = null; // chantier sélectionné (admin)
+let LC_SEM_SEL = null;      // semaine sélectionnée (null = tout)
+
+const LC_ELEMENTS = {
+  'béton':     { unite:'m3', badge:'lc-beton',    emoji:'🏗️', fixe:true  },
+  'treillis':  { unite:'m2', badge:'lc-treillis', emoji:'🔩', fixe:true  },
+  'enkadrain': { unite:'m2', badge:'lc-enkadrain',emoji:'🌊', fixe:true  },
+  'autre':     { unite:'',   badge:'lc-autre',    emoji:'📦', fixe:false },
+};
+
+function lcBadge(el) {
+  const info = LC_ELEMENTS[el] || LC_ELEMENTS['autre'];
+  const label = (el === 'autre') ? '📦 Autre' : `${info.emoji} ${el}`;
+  // For non-standard elements use 'autre' style
+  const badgeClass = LC_ELEMENTS[el] ? info.badge : 'lc-autre';
+  return `<span class="lc-badge ${badgeClass}">${info.emoji||'📦'} ${el}</span>`;
+}
+
+function getPrix(chantier, element) {
+  const ref = PRIX_REF.find(p => p.chantier === chantier && p.element === element);
+  return ref ? ref.prix_unitaire : null;
+}
+
+async function chargerLC() {
+  const role   = USER?.role || 'chef';
+  const auteur = USER?.nom  || '';
+  try {
+    const [rLiv, rPrix] = await Promise.all([
+      fetch(`/api/livchantier?role=${encodeURIComponent(role)}&auteur=${encodeURIComponent(auteur)}`),
+      fetch('/api/prix_reference'),
+    ]);
+    LC_DATA  = await rLiv.json();
+    PRIX_REF = await rPrix.json();
+    if (LC_DATA.erreur) throw new Error(LC_DATA.erreur);
+  } catch(e) {
+    console.error('chargerLC:', e);
+  }
+}
+
+// ── Vue selon le rôle ─────────────────────────────────────────────
+function renderChantierLivraisons() {
+  const isAdmin = USER?.role === 'admin' || USER?.role === 'rh';
+  const el = document.getElementById('chantier-content');
+  if (!el) return;
+  if (isAdmin) {
+    renderAdminLivraisons(el);
+  } else {
+    renderChefLivraisons(el);
+  }
+}
+
+// ── VUE ADMIN : choisir chantier → tableau matériaux + prix ──────
+function renderAdminLivraisons(container) {
+  // Liste des chantiers distincts
+  const chantiers = [...new Set(LC_DATA.map(l => l.chantier))].sort();
+  if (!LC_CHANTIER_SEL && chantiers.length) LC_CHANTIER_SEL = chantiers[0];
+
+  const chips = chantiers.map(c =>
+    `<div class="chantier-chip ${c===LC_CHANTIER_SEL?'on':''}" onclick="selChantierAdmin('${c.replace(/'/g,"\'")}')">${c}</div>`
+  ).join('');
+
+  container.innerHTML = `
+    <div class="chantier-selector" id="adm-chantier-chips">
+      ${chips || '<div style="color:var(--tx3);font-size:13px">Aucun chantier enregistré</div>'}
+    </div>
+    <div id="adm-chantier-detail"></div>`;
+
+  if (LC_CHANTIER_SEL) renderAdminChantierDetail(LC_CHANTIER_SEL);
+}
+
+function selChantierAdmin(chantier) {
+  LC_CHANTIER_SEL = chantier;
+  LC_SEM_SEL = null;
+  document.querySelectorAll('.chantier-chip').forEach(el => {
+    el.classList.toggle('on', el.textContent === chantier);
+  });
+  renderAdminChantierDetail(chantier);
+}
+
+function getSemaines(data) {
+  const sems = {};
+  data.forEach(l => {
+    const d = new Date(l.date_liv + 'T12:00:00');
+    const lundi = new Date(d);
+    lundi.setDate(d.getDate() - ((d.getDay()+6)%7));
+    const k = lundi.toISOString().split('T')[0];
+    if (!sems[k]) sems[k] = lundi;
+  });
+  return Object.entries(sems).sort((a,b) => b[0].localeCompare(a[0]));
+}
+
+function renderAdminChantierDetail(chantier) {
+  const el = document.getElementById('adm-chantier-detail');
+  if (!el) return;
+  const dataChantier = LC_DATA.filter(l => l.chantier === chantier);
+
+  // Semaines disponibles
+  const semaines = getSemaines(dataChantier);
+  const semChips = [['', 'Tout']].concat(semaines.map(([k,d]) => {
+    const fin = new Date(d); fin.setDate(d.getDate()+6);
+    const lbl = `S${getWeekNum(d)} — ${d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})}`;
+    return [k, lbl];
+  })).map(([k,lbl]) =>
+    `<div class="sem-chip ${LC_SEM_SEL===k?'on':''}" onclick="selSemaine('${k}')">${lbl}</div>`
+  ).join('');
+
+  // Filtrer par semaine si sélectionnée
+  let dataFilt = dataChantier;
+  if (LC_SEM_SEL) {
+    const d = new Date(LC_SEM_SEL + 'T12:00:00');
+    const fin = new Date(d); fin.setDate(d.getDate()+6);
+    const finStr = fin.toISOString().split('T')[0];
+    dataFilt = dataChantier.filter(l => l.date_liv >= LC_SEM_SEL && l.date_liv <= finStr);
+  }
+
+  // Agréger par élément
+  const agg = {};
+  dataFilt.forEach(l => {
+    const key = l.element;
+    if (!agg[key]) agg[key] = { element:l.element, unite:l.unite, qte:0, nb:0 };
+    agg[key].qte += l.quantite;
+    agg[key].nb++;
+  });
+
+  // Calcul total
+  let totalGeneral = 0;
+  let allPriced = Object.keys(agg).length > 0;
+  Object.values(agg).forEach(v => {
+    const prix = getPrix(chantier, v.element);
+    if (prix) totalGeneral += v.qte * prix;
+    else allPriced = false;
+  });
+
+  const matRows = Object.values(agg).map(v => {
+    const prix  = getPrix(chantier, v.element);
+    const total = prix ? v.qte * prix : null;
+    return `<div class="mat-row">
+      <div class="mat-info">
+        ${lcBadge(v.element)}
+        <div class="mat-qty">${v.qte.toLocaleString('fr-FR',{maximumFractionDigits:2})} ${v.unite} · ${v.nb} livraison${v.nb>1?'s':''}</div>
+      </div>
+      <div class="mat-prix-wrap">
+        <input class="mat-prix-inp" type="number" step="0.01" min="0"
+          value="${prix||''}" placeholder="Prix"
+          title="Prix €/${v.unite}"
+          onchange="savePrixRef('${chantier.replace(/'/g,"\'")}','${v.element}',this.value)"/>
+        <span style="font-size:11px;color:var(--tx3)">€/${v.unite}</span>
+      </div>
+      <div class="mat-total ${total?'':'vide'}">${total ? total.toLocaleString('fr-FR',{style:'currency',currency:'EUR'}) : '—'}</div>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="semaine-selector">${semChips}</div>
+    ${Object.keys(agg).length === 0 ? `
+      <div class="vide">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7V8z"/></svg>
+        <h3>Aucune livraison${LC_SEM_SEL?' cette semaine':''}</h3>
+        <p>Sélectionnez une autre semaine ou demandez aux chefs de saisir les livraisons.</p>
+      </div>` : `
+    <div class="cout-total">
+      <div class="cout-total-lbl">Total dépenses — ${chantier}${LC_SEM_SEL?' · '+getSemLabel(LC_SEM_SEL):''}</div>
+      <div class="cout-total-val">${totalGeneral>0 ? totalGeneral.toLocaleString('fr-FR',{style:'currency',currency:'EUR'}) : '—'}</div>
+      <div class="cout-total-sub">${allPriced && totalGeneral>0 ? 'Tous les prix renseignés' : 'Renseignez les prix unitaires ci-dessous'}</div>
+    </div>
+    <div class="carte">
+      <div class="carte-ent"><div class="carte-tit">Matériaux</div><div class="carte-sub">${dataFilt.length} livraison${dataFilt.length>1?'s':''}</div></div>
+      <div style="padding:0 14px 8px">${matRows}</div>
+    </div>
+    <button class="btn bs np" style="margin-top:4px" onclick="exportLCExcel()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline;margin-right:6px;vertical-align:middle"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Exporter Excel${LC_SEM_SEL?' (semaine)':' (tout le chantier)'}
+    </button>`}`;
+}
+
+function getSemLabel(k) {
+  if (!k) return '';
+  const d = new Date(k+'T12:00:00');
+  const fin = new Date(d); fin.setDate(d.getDate()+6);
+  return `Sem. du ${d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})} au ${fin.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})}`;
+}
+function getWeekNum(d) {
+  const jan4 = new Date(d.getFullYear(),0,4);
+  return Math.ceil((((d-jan4)/86400000)+jan4.getDay()+1)/7);
+}
+
+function selSemaine(k) {
+  LC_SEM_SEL = k || null;
+  if (LC_CHANTIER_SEL) renderAdminChantierDetail(LC_CHANTIER_SEL);
+}
+
+// ── VUE CHEF : liste de ses livraisons ───────────────────────────
+function renderChefLivraisons(container) {
+  const data = LC_DATA; // already filtered to auteur server-side
+  if (!data.length) {
+    container.innerHTML = `<div class="vide">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7V8z"/></svg>
+      <h3>Aucune livraison</h3><p>Appuyez sur + pour enregistrer une livraison.</p>
+    </div>`;
+    return;
+  }
+  const parDate = {};
+  data.forEach(l => { if(!parDate[l.date_liv]) parDate[l.date_liv]=[]; parDate[l.date_liv].push(l); });
+
+  container.innerHTML = Object.keys(parDate).sort().reverse().map(date => {
+    const dt = new Date(date+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'2-digit',month:'long'});
+    return `<div class="lc-section-title">${dt}</div>` +
+      parDate[date].map(l => {
+        return `<div class="lc-card" onclick="ouvrirLC('${l.id}')">
+          <div class="lc-card-top">
+            <div>
+              ${lcBadge(l.element)}
+              <div style="font-size:13px;color:var(--tx2);margin-top:5px">📍 ${l.chantier}</div>
+              ${l.notes?`<div style="font-size:12px;color:var(--tx3);margin-top:2px;font-style:italic">${l.notes}</div>`:''}
+            </div>
+            <div style="text-align:right">
+              <span class="lc-qty">${l.quantite.toLocaleString('fr-FR',{maximumFractionDigits:2})}</span>
+              <span class="lc-unit">${l.unite}</span>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+  }).join('');
+}
+
+// ── Prix référence ────────────────────────────────────────────────
+async function savePrixRef(chantier, element, val) {
+  const prix = val === '' ? 0 : parseFloat(val);
+  try {
+    const r = await fetch('/api/prix_reference', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({chantier, element, prix_unitaire: prix}),
+    });
+    const d = await r.json();
+    if (d.ok) {
+      const idx = PRIX_REF.findIndex(p => p.chantier===chantier && p.element===element);
+      if (idx >= 0) PRIX_REF[idx].prix_unitaire = prix;
+      else PRIX_REF.push({chantier, element, prix_unitaire: prix});
+      if (LC_CHANTIER_SEL) renderAdminChantierDetail(LC_CHANTIER_SEL);
+      toast('Prix enregistré ✓');
+    }
+  } catch(e) { toast('Erreur sauvegarde prix'); }
+}
+
+// ── CRUD livraisons ───────────────────────────────────────────────
+function lcElementChange() {
+  const el    = document.getElementById('lc-element').value;
+  const unite = document.getElementById('lc-unite');
+  const autreWrap = document.getElementById('lc-autre-nom-wrap');
+  const info  = LC_ELEMENTS[el];
+  if (el === 'autre') {
+    unite.disabled = false;
+    if (autreWrap) autreWrap.style.display = 'block';
+  } else if (info && info.fixe) {
+    unite.value    = info.unite;
+    unite.disabled = true;
+    if (autreWrap) autreWrap.style.display = 'none';
+  } else {
+    unite.disabled = false;
+    if (autreWrap) autreWrap.style.display = 'none';
+  }
+}
+
+function nouvelleLivChantier() {
+  LC_EDIT_ID = null;
+  document.getElementById('mlc-tit').textContent = 'Nouvelle livraison';
+  document.getElementById('del-mlc').style.display = 'none';
+  document.getElementById('lc-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('lc-element').value = 'béton';
+  document.getElementById('lc-qty').value = '';
+  document.getElementById('lc-notes').value = '';
+  if (document.getElementById('lc-autre-nom')) document.getElementById('lc-autre-nom').value = '';
+  lcElementChange();
+  const chantiersPasses = [...new Set([...LC_DATA.map(l=>l.chantier),...POINTAGES.map(p=>p.chantier)].filter(Boolean))];
+  const dl = document.getElementById('lc-chantier-list');
+  if (dl) dl.innerHTML = chantiersPasses.map(c=>`<option value="${c}"/>`).join('');
+  const derniere = LC_DATA.find(l => l.auteur === USER?.nom);
+  document.getElementById('lc-chantier').value = derniere?.chantier || '';
+  om('mlc');
+}
+
+function ouvrirLC(id) {
+  const l = LC_DATA.find(x => String(x.id) === String(id));
+  if (!l) return;
+  LC_EDIT_ID = l.id;
+  document.getElementById('mlc-tit').textContent = 'Modifier la livraison';
+  document.getElementById('del-mlc').style.display = 'flex';
+  document.getElementById('lc-date').value     = l.date_liv;
+  document.getElementById('lc-chantier').value = l.chantier;
+  // Handle "autre" with custom name
+  const isStandard = ['béton','treillis','enkadrain'].includes(l.element);
+  document.getElementById('lc-element').value  = isStandard ? l.element : 'autre';
+  if (!isStandard && document.getElementById('lc-autre-nom')) {
+    document.getElementById('lc-autre-nom').value = l.element;
+  }
+  document.getElementById('lc-qty').value      = l.quantite;
+  document.getElementById('lc-notes').value    = l.notes || '';
+  lcElementChange();
+  if (!isStandard) {
+    const unite = document.getElementById('lc-unite');
+    unite.value = l.unite;
+    unite.disabled = false;
+  }
+  om('mlc');
+}
+
+async function savLivChantier() {
+  const date     = document.getElementById('lc-date').value;
+  const chantier = document.getElementById('lc-chantier').value.trim();
+  const qty      = parseFloat(document.getElementById('lc-qty').value);
+  const elemSel  = document.getElementById('lc-element').value;
+  let element    = elemSel;
+  if (elemSel === 'autre') {
+    const autreNom = document.getElementById('lc-autre-nom')?.value.trim();
+    element = autreNom || 'autre';
+  }
+  if (!date || !chantier) { toast('Date et chantier obligatoires'); return; }
+  if (!qty || qty <= 0)   { toast('Quantité invalide'); return; }
+  const payload = {
+    id: LC_EDIT_ID || null,
+    date_liv: date, chantier,
+    auteur:   USER?.nom || '',
+    element, quantite: qty,
+    unite:    document.getElementById('lc-unite').value,
+    notes:    document.getElementById('lc-notes').value.trim(),
+  };
+  try {
+    const r = await fetch('/api/livchantier', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload),
+    });
+    const d = await r.json();
+    if (d.ok) { toast(LC_EDIT_ID?'Livraison mise à jour ✓':'Livraison enregistrée ✓'); fm('mlc'); await chargerLC(); renderChantierContent(); }
+    else toast('Erreur : '+(d.erreur||'inconnue'));
+  } catch(e) { toast('Erreur réseau'); }
+}
+
+async function delLivChantier() {
+  if (!confirm('Supprimer cette livraison ?')) return;
+  try {
+    await fetch(`/api/livchantier/${LC_EDIT_ID}?role=${encodeURIComponent(USER?.role||'chef')}&auteur=${encodeURIComponent(USER?.nom||'')}`, {method:'DELETE'});
+    toast('Livraison supprimée'); fm('mlc'); await chargerLC(); renderChantierContent();
+  } catch(e) { toast('Erreur'); }
+}
+
+// ── Export Excel ──────────────────────────────────────────────────
+function exportLCExcel() {
+  // Filter to selected chantier + semaine if admin
+  const isAdmin = USER?.role === 'admin' || USER?.role === 'rh';
+  let data = LC_DATA;
+  if (isAdmin && LC_CHANTIER_SEL) {
+    data = LC_DATA.filter(l => l.chantier === LC_CHANTIER_SEL);
+    if (LC_SEM_SEL) {
+      const fin = new Date(LC_SEM_SEL+'T12:00:00'); fin.setDate(fin.getDate()+6);
+      const finStr = fin.toISOString().split('T')[0];
+      data = data.filter(l => l.date_liv >= LC_SEM_SEL && l.date_liv <= finStr);
+    }
+  }
+  if (!data.length) { toast('Aucune livraison à exporter'); return; }
+
+  const sep = ';';
+  const agg = {};
+  data.forEach(l => {
+    const k = l.element;
+    if (!agg[k]) agg[k] = { element:l.element, unite:l.unite, qte:0 };
+    agg[k].qte += l.quantite;
+  });
+
+  const lignes = [
+    ['FGS Travaux Spéciaux — Livraisons chantier'],
+    [`Chantier : ${LC_CHANTIER_SEL||'Tous'} ${LC_SEM_SEL?'· '+getSemLabel(LC_SEM_SEL):''}`],
+    [`Exporté le ${new Date().toLocaleDateString('fr-FR')} par ${USER?.nom||''}`],
+    [],
+    ['RÉCAPITULATIF PAR MATÉRIAU'],
+    ['Matériau','Quantité totale','Unité','Prix unitaire (€)','Coût total (€)'],
+    ...Object.values(agg).map(v => {
+      const prix  = getPrix(LC_CHANTIER_SEL||'', v.element);
+      const total = prix ? (v.qte * prix).toFixed(2) : '';
+      return [v.element, v.qte, v.unite, prix||'', total];
+    }),
+    [],
+    ['DÉTAIL DES LIVRAISONS'],
+    ['Date','Chantier','Chef de chantier','Matériau','Quantité','Unité','Prix unitaire (€)','Coût (€)','Notes'],
+    ...data.map(l => {
+      const prix = getPrix(l.chantier, l.element);
+      const cout = prix ? (l.quantite * prix).toFixed(2) : '';
+      return [
+        new Date(l.date_liv+'T12:00:00').toLocaleDateString('fr-FR'),
+        l.chantier, l.auteur, l.element, l.quantite, l.unite, prix||'', cout, l.notes||'',
+      ];
+    }),
+  ];
+
+  const csv = '\uFEFF' + lignes.map(r=>r.map(v=>`"${String(v===null||v===undefined?'':v).replace(/"/g,'""')}"`).join(sep)).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = `livraisons-${LC_CHANTIER_SEL||'tout'}-${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  toast('Export Excel ✓');
+}
 </script>
-
-
-
-<!-- MODAL LIVRAISON CHANTIER -->
-<div class="fmod" id="mlc"><div class="mod">
-  <div class="poignee"></div>
-  <div class="mod-tit" id="mlc-tit">Nouvelle livraison</div>
-  <div class="gch"><label>Date</label><input id="lc-date" type="date"/></div>
-  <div class="gch"><label>Chantier</label>
-    <input id="lc-chantier" list="lc-chantier-list" placeholder="Nom du chantier..." autocomplete="off"/>
-    <datalist id="lc-chantier-list"></datalist>
-  </div>
-  <div class="gch"><label>Élément livré</label>
-    <select id="lc-element" onchange="lcElementChange()">
-      <option value="béton">Béton</option>
-      <option value="treillis">Treillis</option>
-      <option value="enkadrain">Enkadrain</option>
-      <option value="autre">Autre</option>
-    </select>
-  </div>
-  <div style="display:flex;gap:10px">
-    <div class="gch" style="flex:1"><label>Quantité</label><input id="lc-qty" type="number" min="0" step="0.01" placeholder="0"/></div>
-    <div class="gch" style="flex:1"><label>Unité</label>
-      <select id="lc-unite">
-        <option value="m3">m³</option>
-        <option value="m2">m²</option>
-        <option value="ml">ml</option>
-        <option value="unité">unité</option>
-      </select>
-    </div>
-  </div>
-  <div class="gch"><label>Notes (optionnel)</label><textarea id="lc-notes" placeholder="BL n°, fournisseur..."></textarea></div>
-  <div class="rbtn np">
-    <button class="btn bs" onclick="fm('mlc')">Annuler</button>
-    <button class="btn bp" onclick="savLivChantier()">Enregistrer</button>
-  </div>
-  <button class="btn bd np" id="del-mlc" style="margin-top:10px;display:none" onclick="delLivChantier()">Supprimer</button>
-</div></div>
-
-<!-- MODAL POINTAGE -->
-<div class="fmod" id="mpt"><div class="mod" style="max-height:95vh">
-  <div class="poignee"></div>
-  <div class="mod-tit" id="mpt-tit">Nouveau pointage</div>
-  <div class="gch"><label>Date</label><input id="pt-date" type="date"/></div>
-  <div class="gch"><label>Chantier</label>
-    <input id="pt-chantier" list="pt-chantier-list" placeholder="Nom du chantier..." autocomplete="off"/>
-    <datalist id="pt-chantier-list"></datalist>
-  </div>
-  <div class="carte" style="margin-top:4px">
-    <div class="carte-ent"><div class="carte-tit">Employés</div></div>
-    <div id="pt-lignes"></div>
-    <div class="pt-add">
-      <input id="pt-new-emp" placeholder="Nom de l'employé..." onkeydown="if(event.key==='Enter')ajouterEmp()"/>
-      <button class="btn bp np" style="width:auto;padding:10px 14px" onclick="ajouterEmp()">+</button>
-    </div>
-  </div>
-  <div class="gch"><label>Notes générales</label><textarea id="pt-notes" placeholder="Observations..."></textarea></div>
-  <div class="rbtn np">
-    <button class="btn bs" onclick="fm('mpt')">Annuler</button>
-    <button class="btn bp" onclick="savPointage()">Enregistrer</button>
-  </div>
-  <button class="btn bd np" id="del-mpt" style="margin-top:10px;display:none" onclick="delPointage()">Supprimer ce pointage</button>
-</div></div>
-
-<!-- OVERLAY COMMANDES -->
-<div class="cmd-overlay" id="cmd-overlay">
-  <div class="cmd-header">
-    <div class="btn-ret" onclick="fermerCommandes()"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></div>
-    <div style="flex:1"><div class="tit-det">Commandes à passer</div><div style="font-size:11px;color:var(--tx3)">Besoins calculés automatiquement</div></div>
-    <button class="btn bp np" style="width:auto;padding:8px 14px;font-size:13px" onclick="exportCommandesPDF()">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-      PDF
-    </button>
-  </div>
-  <div class="cmd-body" id="cmd-body"></div>
-</div>
-
 </body>
 </html>
