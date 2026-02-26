@@ -393,6 +393,9 @@ textarea{resize:vertical;min-height:80px}
 .alert-pill.orange{background:var(--wa-bg);border:1px solid var(--wa-b);color:#92400E}
 .alert-pill svg{flex-shrink:0;width:16px;height:16px}
 @media print{.nav,.fab,.np,.fmod{display:none!important}body{background:#fff}#app{max-width:100%}}
+
+.per-tab{padding:7px 16px;border-radius:20px;border:1.5px solid var(--brd);background:var(--sur);font-size:12px;font-weight:700;cursor:pointer;color:var(--tx2);transition:all .15s}
+.per-tab.on{background:var(--acc);color:#fff;border-color:var(--acc)}
 </style>
 </head>
 <body>
@@ -509,6 +512,9 @@ textarea{resize:vertical;min-height:80px}
 <div id="toast" class="toast"></div>
 
 <script>
+
+
+
 // ╔════════════════════════════════════════════════════════════════════╗
 // ║                                                                    ║
 // ║   COMPTES UTILISATEURS                                             ║
@@ -960,32 +966,7 @@ function dorintInt(iv,m){
     `<tr><td>Contrôle général</td><td colspan="2" style="color:#888">—</td><td style="text-align:center"><div style="width:16px;height:16px;border:1.5px solid #999;border-radius:3px;margin:auto"></div></td></tr>`,
   ].join('');
   const w=window.open('','_blank');
-  w.document.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Fiche — ${m.nom}</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;padding:24px;font-size:13px}.top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;padding-bottom:14px;border-bottom:3px solid #C0392B}.lb{display:flex;align-items:center;gap:12px}.lb img{height:44px;object-fit:contain}.bdg{display:inline-block;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:700}.ok{background:#dcfce7;color:#166534}.wa{background:#fef9c3;color:#854d0e}.da{background:#fee2e2;color:#991b1b}h2{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#C0392B;margin:16px 0 7px;padding-bottom:4px;border-bottom:1px solid #e5e7eb}table{width:100%;border-collapse:collapse}th{text-align:left;font-size:11px;font-weight:700;color:#666;text-transform:uppercase;padding:6px 8px;background:#f9fafb;border:1px solid #e5e7eb}td{padding:8px;border:1px solid #e5e7eb;vertical-align:middle}.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}.sbox{border:1px solid #d1d5db;border-radius:4px;height:34px;margin-top:5px}.sarea{border:1px solid #d1d5db;border-radius:4px;height:70px;margin-top:5px;display:flex;align-items:flex-end;padding:6px;font-size:10px;color:#ccc}.note{margin-top:20px;padding-top:12px;border-top:1px solid #e5e7eb;font-size:10px;color:#9ca3af}
-/* ── SOUS-ONGLETS CHANTIER ── */
-.subnav{display:flex;background:var(--sur);border-bottom:1px solid var(--brd);padding:0 16px;gap:0;position:sticky;top:57px;z-index:49}
-.sni{flex:1;padding:12px 8px;text-align:center;font-size:13px;font-weight:700;color:var(--tx3);cursor:pointer;border-bottom:3px solid transparent;transition:all .15s;letter-spacing:.2px}
-.sni.on{color:var(--acc);border-bottom-color:var(--acc)}
-/* Vue admin chantier */
-.chantier-selector{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px}
-.chantier-card{background:var(--sur);border:2px solid var(--brd);border-radius:var(--r);padding:16px 12px;text-align:center;cursor:pointer;transition:all .2s;box-shadow:var(--sh2)}
-.chantier-card:hover,.chantier-card.sel{border-color:var(--acc);background:var(--acc-l)}
-.chantier-card.sel .cc-nom{color:var(--acc)}
-.cc-ico{font-size:24px;margin-bottom:6px}
-.cc-nom{font-size:13px;font-weight:700;color:var(--tx)}
-.cc-sub{font-size:11px;color:var(--tx3);margin-top:3px}
-/* Tableau bilan chantier */
-.bilan-table{width:100%;border-collapse:collapse;font-size:13px}
-.bilan-table th{background:var(--acc);color:#fff;padding:10px 12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;text-align:left}
-.bilan-table td{padding:10px 12px;border-bottom:1px solid var(--brd);vertical-align:middle}
-.bilan-table tr:last-child td{border-bottom:none}
-.bilan-table tr:nth-child(even) td{background:var(--sur2)}
-.bilan-total{background:var(--acc)!important;color:#fff!important;font-weight:700}
-.prix-inline{width:80px;text-align:right;padding:6px 8px!important;font-size:14px;font-weight:700;font-family:var(--mo)}
-/* Semaines */
-.sem-pills{display:flex;gap:6px;overflow-x:auto;padding:4px 0 8px;-webkit-overflow-scrolling:touch}
-.sem-pill{white-space:nowrap;padding:7px 14px;border-radius:20px;border:1.5px solid var(--brd);background:var(--sur);font-size:12px;font-weight:700;cursor:pointer;color:var(--tx2);transition:all .15s;flex-shrink:0}
-.sem-pill.on{background:var(--acc);color:#fff;border-color:var(--acc)}
-@media print{body{padding:16px}}</style></head><body>
+  w.document.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Fiche — ${m.nom}</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;padding:24px;font-size:13px}.top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;padding-bottom:14px;border-bottom:3px solid #C0392B}.lb{display:flex;align-items:center;gap:12px}.lb img{height:44px;object-fit:contain}.bdg{display:inline-block;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:700}.ok{background:#dcfce7;color:#166534}.wa{background:#fef9c3;color:#854d0e}.da{background:#fee2e2;color:#991b1b}h2{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#C0392B;margin:16px 0 7px;padding-bottom:4px;border-bottom:1px solid #e5e7eb}table{width:100%;border-collapse:collapse}th{text-align:left;font-size:11px;font-weight:700;color:#666;text-transform:uppercase;padding:6px 8px;background:#f9fafb;border:1px solid #e5e7eb}td{padding:8px;border:1px solid #e5e7eb;vertical-align:middle}.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}.sbox{border:1px solid #d1d5db;border-radius:4px;height:34px;margin-top:5px}.sarea{border:1px solid #d1d5db;border-radius:4px;height:70px;margin-top:5px;display:flex;align-items:flex-end;padding:6px;font-size:10px;color:#ccc}.note{margin-top:20px;padding-top:12px;border-top:1px solid #e5e7eb;font-size:10px;color:#9ca3af}</style></head><body>
 <div class="top"><div class="lb"><img src="${LOGO}" alt="FGS"/><div><div style="font-size:18px;font-weight:700;color:#C0392B">Fiche d'entretien</div><div style="font-size:13px;color:#555">${m.nom} — ${m.modele||''}${m.site?' · '+m.site:''}</div></div></div><div style="text-align:right;font-size:12px;color:#555;line-height:1.8"><div><b>Créée le :</b> ${new Date().toLocaleDateString('fr-FR')}</div>${iv?.datePrevue?`<div><b>Date prévue :</b> ${fdt(iv.datePrevue)}</div>`:''}<div><b>Type :</b> ${iv?lblTy(iv.type):'Entretien'}</div><span class="bdg ${s}">${lblSt(s)}</span></div></div>
 <div class="g2"><div><h2>Machine</h2><table><tr><th>Champ</th><th>Valeur</th></tr><tr><td>Modèle</td><td style="font-weight:600">${m.modele||'—'}</td></tr><tr><td>N° série</td><td style="font-weight:600">${m.serie||'—'}</td></tr><tr><td>Site</td><td style="font-weight:600">${m.site||'—'}</td></tr></table></div>
 <div><h2>Heures</h2><table><tr><th>Champ</th><th>Valeur</th></tr><tr><td>Actuelles</td><td style="font-weight:600">${m.heures}h</td></tr><tr><td>Dernier entretien</td><td style="font-weight:600">${m.hEntretien}h</td></tr><tr><td>Écart</td><td style="font-weight:600;color:${s==='da'?'#dc2626':s==='wa'?'#d97706':'#16a34a'}">${d}h / ${seuil}h</td></tr></table></div></div>
@@ -996,82 +977,7 @@ ${iv?.notes?`<h2>Notes</h2><div style="padding:10px 12px;background:#f9fafb;bord
 <div class="note">Généré le ${new Date().toLocaleDateString('fr-FR')} — FGS App, usage interne</div>
 
 
-<!-- MODAL LIVRAISON CHANTIER -->
-<div class="fmod" id="mlc" onclick="if(event.target===this)fm('mlc')"><div class="mod">
-  <div class="poignee"></div>
-  <div class="mod-tit" id="mlc-tit">Nouvelle livraison</div>
-  <div class="gch"><label>Date</label><input id="lc-date" type="date"/></div>
-  <div class="gch"><label>Chantier</label>
-    <input id="lc-chantier" list="lc-chantier-list" placeholder="Nom du chantier..." autocomplete="off"/>
-    <datalist id="lc-chantier-list"></datalist>
-  </div>
-  <div class="gch"><label>Élément livré</label>
-    <select id="lc-element" onchange="lcElementChange()">
-      <option value="béton">Béton</option>
-      <option value="treillis">Treillis</option>
-      <option value="enkadrain">Enkadrain</option>
-      <option value="autre">Autre (préciser)</option>
-    </select>
-  </div>
-  <div class="gch" id="lc-autre-wrap" style="display:none"><label>Nom de la fourniture</label><input id="lc-autre-nom" placeholder="Ex: gabions, géotextile, PVC DN400..."/></div>
-  <div style="display:flex;gap:10px">
-    <div class="gch" style="flex:1"><label>Quantité</label><input id="lc-qty" type="number" min="0" step="0.01" placeholder="0"/></div>
-    <div class="gch" style="flex:1"><label>Unité</label>
-      <select id="lc-unite">
-        <option value="m3">m³</option>
-        <option value="m2">m²</option>
-        <option value="ml">ml</option>
-        <option value="unité">unité</option>
-      </select>
-    </div>
-  </div>
-  <div class="gch"><label>Notes (optionnel)</label><textarea id="lc-notes" placeholder="BL n°, fournisseur..."></textarea></div>
-  <div class="rbtn np">
-    <button class="btn bs" onclick="fm('mlc')">Annuler</button>
-    <button class="btn bp" onclick="savLivChantier()">Enregistrer</button>
-  </div>
-  <button class="btn bd np" id="del-mlc" style="margin-top:10px;display:none" onclick="delLivChantier()">Supprimer</button>
-</div></div>
-
-<!-- MODAL POINTAGE -->
-<div class="fmod" id="mpt" onclick="if(event.target===this)fm('mpt')"><div class="mod" style="max-height:95vh">
-  <div class="poignee"></div>
-  <div class="mod-tit" id="mpt-tit">Nouveau pointage</div>
-  <div class="gch"><label>Date</label><input id="pt-date" type="date"/></div>
-  <div class="gch"><label>Chantier</label>
-    <input id="pt-chantier" list="pt-chantier-list" placeholder="Nom du chantier..." autocomplete="off"/>
-    <datalist id="pt-chantier-list"></datalist>
-  </div>
-  <div class="carte" style="margin-top:4px">
-    <div class="carte-ent"><div class="carte-tit">Employés</div></div>
-    <div id="pt-lignes"></div>
-    <div class="pt-add">
-      <input id="pt-new-emp" placeholder="Nom de l'employé..." onkeydown="if(event.key==='Enter')ajouterEmp()"/>
-      <button class="btn bp np" style="width:auto;padding:10px 14px" onclick="ajouterEmp()">+</button>
-    </div>
-  </div>
-  <div class="gch"><label>Notes générales</label><textarea id="pt-notes" placeholder="Observations..."></textarea></div>
-  <div class="rbtn np">
-    <button class="btn bs" onclick="fm('mpt')">Annuler</button>
-    <button class="btn bp" onclick="savPointage()">Enregistrer</button>
-  </div>
-  <button class="btn bd np" id="del-mpt" style="margin-top:10px;display:none" onclick="delPointage()">Supprimer ce pointage</button>
-</div></div>
-
-<!-- OVERLAY COMMANDES -->
-<div class="cmd-overlay" id="cmd-overlay">
-  <div class="cmd-header">
-    <div class="btn-ret" onclick="fermerCommandes()"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></div>
-    <div style="flex:1"><div class="tit-det">Commandes à passer</div><div style="font-size:11px;color:var(--tx3)">Besoins calculés automatiquement</div></div>
-    <button class="btn bp np" style="width:auto;padding:8px 14px;font-size:13px" onclick="exportCommandesPDF()">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-      PDF
-    </button>
-  </div>
-  <div class="cmd-body" id="cmd-body"></div>
-</div>
-
-<\/body><\/html>`);
+`);
   w.document.close();w.focus();setTimeout(()=>w.print(),400);
 }
 function printMach(id){
@@ -1080,32 +986,7 @@ function printMach(id){
   const ivs=BD.interventions.filter(i=>i.machineId===id).sort((a,b)=>new Date(b.date)-new Date(a.date));
   const pas=m.piecesAssociees||[];
   const w=window.open('','_blank');
-  w.document.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Fiche machine — ${m.nom}</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;padding:24px;font-size:13px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:14px;border-bottom:3px solid #C0392B}.lb{display:flex;align-items:center;gap:12px}.lb img{height:44px;object-fit:contain}.bdg{display:inline-block;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:700}.ok{background:#dcfce7;color:#166534}.wa{background:#fef9c3;color:#854d0e}.da{background:#fee2e2;color:#991b1b}h2{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#C0392B;margin:16px 0 7px;padding-bottom:4px;border-bottom:1px solid #e5e7eb}table{width:100%;border-collapse:collapse}th{text-align:left;font-size:11px;font-weight:700;color:#666;text-transform:uppercase;padding:6px 8px;background:#f9fafb;border:1px solid #e5e7eb}td{padding:8px;border:1px solid #e5e7eb}.note{margin-top:20px;padding-top:12px;border-top:1px solid #e5e7eb;font-size:10px;color:#9ca3af}
-/* ── SOUS-ONGLETS CHANTIER ── */
-.subnav{display:flex;background:var(--sur);border-bottom:1px solid var(--brd);padding:0 16px;gap:0;position:sticky;top:57px;z-index:49}
-.sni{flex:1;padding:12px 8px;text-align:center;font-size:13px;font-weight:700;color:var(--tx3);cursor:pointer;border-bottom:3px solid transparent;transition:all .15s;letter-spacing:.2px}
-.sni.on{color:var(--acc);border-bottom-color:var(--acc)}
-/* Vue admin chantier */
-.chantier-selector{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px}
-.chantier-card{background:var(--sur);border:2px solid var(--brd);border-radius:var(--r);padding:16px 12px;text-align:center;cursor:pointer;transition:all .2s;box-shadow:var(--sh2)}
-.chantier-card:hover,.chantier-card.sel{border-color:var(--acc);background:var(--acc-l)}
-.chantier-card.sel .cc-nom{color:var(--acc)}
-.cc-ico{font-size:24px;margin-bottom:6px}
-.cc-nom{font-size:13px;font-weight:700;color:var(--tx)}
-.cc-sub{font-size:11px;color:var(--tx3);margin-top:3px}
-/* Tableau bilan chantier */
-.bilan-table{width:100%;border-collapse:collapse;font-size:13px}
-.bilan-table th{background:var(--acc);color:#fff;padding:10px 12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;text-align:left}
-.bilan-table td{padding:10px 12px;border-bottom:1px solid var(--brd);vertical-align:middle}
-.bilan-table tr:last-child td{border-bottom:none}
-.bilan-table tr:nth-child(even) td{background:var(--sur2)}
-.bilan-total{background:var(--acc)!important;color:#fff!important;font-weight:700}
-.prix-inline{width:80px;text-align:right;padding:6px 8px!important;font-size:14px;font-weight:700;font-family:var(--mo)}
-/* Semaines */
-.sem-pills{display:flex;gap:6px;overflow-x:auto;padding:4px 0 8px;-webkit-overflow-scrolling:touch}
-.sem-pill{white-space:nowrap;padding:7px 14px;border-radius:20px;border:1.5px solid var(--brd);background:var(--sur);font-size:12px;font-weight:700;cursor:pointer;color:var(--tx2);transition:all .15s;flex-shrink:0}
-.sem-pill.on{background:var(--acc);color:#fff;border-color:var(--acc)}
-@media print{body{padding:16px}}</style></head><body>
+  w.document.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Fiche machine — ${m.nom}</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;padding:24px;font-size:13px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:14px;border-bottom:3px solid #C0392B}.lb{display:flex;align-items:center;gap:12px}.lb img{height:44px;object-fit:contain}.bdg{display:inline-block;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:700}.ok{background:#dcfce7;color:#166534}.wa{background:#fef9c3;color:#854d0e}.da{background:#fee2e2;color:#991b1b}h2{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#C0392B;margin:16px 0 7px;padding-bottom:4px;border-bottom:1px solid #e5e7eb}table{width:100%;border-collapse:collapse}th{text-align:left;font-size:11px;font-weight:700;color:#666;text-transform:uppercase;padding:6px 8px;background:#f9fafb;border:1px solid #e5e7eb}td{padding:8px;border:1px solid #e5e7eb}.note{margin-top:20px;padding-top:12px;border-top:1px solid #e5e7eb;font-size:10px;color:#9ca3af}</style></head><body>
 <div class="top"><div class="lb"><img src="${LOGO}" alt="FGS"/><div><div style="font-size:18px;font-weight:700;color:#C0392B">${m.nom}</div><div style="font-size:13px;color:#555">${m.modele||''}${m.site?' · '+m.site:''}</div></div></div><span class="bdg ${s}">${lblSt(s)}</span></div>
 <h2>Informations</h2><table><tr><th>Champ</th><th>Valeur</th></tr><tr><td>Catégorie</td><td style="font-weight:600">${ncat(m.catId)}</td></tr><tr><td>Modèle</td><td style="font-weight:600">${m.modele||'—'}</td></tr><tr><td>Année</td><td style="font-weight:600">${m.annee||'—'}</td></tr><tr><td>N° série</td><td style="font-weight:600">${m.serie||'—'}</td></tr><tr><td>Site</td><td style="font-weight:600">${m.site||'—'}</td></tr><tr><td>Poids</td><td style="font-weight:600">${m.poids?m.poids+' kg':'—'}</td></tr></table>
 <h2>Heures & Entretien</h2><table><tr><th>Champ</th><th>Valeur</th></tr><tr><td>Heures actuelles</td><td style="font-weight:600">${m.heures}h</td></tr><tr><td>Dernier entretien</td><td style="font-weight:600">${m.hEntretien}h</td></tr><tr><td>Depuis dernier entretien</td><td style="font-weight:600;color:${s==='da'?'#dc2626':s==='wa'?'#d97706':'#16a34a'}">${d}h / ${seuil}h (${Math.round(Math.min(d/seuil,1)*100)}%)</td></tr></table>
@@ -1117,80 +998,7 @@ ${ivs.length?`<table><tr><th>Date</th><th>Type</th><th>Heures</th><th>Pièces</t
 <div class="note">Généré le ${new Date().toLocaleDateString('fr-FR')} — FGS App, usage interne</div>
 
 
-<!-- MODAL LIVRAISON CHANTIER -->
-<div class="fmod" id="mlc" onclick="if(event.target===this)fm('mlc')"><div class="mod">
-  <div class="poignee"></div>
-  <div class="mod-tit" id="mlc-tit">Nouvelle livraison</div>
-  <div class="gch"><label>Date</label><input id="lc-date" type="date"/></div>
-  <div class="gch"><label>Chantier</label>
-    <input id="lc-chantier" list="lc-chantier-list" placeholder="Nom du chantier..." autocomplete="off"/>
-    <datalist id="lc-chantier-list"></datalist>
-  </div>
-  <div class="gch"><label>Élément livré</label>
-    <select id="lc-element" onchange="lcElementChange()">
-      <option value="béton">Béton</option>
-      <option value="treillis">Treillis</option>
-      <option value="enkadrain">Enkadrain</option>
-      <option value="autre">Autre (préciser)</option>
-    </select>
-  </div>
-  <div class="gch" id="lc-autre-wrap" style="display:none"><label>Nom de la fourniture</label><input id="lc-autre-nom" placeholder="Ex: gabions, géotextile, PVC DN400..."/></div>
-  <div style="display:flex;gap:10px">
-    <div class="gch" style="flex:1"><label>Quantité</label><input id="lc-qty" type="number" min="0" step="0.01" placeholder="0"/></div>
-    <div class="gch" style="flex:1"><label>Unité</label>
-      <select id="lc-unite">
-        <option value="m3">m³</option>
-        <option value="m2">m²</option>
-        <option value="ml">ml</option>
-        <option value="unité">unité</option>
-      </select>
-    </div>
-  </div>
-  <div class="gch"><label>Notes (optionnel)</label><textarea id="lc-notes" placeholder="BL n°, fournisseur..."></textarea></div>
-  <div class="rbtn np">
-    <button class="btn bs" onclick="fm('mlc')">Annuler</button>
-    <button class="btn bp" onclick="savLivChantier()">Enregistrer</button>
-  </div>
-  <button class="btn bd np" id="del-mlc" style="margin-top:10px;display:none" onclick="delLivChantier()">Supprimer</button>
-</div></div>
 
-<!-- MODAL POINTAGE -->
-<div class="fmod" id="mpt" onclick="if(event.target===this)fm('mpt')"><div class="mod" style="max-height:95vh">
-  <div class="poignee"></div>
-  <div class="mod-tit" id="mpt-tit">Nouveau pointage</div>
-  <div class="gch"><label>Date</label><input id="pt-date" type="date"/></div>
-  <div class="gch"><label>Chantier</label>
-    <input id="pt-chantier" list="pt-chantier-list" placeholder="Nom du chantier..." autocomplete="off"/>
-    <datalist id="pt-chantier-list"></datalist>
-  </div>
-  <div class="carte" style="margin-top:4px">
-    <div class="carte-ent"><div class="carte-tit">Employés</div></div>
-    <div id="pt-lignes"></div>
-    <div class="pt-add">
-      <input id="pt-new-emp" placeholder="Nom de l'employé..." onkeydown="if(event.key==='Enter')ajouterEmp()"/>
-      <button class="btn bp np" style="width:auto;padding:10px 14px" onclick="ajouterEmp()">+</button>
-    </div>
-  </div>
-  <div class="gch"><label>Notes générales</label><textarea id="pt-notes" placeholder="Observations..."></textarea></div>
-  <div class="rbtn np">
-    <button class="btn bs" onclick="fm('mpt')">Annuler</button>
-    <button class="btn bp" onclick="savPointage()">Enregistrer</button>
-  </div>
-  <button class="btn bd np" id="del-mpt" style="margin-top:10px;display:none" onclick="delPointage()">Supprimer ce pointage</button>
-</div></div>
-
-<!-- OVERLAY COMMANDES -->
-<div class="cmd-overlay" id="cmd-overlay">
-  <div class="cmd-header">
-    <div class="btn-ret" onclick="fermerCommandes()"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></div>
-    <div style="flex:1"><div class="tit-det">Commandes à passer</div><div style="font-size:11px;color:var(--tx3)">Besoins calculés automatiquement</div></div>
-    <button class="btn bp np" style="width:auto;padding:8px 14px;font-size:13px" onclick="exportCommandesPDF()">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-      PDF
-    </button>
-  </div>
-  <div class="cmd-body" id="cmd-body"></div>
-</div>
 
 <\/body><\/html>`);
   w.document.close();w.focus();setTimeout(()=>w.print(),400);
@@ -1490,6 +1298,7 @@ let CHANTIER_TAB = 'pointage'; // 'pointage' | 'livraisons'
 
 function pgChantier() {
   const isAdmin = USER?.role === 'admin' || USER?.role === 'rh';
+  const totalTab = isAdmin ? `<div class="sub-ni ${CHANTIER_TAB==='total'?'on':''}" onclick="switchChantierTab('total')">💰 Total</div>` : '';
   return `
   <div class="ent">
     <div><h1>Chantier</h1></div>
@@ -1499,6 +1308,7 @@ function pgChantier() {
     <div class="sub-nav">
       <div class="sub-ni ${CHANTIER_TAB==='pointage'?'on':''}" onclick="switchChantierTab('pointage')">📋 Pointage</div>
       <div class="sub-ni ${CHANTIER_TAB==='livraisons'?'on':''}" onclick="switchChantierTab('livraisons')">🚚 Livraisons</div>
+      ${totalTab}
     </div>
     <div id="chantier-content"></div>
     <div style="height:80px"></div>
@@ -1526,10 +1336,11 @@ function renderChantierContent() {
   if (!el) return;
   if (CHANTIER_TAB === 'pointage') {
     renderChantierPointage();
+  } else if (CHANTIER_TAB === 'total') {
+    renderChantierTotal();
   } else {
     renderChantierLivraisons();
   }
-  // Update action buttons in header
   updateChantierActions();
 }
 
@@ -1537,12 +1348,14 @@ function updateChantierActions() {
   const el = document.getElementById('chantier-act');
   if (!el) return;
   const isAdmin = USER?.role === 'admin' || USER?.role === 'rh';
+  // Hide FAB on total tab
+  const fabEl = document.getElementById('fab');
+  if (fabEl) fabEl.style.display = CHANTIER_TAB === 'total' ? 'none' : 'flex';
   if (!isAdmin) { el.innerHTML = ''; return; }
   if (CHANTIER_TAB === 'livraisons') {
-    el.innerHTML = `
-      <div class="ico-btn" onclick="exportLCExcel()" title="Export Excel livraisons">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-      </div>`;
+    el.innerHTML = `<div class="ico-btn" onclick="exportLCExcel()" title="Export Excel">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+    </div>`;
   } else if (CHANTIER_TAB === 'pointage') {
     el.innerHTML = `
       <div class="ico-btn" onclick="exportExcelJour()" title="Export jour">
@@ -1941,6 +1754,30 @@ async function delLivChantier() {
 }
 
 // ── Export Excel ──────────────────────────────────────────────────
+
+async function savePrixRef(chantier, element, val) {
+  if (USER?.role !== 'admin' && USER?.role !== 'rh') return;
+  const prix = val === '' ? 0 : parseFloat(val);
+  try {
+    const r = await fetch('/api/prix_reference', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({chantier, element, prix_unitaire: prix || 0})
+    });
+    const d = await r.json();
+    if (d.ok) {
+      // Update local cache
+      const existing = PRIX_REF.find(p => p.chantier===chantier && p.element===element);
+      if (existing) existing.prix_unitaire = prix;
+      else PRIX_REF.push({chantier, element, prix_unitaire: prix});
+      // Re-render current view
+      if (CHANTIER_TAB === 'total') renderTotalBody();
+      else if (CHANTIER_TAB === 'livraisons' && LC_CHANTIER_SEL) renderAdminChantierDetail(LC_CHANTIER_SEL);
+      toast('Prix mis à jour ✓');
+    }
+  } catch(e) { toast('Erreur réseau'); }
+}
+
 function exportLCExcel() {
   // Filter to selected chantier + semaine if admin
   const isAdmin = USER?.role === 'admin' || USER?.role === 'rh';
@@ -1995,6 +1832,314 @@ function exportLCExcel() {
   a.click();
   toast('Export Excel ✓');
 }
+
+
+// ══════════════════════════════════════════════════════════════════
+// MODULE TOTAL CHANTIER (admin uniquement)
+// ══════════════════════════════════════════════════════════════════
+
+let TOTAL_CHANTIER_SEL = null;
+let TOTAL_PERIODE      = 'semaine'; // 'jour' | 'semaine' | 'mois'
+
+function renderChantierTotal() {
+  const isAdmin = USER?.role === 'admin' || USER?.role === 'rh';
+  if (!isAdmin) return;
+  const el = document.getElementById('chantier-content');
+  if (!el) return;
+
+  // Tous les chantiers connus (pointages + livraisons)
+  const chantiers = [...new Set([
+    ...POINTAGES.map(p => p.chantier),
+    ...LC_DATA.map(l => l.chantier),
+  ].filter(Boolean))].sort();
+
+  if (!chantiers.length) {
+    el.innerHTML = `<div class="vide"><h3>Aucune donnée</h3><p>Aucun chantier enregistré.</p></div>`;
+    return;
+  }
+  if (!TOTAL_CHANTIER_SEL || !chantiers.includes(TOTAL_CHANTIER_SEL)) {
+    TOTAL_CHANTIER_SEL = chantiers[0];
+  }
+
+  const chips = chantiers.map(c =>
+    `<div class="chantier-chip ${c===TOTAL_CHANTIER_SEL?'on':''}" onclick="selTotalChantier('${c.replace(/'/g,"\\'")}')">
+      <div class="chantier-chip-name">${c}</div>
+    </div>`
+  ).join('');
+
+  el.innerHTML = `
+    <div style="margin-bottom:14px">
+      <div class="ts" style="margin-bottom:8px">Chantier</div>
+      <div class="chantier-grid">${chips}</div>
+    </div>
+    <div id="total-body"></div>`;
+
+  renderTotalBody();
+}
+
+function selTotalChantier(c) {
+  TOTAL_CHANTIER_SEL = c;
+  // Update chips
+  document.querySelectorAll('.chantier-chip').forEach(el => {
+    el.classList.toggle('on', el.querySelector('.chantier-chip-name')?.textContent === c);
+  });
+  renderTotalBody();
+}
+
+function selTotalPeriode(p) {
+  TOTAL_PERIODE = p;
+  document.querySelectorAll('.per-tab').forEach(el => {
+    el.classList.toggle('on', el.dataset.p === p);
+  });
+  renderTotalBody();
+}
+
+function renderTotalBody() {
+  const el = document.getElementById('total-body');
+  if (!el || !TOTAL_CHANTIER_SEL) return;
+
+  const chantier = TOTAL_CHANTIER_SEL;
+  const ptgC = POINTAGES.filter(p => p.chantier === chantier);
+  const livC = LC_DATA.filter(l => l.chantier === chantier);
+
+  // ── Calcul des périodes ───────────────────────────────────────
+  const getPeriodeKey = (dateStr) => {
+    const d = new Date(dateStr + 'T12:00:00');
+    if (TOTAL_PERIODE === 'jour') return dateStr;
+    if (TOTAL_PERIODE === 'mois') return dateStr.slice(0,7); // YYYY-MM
+    // semaine : lundi de la semaine
+    const day = (d.getDay() + 6) % 7;
+    const lun = new Date(d); lun.setDate(d.getDate() - day);
+    return lun.toISOString().split('T')[0];
+  };
+
+  const labelPeriode = (key) => {
+    if (TOTAL_PERIODE === 'jour') {
+      return new Date(key+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'2-digit',month:'short'});
+    }
+    if (TOTAL_PERIODE === 'mois') {
+      const [y,m] = key.split('-');
+      return new Date(parseInt(y), parseInt(m)-1).toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+    }
+    // semaine
+    const lun = new Date(key+'T12:00:00');
+    const dim = new Date(lun); dim.setDate(lun.getDate()+6);
+    return `${lun.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})} → ${dim.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})}`;
+  };
+
+  // Agréger par période
+  const periodes = {};
+  const addPeriode = (key) => {
+    if (!periodes[key]) periodes[key] = { heures:0, presences:0, gd:0, paniers:0, materiaux:{} };
+  };
+
+  ptgC.forEach(p => {
+    const key = getPeriodeKey(p.date_jour);
+    addPeriode(key);
+    (p.lignes||[]).forEach(l => {
+      periodes[key].heures     += parseFloat(l.heures)||0;
+      periodes[key].presences  += 1;
+      if (l.gd)     periodes[key].gd++;
+      if (l.panier) periodes[key].paniers++;
+    });
+  });
+
+  livC.forEach(l => {
+    const key = getPeriodeKey(l.date_liv);
+    addPeriode(key);
+    const el = l.element;
+    if (!periodes[key].materiaux[el]) periodes[key].materiaux[el] = { qte:0, unite:l.unite };
+    periodes[key].materiaux[el].qte += l.quantite;
+  });
+
+  const keys = Object.keys(periodes).sort().reverse();
+  if (!keys.length) {
+    el.innerHTML = `<div class="vide"><h3>Aucune donnée pour ce chantier</h3></div>`;
+    return;
+  }
+
+  // ── Totaux globaux ────────────────────────────────────────────
+  const totalH = ptgC.reduce((s,p) => s+(p.lignes||[]).reduce((ss,l)=>ss+(parseFloat(l.heures)||0),0),0);
+  const coutH  = getPrix(chantier, '__heures__');
+  const coutMO = coutH ? totalH * coutH : null;
+
+  // Matériaux totaux
+  const matTotal = {};
+  livC.forEach(l => {
+    if (!matTotal[l.element]) matTotal[l.element] = {qte:0, unite:l.unite};
+    matTotal[l.element].qte += l.quantite;
+  });
+  let totalMat = 0;
+  Object.entries(matTotal).forEach(([el,v]) => {
+    const prix = getPrix(chantier, el);
+    if (prix) totalMat += v.qte * prix;
+  });
+  const totalGen = (coutMO||0) + totalMat;
+
+  // ── Rendu ─────────────────────────────────────────────────────
+  el.innerHTML = `
+    <!-- Sélecteur période -->
+    <div style="display:flex;gap:6px;margin-bottom:14px">
+      <div class="per-tab ${TOTAL_PERIODE==='jour'?'on':''}" data-p="jour" onclick="selTotalPeriode('jour')">Par jour</div>
+      <div class="per-tab ${TOTAL_PERIODE==='semaine'?'on':''}" data-p="semaine" onclick="selTotalPeriode('semaine')">Par semaine</div>
+      <div class="per-tab ${TOTAL_PERIODE==='mois'?'on':''}" data-p="mois" onclick="selTotalPeriode('mois')">Par mois</div>
+    </div>
+
+    <!-- Total général depuis le début -->
+    <div class="carte" style="margin-bottom:12px;border-left:3px solid var(--acc)">
+      <div class="carte-tit" style="margin-bottom:12px">💰 Depuis le début — ${chantier}</div>
+
+      <!-- Heures -->
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--brd)">
+        <div>
+          <div style="font-size:13px;font-weight:600">⏱ Main d'œuvre</div>
+          <div style="font-size:12px;color:var(--tx3);margin-top:1px">${totalH.toLocaleString('fr-FR',{maximumFractionDigits:1})} h</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <input class="mat-prix-inp" type="number" step="0.01" min="0"
+            value="${coutH||''}" placeholder="€/h"
+            onchange="savePrixRef('${chantier.replace(/'/g,"\\'")}','__heures__',this.value)"/>
+          <span style="font-size:11px;color:var(--tx3)">€/h</span>
+          <div style="font-weight:700;min-width:70px;text-align:right;font-family:var(--mo);color:${coutMO?'var(--ok)':'var(--tx3)'}">${coutMO?coutMO.toLocaleString('fr-FR',{style:'currency',currency:'EUR'}):'—'}</div>
+        </div>
+      </div>
+
+      <!-- Matériaux -->
+      ${Object.entries(matTotal).map(([el,v]) => {
+        const prix  = getPrix(chantier, el);
+        const total = prix ? v.qte * prix : null;
+        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--brd)">
+          <div>
+            <div style="font-size:13px;font-weight:600">${lcBadge(el)}</div>
+            <div style="font-size:12px;color:var(--tx3);margin-top:1px">${v.qte.toLocaleString('fr-FR',{maximumFractionDigits:2})} ${v.unite}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <input class="mat-prix-inp" type="number" step="0.01" min="0"
+              value="${prix||''}" placeholder="€/${v.unite}"
+              onchange="savePrixRef('${chantier.replace(/'/g,"\\'")}','${el}',this.value)"/>
+            <span style="font-size:11px;color:var(--tx3)">€/${v.unite}</span>
+            <div style="font-weight:700;min-width:70px;text-align:right;font-family:var(--mo);color:${total?'var(--ok)':'var(--tx3)'}">${total?total.toLocaleString('fr-FR',{style:'currency',currency:'EUR'}):'—'}</div>
+          </div>
+        </div>`;
+      }).join('')}
+
+      <!-- Total général -->
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0 2px">
+        <div style="font-size:14px;font-weight:700;color:var(--acc)">Total général</div>
+        <div style="font-size:20px;font-weight:700;font-family:var(--mo);color:var(--acc)">${totalGen>0?totalGen.toLocaleString('fr-FR',{style:'currency',currency:'EUR'}):'—'}</div>
+      </div>
+    </div>
+
+    <!-- Détail par période -->
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--tx3);margin-bottom:8px">
+      Détail ${TOTAL_PERIODE==='jour'?'par jour':TOTAL_PERIODE==='semaine'?'par semaine':'par mois'}
+    </div>
+    ${keys.map(key => {
+      const p = periodes[key];
+      const cH  = coutH ? p.heures * coutH : null;
+      let cMat  = 0;
+      const matRows = Object.entries(p.materiaux).map(([el,v]) => {
+        const prix = getPrix(chantier, el);
+        if (prix) cMat += v.qte * prix;
+        return `<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;color:var(--tx2)">
+          <span>${lcBadge(el)} ${v.qte.toLocaleString('fr-FR',{maximumFractionDigits:2})} ${v.unite}</span>
+          <span style="font-family:var(--mo);color:${prix?'var(--tx)':'var(--tx3)'}">${prix?(v.qte*prix).toLocaleString('fr-FR',{style:'currency',currency:'EUR'}):'—'}</span>
+        </div>`;
+      }).join('');
+      const cTot = (cH||0) + cMat;
+      return `<div class="carte" style="margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div style="font-size:13px;font-weight:700">${labelPeriode(key)}</div>
+          <div style="font-size:14px;font-weight:700;font-family:var(--mo);color:${cTot>0?'var(--acc)':'var(--tx3)'}">
+            ${cTot>0?cTot.toLocaleString('fr-FR',{style:'currency',currency:'EUR'}):'—'}
+          </div>
+        </div>
+        ${p.heures>0?`<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid var(--brd);margin-bottom:4px">
+          <span style="color:var(--tx2)">⏱ ${p.heures.toLocaleString('fr-FR',{maximumFractionDigits:1})} h · ${p.presences} présence${p.presences>1?'s':''}${p.gd>0?' · '+p.gd+' GD':''}${p.paniers>0?' · '+p.paniers+' 🍽':''}</span>
+          <span style="font-family:var(--mo);color:${cH?'var(--tx)':'var(--tx3)'}">${cH?cH.toLocaleString('fr-FR',{style:'currency',currency:'EUR'}):'—'}</span>
+        </div>`:''}
+        ${matRows}
+      </div>`;
+    }).join('')}`;
+}
+
+
 </script>
+
+<!-- MODAL LIVRAISON CHANTIER -->
+<div class="fmod" id="mlc" onclick="if(event.target===this)fm('mlc')"><div class="mod">
+  <div class="poignee"></div>
+  <div class="mod-tit" id="mlc-tit">Nouvelle livraison</div>
+  <div class="gch"><label>Date</label><input id="lc-date" type="date"/></div>
+  <div class="gch"><label>Chantier</label>
+    <input id="lc-chantier" list="lc-chantier-list" placeholder="Nom du chantier..." autocomplete="off"/>
+    <datalist id="lc-chantier-list"></datalist>
+  </div>
+  <div class="gch"><label>Élément livré</label>
+    <select id="lc-element" onchange="lcElementChange()">
+      <option value="béton">Béton</option>
+      <option value="treillis">Treillis</option>
+      <option value="enkadrain">Enkadrain</option>
+      <option value="autre">Autre (préciser)</option>
+    </select>
+  </div>
+  <div class="gch" id="lc-autre-wrap" style="display:none"><label>Nom de la fourniture</label><input id="lc-autre-nom" placeholder="Ex: gabions, géotextile, PVC DN400..."/></div>
+  <div style="display:flex;gap:10px">
+    <div class="gch" style="flex:1"><label>Quantité</label><input id="lc-qty" type="number" min="0" step="0.01" placeholder="0"/></div>
+    <div class="gch" style="flex:1"><label>Unité</label>
+      <select id="lc-unite">
+        <option value="m3">m³</option>
+        <option value="m2">m²</option>
+        <option value="ml">ml</option>
+        <option value="unité">unité</option>
+      </select>
+    </div>
+  </div>
+  <div class="gch"><label>Notes (optionnel)</label><textarea id="lc-notes" placeholder="BL n°, fournisseur..."></textarea></div>
+  <div class="rbtn np">
+    <button class="btn bs" onclick="fm('mlc')">Annuler</button>
+    <button class="btn bp" onclick="savLivChantier()">Enregistrer</button>
+  </div>
+  <button class="btn bd np" id="del-mlc" style="margin-top:10px;display:none" onclick="delLivChantier()">Supprimer</button>
+</div></div>
+
+<!-- MODAL POINTAGE -->
+<div class="fmod" id="mpt" onclick="if(event.target===this)fm('mpt')"><div class="mod" style="max-height:95vh">
+  <div class="poignee"></div>
+  <div class="mod-tit" id="mpt-tit">Nouveau pointage</div>
+  <div class="gch"><label>Date</label><input id="pt-date" type="date"/></div>
+  <div class="gch"><label>Chantier</label>
+    <input id="pt-chantier" list="pt-chantier-list" placeholder="Nom du chantier..." autocomplete="off"/>
+    <datalist id="pt-chantier-list"></datalist>
+  </div>
+  <div class="carte" style="margin-top:4px">
+    <div class="carte-ent"><div class="carte-tit">Employés</div></div>
+    <div id="pt-lignes"></div>
+    <div class="pt-add">
+      <input id="pt-new-emp" placeholder="Nom de l'employé..." onkeydown="if(event.key==='Enter')ajouterEmp()"/>
+      <button class="btn bp np" style="width:auto;padding:10px 14px" onclick="ajouterEmp()">+</button>
+    </div>
+  </div>
+  <div class="gch"><label>Notes générales</label><textarea id="pt-notes" placeholder="Observations..."></textarea></div>
+  <div class="rbtn np">
+    <button class="btn bs" onclick="fm('mpt')">Annuler</button>
+    <button class="btn bp" onclick="savPointage()">Enregistrer</button>
+  </div>
+  <button class="btn bd np" id="del-mpt" style="margin-top:10px;display:none" onclick="delPointage()">Supprimer ce pointage</button>
+</div></div>
+
+<!-- OVERLAY COMMANDES -->
+<div class="cmd-overlay" id="cmd-overlay">
+  <div class="cmd-header">
+    <div class="btn-ret" onclick="fermerCommandes()"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></div>
+    <div style="flex:1"><div class="tit-det">Commandes à passer</div><div style="font-size:11px;color:var(--tx3)">Besoins calculés automatiquement</div></div>
+    <button class="btn bp np" style="width:auto;padding:8px 14px;font-size:13px" onclick="exportCommandesPDF()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      PDF
+    </button>
+  </div>
+  <div class="cmd-body" id="cmd-body"></div>
+</div>
+
 </body>
 </html>
