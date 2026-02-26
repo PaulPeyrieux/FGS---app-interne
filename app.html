@@ -1188,396 +1188,282 @@ function exportCSV(){
 
 
 // ══════════════════════════════════════════════════════════════════
-// MODULE CHANTIER (Pointage + Livraisons)
+// MODULE POINTAGE
 // ══════════════════════════════════════════════════════════════════
 
-let SOUS_ONGLET = 'pointage'; // 'pointage' | 'livraison'
+let POINTAGES   = [];
+let PT_EDIT_ID  = null;
+let PT_LIGNES   = [];
 
-// ── Page unifiée ──────────────────────────────────────────────────
-function pgChantier() {
-  return `
-    <div class="ent">
-      <div>
-        <h1>Chantier</h1>
-        <div style="margin-top:3px">
-          <span class="role-badge role-${USER?.role||'chef'}">${USER?.role||'chef'}</span>
-          <span style="font-size:12px;color:var(--tx3);margin-left:6px">${USER?.nom||''}</span>
-        </div>
-      </div>
-    </div>
-    <div class="subnav">
-      <div class="sni ${SOUS_ONGLET==='pointage'?'on':''}" onclick="switchSousOnglet('pointage')">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:4px;vertical-align:-2px"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M9 16l2 2 4-4"/></svg>Pointage
-      </div>
-      <div class="sni ${SOUS_ONGLET==='livraison'?'on':''}" onclick="switchSousOnglet('livraison')">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:4px;vertical-align:-2px"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7V8z"/></svg>Livraisons
-      </div>
-    </div>
-    <div id="chantier-content"></div>`;
-}
-
-function switchSousOnglet(s) {
-  SOUS_ONGLET = s;
-  // Update tab styles
-  document.querySelectorAll('.sni').forEach((el,i) => {
-    el.classList.toggle('on', (i===0&&s==='pointage')||(i===1&&s==='livraison'));
-  });
-  renderSousOnglet();
-}
-
-async function initChantier() {
-  await Promise.all([chargerPointages(), chargerLC()]);
-  renderSousOnglet();
-}
-
-function renderSousOnglet() {
-  const el = document.getElementById('chantier-content');
-  if (!el) return;
-  if (SOUS_ONGLET === 'pointage') {
-    el.innerHTML = renderPointageContent();
-  } else {
-    el.innerHTML = renderLCContent();
+async function chargerPointages() {
+  const role   = USER?.role || 'chef';
+  const auteur = USER?.nom  || '';
+  const debut  = document.getElementById('pt-f-debut')?.value || '';
+  const fin    = document.getElementById('pt-f-fin')?.value   || '';
+  let url = `/api/pointages?role=${encodeURIComponent(role)}&auteur=${encodeURIComponent(auteur)}`;
+  if (debut && fin) url += `&debut=${debut}&fin=${fin}`;
+  try {
+    const r  = await fetch(url);
+    POINTAGES = await r.json();
+    if (POINTAGES.erreur) throw new Error(POINTAGES.erreur);
+    renderListePointages();
+  } catch(e) {
+    const el = document.getElementById('pt-liste');
+    if (el) el.innerHTML = `<div class="vide"><h3>Erreur</h3><p>${e.message}</p></div>`;
   }
 }
 
-function chantierFab() {
-  if (SOUS_ONGLET === 'pointage') nouveauPointage();
-  else nouvelleLivChantier();
-}
-
-// ══════════════════════════════════════════════════════════════════
-// POINTAGE
-// ══════════════════════════════════════════════════════════════════
-
-let POINTAGES = [];
-let PT_EDIT_ID = null;
-let PT_LIGNES = [];
-
-function renderPointageContent() {
-  const isAdmin = USER?.role === 'admin' || USER?.role === 'rh';
-  const filtreH = isAdmin ? `
-    <div class="filtre-bar" style="margin:12px 16px 0">
-      <input type="date" id="pt-f-debut" style="flex:1;min-width:120px" onchange="renderPointageListe()"/>
-      <span style="color:var(--tx3);font-size:13px;align-self:center">→</span>
-      <input type="date" id="pt-f-fin" style="flex:1;min-width:120px" onchange="renderPointageListe()"/>
-    </div>` : '';
-  const exports = isAdmin ? `
-    <div style="display:flex;gap:8px;padding:10px 16px 0">
-      <button class="btn bs np" style="flex:1;padding:9px;font-size:12px" onclick="exportExcelSemaine()">📅 Excel semaine</button>
-      <button class="btn bs np" style="flex:1;padding:9px;font-size:12px" onclick="exportExcelJour()">📄 Excel jour</button>
-    </div>` : '';
-  return `${filtreH}${exports}
-    <div id="pt-liste" style="padding:12px 16px;display:flex;flex-direction:column;gap:10px">
-      <div class="spin-c"><div class="spin"></div>Chargement...</div>
-    </div>
-    <div style="height:80px"></div>`;
-}
-
-
+// ── Rendu liste pointages ──────────────────────────────────────────
 function renderChantierPointage() {
+  const isAdmin = USER?.role === 'admin' || USER?.role === 'rh';
   const el = document.getElementById('chantier-content');
   if (!el) return;
-  const isAdmin = USER?.role === 'admin' || USER?.role === 'rh';
-  const canAll  = isAdmin;
-  const roleLbl = isAdmin ? 'admin' : USER?.role === 'rh' ? 'rh' : 'chef';
 
-  const filtreH = canAll ? `
+  const filtreH = isAdmin ? `
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
       <input type="date" id="pt-f-debut" style="flex:1;min-width:120px" onchange="chargerPointages()"/>
-      <span style="color:var(--tx3);font-size:13px">→</span>
+      <span style="color:var(--tx3);font-size:13px;align-self:center">→</span>
       <input type="date" id="pt-f-fin" style="flex:1;min-width:120px" onchange="chargerPointages()"/>
     </div>` : '';
 
   el.innerHTML = `
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-      <span class="role-badge role-${roleLbl}">${roleLbl}</span>
-      <span style="font-size:12px;color:var(--tx3)">${USER?.nom}</span>
-    </div>
     ${filtreH}
-    <div id="pt-liste"><div class="spin-c"><div class="spin"></div>Chargement...</div></div>`;
+    <div id="pt-liste"><div class="spin-c"><div class="spin"></div>Chargement...</div></div>
+    <div style="height:24px"></div>`;
   chargerPointages();
 }
-async function chargerPointages() {
-  const role   = USER?.role || 'chef';
-  const auteur = USER?.nom  || '';
-  try {
-    const r = await fetch(`/api/pointages?role=${encodeURIComponent(role)}&auteur=${encodeURIComponent(auteur)}`);
-    POINTAGES = await r.json();
-    if (POINTAGES.erreur) throw new Error(POINTAGES.erreur);
-    renderPointageListe();
-  } catch(e) { console.error('Pointages:', e); }
-}
 
-function renderPointageListe() {
+function renderListePointages() {
   const el = document.getElementById('pt-liste');
   if (!el) return;
-  const debut = document.getElementById('pt-f-debut')?.value || '';
-  const fin   = document.getElementById('pt-f-fin')?.value   || '';
-  let data = POINTAGES;
-  if (debut && fin) data = data.filter(p => p.date_jour >= debut && p.date_jour <= fin);
+  const isAdmin = USER?.role === 'admin' || USER?.role === 'rh';
 
-  if (!data.length) {
+  if (!POINTAGES.length) {
     el.innerHTML = `<div class="vide">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-      <h3>Aucun pointage</h3><p>Appuyez sur + pour saisir le pointage du jour.</p>
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M9 16l2 2 4-4"/></svg>
+      <h3>Aucun pointage</h3><p>Appuyez sur + pour créer un pointage.</p>
     </div>`;
     return;
   }
-  el.innerHTML = data.map(p => {
-    const nbEmp  = (p.lignes||[]).length;
-    const totalH = (p.lignes||[]).reduce((s,l)=>s+(parseFloat(l.heures)||0),0);
-    const nbGD   = (p.lignes||[]).filter(l=>l.gd).length;
-    const nbPan  = (p.lignes||[]).filter(l=>l.panier).length;
-    const dt = new Date(p.date_jour+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'2-digit',month:'short'});
-    return `<div class="hist-ptg" onclick="ouvrirPointage('${p.id}')">
-      <div class="hist-ptg-top">
-        <div>
-          <div class="hist-ptg-dt">${dt}</div>
-          <div class="hist-ptg-ch">📍 ${p.chantier}</div>
-          <div class="hist-ptg-info">par <b>${p.auteur}</b>
-            ${nbGD?` · <span style="color:var(--in);font-weight:600">${nbGD} GD</span>`:''}
-            ${nbPan?` · <span style="color:var(--wa);font-weight:600">${nbPan} 🍽️</span>`:''}
+
+  // Group by date
+  const parDate = {};
+  POINTAGES.forEach(p => {
+    const d = p.date_jour;
+    if (!parDate[d]) parDate[d] = [];
+    parDate[d].push(p);
+  });
+
+  el.innerHTML = Object.keys(parDate).sort().reverse().map(date => {
+    const dt = new Date(date + 'T12:00:00').toLocaleDateString('fr-FR', {weekday:'long', day:'2-digit', month:'long'});
+    return `<div class="lc-section-title">${dt}</div>` +
+      parDate[date].map(p => {
+        const lignes  = p.lignes || [];
+        const totalH  = lignes.reduce((s,l) => s + (parseFloat(l.heures)||0), 0);
+        const nbGD    = lignes.filter(l=>l.gd).length;
+        const nbPan   = lignes.filter(l=>l.panier).length;
+        return `<div class="lc-card" onclick="ouvrirPointage('${p.id}')">
+          <div class="lc-card-top">
+            <div>
+              <div style="font-weight:700;font-size:14px">📍 ${p.chantier}</div>
+              <div style="font-size:12px;color:var(--tx3);margin-top:3px">👤 ${p.auteur}</div>
+              <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
+                ${lignes.map(l=>`<span style="font-size:12px;background:var(--sur2);border:1px solid var(--brd);border-radius:6px;padding:2px 8px">${l.nom}</span>`).join('')}
+              </div>
+            </div>
+            <div style="text-align:right;flex-shrink:0">
+              <span class="lc-qty">${totalH.toLocaleString('fr-FR',{maximumFractionDigits:1})}</span>
+              <span class="lc-unit">h</span>
+              <div style="margin-top:6px;display:flex;gap:5px;justify-content:flex-end">
+                ${nbGD>0?`<span style="font-size:11px;background:var(--in-bg);color:var(--in);border:1px solid var(--in-b);border-radius:10px;padding:2px 7px">${nbGD} GD</span>`:''}
+                ${nbPan>0?`<span style="font-size:11px;background:var(--wa-bg);color:var(--wa);border:1px solid var(--wa-b);border-radius:10px;padding:2px 7px">${nbPan} 🍽</span>`:''}
+              </div>
+            </div>
           </div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-size:24px;font-weight:700;font-family:var(--mo);color:var(--acc);line-height:1">${totalH}h</div>
-          <div style="font-size:11px;color:var(--tx3);margin-top:2px">${nbEmp} pers.</div>
-        </div>
-      </div>
-      <div style="display:flex;gap:6px;margin-top:10px">
-        <button class="btn bb np" style="flex:1;padding:7px;font-size:12px" onclick="event.stopPropagation();printPointagePDF('${p.id}')">🖨️ PDF</button>
-        <button class="btn bs np" style="flex:1;padding:7px;font-size:12px" onclick="event.stopPropagation();exportPointageExcelJour('${p.id}')">📊 Excel</button>
-      </div>
-    </div>`;
+        </div>`;
+      }).join('');
   }).join('');
 }
 
-function ouvrirPointage(id) {
-  const p = POINTAGES.find(x => String(x.id) === String(id));
-  if (!p) return;
-  PT_EDIT_ID = p.id;
-  PT_LIGNES = JSON.parse(JSON.stringify(p.lignes||[]));
-  document.getElementById('mpt-tit').textContent = 'Modifier le pointage';
-  document.getElementById('del-mpt').style.display = 'flex';
-  document.getElementById('pt-date').value = p.date_jour;
-  fillPtChantier(p.chantier);
-  document.getElementById('pt-notes').value = p.notes||'';
-  renderLignes();
-  om('mpt');
-}
-
+// ── Modal nouveau / édition pointage ──────────────────────────────
 function nouveauPointage() {
   PT_EDIT_ID = null;
   document.getElementById('mpt-tit').textContent = 'Nouveau pointage';
   document.getElementById('del-mpt').style.display = 'none';
   document.getElementById('pt-date').value = new Date().toISOString().split('T')[0];
   document.getElementById('pt-notes').value = '';
-  document.getElementById('pt-new-emp').value = '';
-  const dernierPtg = POINTAGES.find(p => p.auteur === USER?.nom);
-  if (dernierPtg?.lignes?.length) {
-    PT_LIGNES = dernierPtg.lignes.map(l=>({nom:l.nom,heures:8,gd:false,panier:false,notes:''}));
-    fillPtChantier(dernierPtg.chantier);
+
+  // Autocomplete chantiers
+  const chantiersPasses = [...new Set([
+    ...POINTAGES.map(p=>p.chantier),
+    ...LC_DATA.map(l=>l.chantier),
+  ].filter(Boolean))];
+  const dl = document.getElementById('pt-chantier-list');
+  if (dl) dl.innerHTML = chantiersPasses.map(c=>`<option value="${c}"/>`).join('');
+
+  // Préremplir employés du dernier pointage de cet auteur
+  const dernier = POINTAGES.find(p => p.auteur === USER?.nom);
+  if (dernier?.lignes?.length) {
+    PT_LIGNES = dernier.lignes.map(l => ({nom:l.nom, heures:8, gd:false, panier:false}));
+    document.getElementById('pt-chantier').value = dernier.chantier || '';
   } else {
     PT_LIGNES = [];
-    fillPtChantier();
+    document.getElementById('pt-chantier').value = '';
   }
-  renderLignes();
+  renderPtLignes();
   om('mpt');
 }
 
-function fillPtChantier(sel) {
-  const chantiersPasses = [...new Set([...POINTAGES.map(p=>p.chantier),...LC_DATA.map(l=>l.chantier)].filter(Boolean))];
-  const dl = document.getElementById('pt-chantier-list');
-  if (dl) dl.innerHTML = chantiersPasses.map(c=>`<option value="${c}"/>`).join('');
-  const inp = document.getElementById('pt-chantier');
-  if (inp) inp.value = sel||'';
+function ouvrirPointage(id) {
+  const p = POINTAGES.find(x => String(x.id) === String(id));
+  if (!p) return;
+  PT_EDIT_ID = p.id;
+  document.getElementById('mpt-tit').textContent = 'Modifier pointage';
+  document.getElementById('del-mpt').style.display = 'flex';
+  document.getElementById('pt-date').value    = p.date_jour;
+  document.getElementById('pt-chantier').value= p.chantier;
+  document.getElementById('pt-notes').value   = p.notes || '';
+  PT_LIGNES = (p.lignes||[]).map(l => ({...l}));
+  renderPtLignes();
+  om('mpt');
 }
 
-function renderLignes() {
+function renderPtLignes() {
   const el = document.getElementById('pt-lignes');
   if (!el) return;
   if (!PT_LIGNES.length) {
-    el.innerHTML = '<div style="color:var(--tx3);font-size:13px;padding:10px 0;text-align:center">Aucun employé — ajoutez-en ci-dessous</div>';
+    el.innerHTML = `<div style="color:var(--tx3);font-size:13px;text-align:center;padding:12px">Aucun employé — appuyez sur + pour en ajouter</div>`;
     return;
   }
   el.innerHTML = PT_LIGNES.map((l,i) => `
     <div class="pt-row">
-      <div class="pt-nom" style="font-size:14px;font-weight:600">${l.nom}</div>
-      <input class="pt-h" type="number" min="0" max="24" step="0.5" value="${l.heures||0}"
-        style="text-align:center;font-weight:700;font-size:15px"
-        onchange="PT_LIGNES[${i}].heures=parseFloat(this.value)||0"/>
-      <div class="pt-toggle ${l.gd?'on':''}" title="Grand déplacement" onclick="tglGD(${i})">🏕️</div>
-      <div class="pt-toggle pan ${l.panier?'on':''}" title="Panier repas" onclick="tglPanier(${i})">🍽️</div>
-      <div class="ico-btn" style="width:30px;height:30px;flex-shrink:0" onclick="suppEmp(${i})">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--da)" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </div>
+      <input class="pt-nom" value="${l.nom||''}" placeholder="Nom" oninput="PT_LIGNES[${i}].nom=this.value"/>
+      <input class="pt-h" type="number" min="0" max="24" step="0.5" value="${l.heures??8}" oninput="PT_LIGNES[${i}].heures=parseFloat(this.value)||0"/>
+      <button class="pt-toggle ${l.gd?'on':''}" onclick="PT_LIGNES[${i}].gd=!PT_LIGNES[${i}].gd;renderPtLignes()" title="Grand déplacement">🏕</button>
+      <button class="pt-toggle pan ${l.panier?'on':''}" onclick="PT_LIGNES[${i}].panier=!PT_LIGNES[${i}].panier;renderPtLignes()" title="Panier repas">🍽</button>
+      <button style="width:30px;height:30px;border:none;background:none;cursor:pointer;color:var(--da);font-size:18px;line-height:1" onclick="PT_LIGNES.splice(${i},1);renderPtLignes()">×</button>
     </div>`).join('');
 }
 
-function tglGD(i)     { PT_LIGNES[i].gd     = !PT_LIGNES[i].gd;     renderLignes(); }
-function tglPanier(i) { PT_LIGNES[i].panier = !PT_LIGNES[i].panier; renderLignes(); }
-function suppEmp(i)   { PT_LIGNES.splice(i,1); renderLignes(); }
-
 function ajouterEmp() {
   const inp = document.getElementById('pt-new-emp');
-  const nom = inp.value.trim();
-  if (!nom) return;
-  PT_LIGNES.push({nom,heures:8,gd:false,panier:false,notes:''});
-  inp.value = '';
-  renderLignes();
-  inp.focus();
+  const nom = inp?.value.trim();
+  if (!nom) { toast('Saisissez un prénom'); return; }
+  PT_LIGNES.push({nom, heures:8, gd:false, panier:false});
+  if (inp) inp.value = '';
+  renderPtLignes();
 }
 
 async function savPointage() {
-  const date = document.getElementById('pt-date').value;
-  if (!date) { toast('La date est obligatoire'); return; }
-  if (!PT_LIGNES.length) { toast('Ajoutez au moins un employé'); return; }
-  const chantier = document.getElementById('pt-chantier').value;
+  const date     = document.getElementById('pt-date').value;
+  const chantier = document.getElementById('pt-chantier').value.trim();
+  if (!date || !chantier) { toast('Date et chantier obligatoires'); return; }
+  if (!PT_LIGNES.length)  { toast('Ajoutez au moins un employé'); return; }
   const payload = {
-    id: PT_EDIT_ID||null, date_jour:date, chantier,
-    auteur:USER?.nom||'', role_auteur:USER?.role||'chef',
-    lignes:PT_LIGNES, notes:document.getElementById('pt-notes').value.trim(),
+    id:       PT_EDIT_ID || null,
+    date_jour:date, chantier,
+    auteur:   USER?.nom  || '',
+    role_auteur: USER?.role || 'chef',
+    lignes:   PT_LIGNES,
+    notes:    document.getElementById('pt-notes').value.trim(),
   };
   try {
-    const r = await fetch('/api/pointages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const r = await fetch('/api/pointages', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload),
+    });
     const d = await r.json();
-    if (d.ok) { toast(PT_EDIT_ID?'Pointage mis à jour ✓':'Pointage enregistré ✓'); fm('mpt'); await chargerPointages(); renderSousOnglet(); }
-    else toast('Erreur : '+(d.erreur||'inconnue'));
+    if (d.ok) {
+      toast(PT_EDIT_ID ? 'Pointage mis à jour ✓' : 'Pointage enregistré ✓');
+      fm('mpt');
+      await chargerPointages();
+    } else toast('Erreur : ' + (d.erreur||'inconnue'));
   } catch(e) { toast('Erreur réseau'); }
 }
 
 async function delPointage() {
   if (!confirm('Supprimer ce pointage ?')) return;
   try {
-    await fetch(`/api/pointages/${PT_EDIT_ID}?role=${encodeURIComponent(USER?.role||'chef')}&auteur=${encodeURIComponent(USER?.nom||'')}`,{method:'DELETE'});
-    toast('Pointage supprimé'); fm('mpt'); await chargerPointages(); renderSousOnglet();
+    await fetch(`/api/pointages/${PT_EDIT_ID}?role=${encodeURIComponent(USER?.role||'chef')}&auteur=${encodeURIComponent(USER?.nom||'')}`, {method:'DELETE'});
+    toast('Pointage supprimé');
+    fm('mpt');
+    await chargerPointages();
   } catch(e) { toast('Erreur'); }
 }
 
-// ── PDF pointage ──────────────────────────────────────────────────
-function printPointagePDF(id) {
-  const p = POINTAGES.find(x=>String(x.id)===String(id));
-  if (!p) return;
-  const dt = new Date(p.date_jour+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
-  const totalH = (p.lignes||[]).reduce((s,l)=>s+(parseFloat(l.heures)||0),0);
-  const rows = (p.lignes||[]).map(l=>`<tr>
-    <td style="font-weight:600">${l.nom}</td>
-    <td style="text-align:center;font-weight:700;font-size:15px">${l.heures||0}h</td>
-    <td style="text-align:center">${l.gd?'<span style="color:#7C3AED;font-weight:700">✓ Oui</span>':'<span style="color:#ccc">Non</span>'}</td>
-    <td style="text-align:center">${l.panier?'<span style="color:#D97706;font-weight:700">✓ Oui</span>':'<span style="color:#ccc">Non</span>'}</td>
-  </tr>`).join('');
-  const w = window.open('','_blank');
-  w.document.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Pointage ${p.chantier}</title>
-<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;padding:20px;font-size:13px}
-.cart{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border:2px solid #C0392B;border-radius:10px;margin-bottom:18px;background:#FEF5F4}
-.cart img{height:44px;object-fit:contain}
-.cart h1{font-size:18px;font-weight:700;color:#C0392B;text-align:center}
-.cart p{font-size:12px;color:#666;text-align:center;margin-top:2px}
-.cart-r{text-align:right;font-size:11px;color:#555;line-height:1.8}
-table{width:100%;border-collapse:collapse;margin-top:14px}
-th{background:#f3f4f6;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;color:#666;border:1px solid #e5e7eb}
-td{padding:9px 10px;border:1px solid #e5e7eb}tr:nth-child(even){background:#fafafa}
-.tot{margin-top:12px;display:flex;gap:12px}
-.tot-box{flex:1;padding:10px;border-radius:8px;text-align:center;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
-.tot-box .n{font-size:20px;font-weight:700;display:block;margin-bottom:3px}
-.sign{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:20px}
-.sbox{border:1px solid #d1d5db;border-radius:6px;padding:12px;height:70px}
-.slbl{font-size:10px;font-weight:700;color:#666;margin-bottom:6px;text-transform:uppercase}
-</style></head><body>
-<div class="cart">
-  <img src="${LOGO}" alt="FGS"/>
-  <div><h1>Feuille de pointage</h1><p>${p.chantier} — ${dt}</p></div>
-  <div class="cart-r"><div><b>Saisi par :</b> ${p.auteur}</div><div><b>Le :</b> ${new Date().toLocaleDateString('fr-FR')}</div></div>
-</div>
-<table>
-  <tr><th>Employé</th><th style="width:80px;text-align:center">Heures</th><th style="width:100px;text-align:center">Grand dépl.</th><th style="width:100px;text-align:center">Panier</th></tr>
-  ${rows}
-  <tr style="background:#f9fafb;font-weight:700"><td>TOTAL</td><td style="text-align:center;font-size:15px;color:#C0392B">${totalH}h</td><td style="text-align:center">${(p.lignes||[]).filter(l=>l.gd).length}</td><td style="text-align:center">${(p.lignes||[]).filter(l=>l.panier).length}</td></tr>
-</table>
-<div class="tot">
-  <div class="tot-box" style="background:#FEF2F2"><span class="n" style="color:#C0392B">${totalH}h</span>Total heures</div>
-  <div class="tot-box" style="background:#F5F3FF"><span class="n" style="color:#7C3AED">${(p.lignes||[]).filter(l=>l.gd).length}</span>Grands dépl.</div>
-  <div class="tot-box" style="background:#FFFBEB"><span class="n" style="color:#D97706">${(p.lignes||[]).filter(l=>l.panier).length}</span>Paniers repas</div>
-</div>
-${p.notes?`<div style="margin-top:14px;padding:10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;font-size:12px"><b>Notes :</b> ${p.notes}</div>`:''}
-<div class="sign">
-  <div><div class="slbl">Signature chef de chantier</div><div class="sbox"></div></div>
-  <div><div class="slbl">Signature RH</div><div class="sbox"></div></div>
-</div>
-<\/body><\/html>`);
-  w.document.close(); w.focus(); setTimeout(()=>w.print(),400);
-}
-
-function exportPointageExcelJour(id) {
-  const p = POINTAGES.find(x=>String(x.id)===String(id));
-  if (!p) return;
-  genererExcelJour([p],`pointage-${p.date_jour}-${p.chantier}`);
-}
-
+// ── Exports Excel pointage (admin uniquement) ─────────────────────
 function exportExcelJour() {
-  if (!POINTAGES.length) { toast('Aucun pointage'); return; }
-  genererExcelJour(POINTAGES,'pointages-jour');
-}
-
-function genererExcelJour(pts,nomFichier) {
-  const sep=';';
-  const lignes=[
-    ['FGS Travaux Spéciaux — Pointage journalier'],
-    [`Exporté le ${new Date().toLocaleDateString('fr-FR')}`],[],
-    ['Date','Chantier','Saisi par','Employé','Heures','Grand déplacement','Panier repas'],
-  ];
-  pts.forEach(p=>{
-    const dt=new Date(p.date_jour+'T12:00:00').toLocaleDateString('fr-FR');
-    (p.lignes||[]).forEach(l=>lignes.push([dt,p.chantier,p.auteur,l.nom,l.heures||0,l.gd?'Oui':'Non',l.panier?'Oui':'Non']));
-    const tH=(p.lignes||[]).reduce((s,l)=>s+(parseFloat(l.heures)||0),0);
-    lignes.push([dt,p.chantier,'','TOTAL',tH,(p.lignes||[]).filter(l=>l.gd).length+' GD',(p.lignes||[]).filter(l=>l.panier).length+' paniers']);
+  if (USER?.role !== 'admin' && USER?.role !== 'rh') return;
+  const sep = ';';
+  const lignes = [['Date','Chantier','Saisi par','Employé','Heures','Grand déplacement','Panier repas']];
+  POINTAGES.forEach(p => {
+    const dt = new Date(p.date_jour+'T12:00:00').toLocaleDateString('fr-FR');
+    (p.lignes||[]).forEach(l => {
+      lignes.push([dt, p.chantier, p.auteur, l.nom, l.heures||0, l.gd?'Oui':'Non', l.panier?'Oui':'Non']);
+    });
+    const totalH = (p.lignes||[]).reduce((s,l)=>s+(parseFloat(l.heures)||0),0);
+    lignes.push([dt, p.chantier, '', 'TOTAL', totalH,
+      (p.lignes||[]).filter(l=>l.gd).length+' GD',
+      (p.lignes||[]).filter(l=>l.panier).length+' paniers']);
     lignes.push([]);
   });
-  const csv='\uFEFF'+lignes.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(sep)).join('\n');
-  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download=nomFichier+'.csv';a.click();
+  const csv = '\uFEFF' + lignes.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(sep)).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = `pointage-jour-${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
   toast('Export Excel ✓');
 }
 
 function exportExcelSemaine() {
-  if (!POINTAGES.length) { toast('Aucun pointage'); return; }
-  const semaines={};
-  POINTAGES.forEach(p=>{
-    const d=new Date(p.date_jour+'T12:00:00');
-    const lundi=new Date(d);lundi.setDate(d.getDate()-((d.getDay()+6)%7));
-    const k=lundi.toISOString().split('T')[0];
-    if(!semaines[k])semaines[k]=[];semaines[k].push(p);
+  if (USER?.role !== 'admin' && USER?.role !== 'rh') return;
+  const sep = ';';
+  // Group by week
+  const semMap = {};
+  POINTAGES.forEach(p => {
+    const d   = new Date(p.date_jour + 'T12:00:00');
+    const day = (d.getDay()+6)%7;
+    const lun = new Date(d); lun.setDate(d.getDate()-day);
+    const wk  = lun.toISOString().split('T')[0];
+    if (!semMap[wk]) semMap[wk] = [];
+    semMap[wk].push(p);
   });
-  const sep=';';
-  const lignes=[['FGS Travaux Spéciaux — Pointage hebdomadaire'],[`Exporté le ${new Date().toLocaleDateString('fr-FR')}`],[]];
-  Object.keys(semaines).sort().reverse().forEach(k=>{
-    const pts=semaines[k];
-    const fin=new Date(k);fin.setDate(fin.getDate()+6);
-    lignes.push([`Semaine du ${new Date(k).toLocaleDateString('fr-FR')} au ${fin.toLocaleDateString('fr-FR')}`]);
-    lignes.push(['Employé','Chantier','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche','Total h','Jours GD','Paniers']);
-    const emp={};
-    pts.forEach(p=>{
-      const j=(new Date(p.date_jour+'T12:00:00').getDay()+6)%7;
-      (p.lignes||[]).forEach(l=>{
-        const key=l.nom+'||'+p.chantier;
-        if(!emp[key])emp[key]={nom:l.nom,chantier:p.chantier,jours:Array(7).fill(''),gd:0,panier:0,total:0};
-        emp[key].jours[j]=l.heures||0;emp[key].total+=parseFloat(l.heures)||0;
-        if(l.gd)emp[key].gd++;if(l.panier)emp[key].panier++;
+  const jours = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+  const lignes = [['Semaine','Employé','Chantier','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche','Total h','GD','Paniers']];
+  Object.keys(semMap).sort().reverse().forEach(wk => {
+    const ptgs = semMap[wk];
+    const lun  = new Date(wk+'T12:00:00');
+    const dim  = new Date(lun); dim.setDate(lun.getDate()+6);
+    const lblW = `${lun.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})} - ${dim.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})}`;
+    // Aggregate by employee+chantier
+    const empMap = {};
+    ptgs.forEach(p => {
+      const d   = new Date(p.date_jour+'T12:00:00');
+      const dow = (d.getDay()+6)%7;
+      (p.lignes||[]).forEach(l => {
+        const k = `${l.nom}||${p.chantier}`;
+        if (!empMap[k]) empMap[k] = {nom:l.nom, chantier:p.chantier, h:[0,0,0,0,0,0,0], gd:0, pan:0};
+        empMap[k].h[dow] += parseFloat(l.heures)||0;
+        if (l.gd)     empMap[k].gd++;
+        if (l.panier) empMap[k].pan++;
       });
     });
-    Object.values(emp).forEach(e=>lignes.push([e.nom,e.chantier,...e.jours,e.total,e.gd,e.panier]));
-    const tH=Object.values(emp).reduce((s,e)=>s+e.total,0);
-    const tG=Object.values(emp).reduce((s,e)=>s+e.gd,0);
-    const tP=Object.values(emp).reduce((s,e)=>s+e.panier,0);
-    lignes.push(['TOTAL SEMAINE','','','','','','','','',tH,tG,tP]);
+    Object.values(empMap).forEach(e => {
+      const tot = e.h.reduce((s,v)=>s+v,0);
+      lignes.push([lblW, e.nom, e.chantier, ...e.h, tot, e.gd, e.pan]);
+    });
     lignes.push([]);
   });
-  const csv='\uFEFF'+lignes.map(r=>r.map(v=>`"${String(v===''?'':v).replace(/"/g,'""')}"`).join(sep)).join('\n');
-  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='pointages-semaine.csv';a.click();
+  const csv = '\uFEFF' + lignes.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(sep)).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = `pointage-semaine-${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
   toast('Export semaine ✓');
 }
 
-// ══════════════════════════════════════════════════════════════════
-// MODULE CHANTIER (Pointage + Livraisons)
+
+
 // ══════════════════════════════════════════════════════════════════
 
 let CHANTIER_TAB = 'pointage'; // 'pointage' | 'livraisons'
@@ -1631,14 +1517,21 @@ function updateChantierActions() {
   const el = document.getElementById('chantier-act');
   if (!el) return;
   const isAdmin = USER?.role === 'admin' || USER?.role === 'rh';
-  if (CHANTIER_TAB === 'livraisons' && isAdmin) {
+  if (!isAdmin) { el.innerHTML = ''; return; }
+  if (CHANTIER_TAB === 'livraisons') {
     el.innerHTML = `
-      <div class="ico-btn" onclick="exportLCExcel()" title="Export Excel">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>
+      <div class="ico-btn" onclick="exportLCExcel()" title="Export Excel livraisons">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
       </div>`;
-  } else {
-    el.innerHTML = '';
-  }
+  } else if (CHANTIER_TAB === 'pointage') {
+    el.innerHTML = `
+      <div class="ico-btn" onclick="exportExcelJour()" title="Export jour">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      </div>
+      <div class="ico-btn" onclick="exportExcelSemaine()" title="Export semaine">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/></svg>
+      </div>`;
+  } else { el.innerHTML = ''; }
 }
 
 function chantierFab() {
@@ -1747,86 +1640,138 @@ function getSemaines(data) {
 function renderAdminChantierDetail(chantier) {
   const el = document.getElementById('adm-chantier-detail');
   if (!el) return;
-  const dataChantier = LC_DATA.filter(l => l.chantier === chantier);
 
-  // Semaines disponibles
-  const semaines = getSemaines(dataChantier);
-  const semChips = [['', 'Tout']].concat(semaines.map(([k,d]) => {
-    const fin = new Date(d); fin.setDate(d.getDate()+6);
+  const dataChantier = LC_DATA.filter(l => l.chantier === chantier);
+  const ptgChantier  = POINTAGES.filter(p => p.chantier === chantier);
+
+  // ── Semaines dispo (livraisons + pointages) ────────────────────
+  const allForSem = [
+    ...dataChantier.map(l => ({date_liv: l.date_liv})),
+    ...ptgChantier.map(p => ({date_liv: p.date_jour})),
+  ];
+  const semaines = getSemaines(allForSem);
+  const semChips = [['','Tout']].concat(semaines.map(([k,d]) => {
     const lbl = `S${getWeekNum(d)} — ${d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})}`;
-    return [k, lbl];
+    return [k,lbl];
   })).map(([k,lbl]) =>
     `<div class="sem-chip ${LC_SEM_SEL===k?'on':''}" onclick="selSemaine('${k}')">${lbl}</div>`
   ).join('');
 
-  // Filtrer par semaine si sélectionnée
+  // ── Filtrer par semaine ────────────────────────────────────────
   let dataFilt = dataChantier;
+  let ptgFilt  = ptgChantier;
   if (LC_SEM_SEL) {
-    const d = new Date(LC_SEM_SEL + 'T12:00:00');
-    const fin = new Date(d); fin.setDate(d.getDate()+6);
-    const finStr = fin.toISOString().split('T')[0];
+    const dStart = new Date(LC_SEM_SEL+'T12:00:00');
+    const dEnd   = new Date(dStart); dEnd.setDate(dStart.getDate()+6);
+    const finStr = dEnd.toISOString().split('T')[0];
     dataFilt = dataChantier.filter(l => l.date_liv >= LC_SEM_SEL && l.date_liv <= finStr);
+    ptgFilt  = ptgChantier.filter(p => p.date_jour >= LC_SEM_SEL && p.date_jour <= finStr);
   }
 
-  // Agréger par élément
+  // ── Heures main d'œuvre ────────────────────────────────────────
+  const totalH    = ptgFilt.reduce((s,p) => s+(p.lignes||[]).reduce((ss,l)=>ss+(parseFloat(l.heures)||0),0), 0);
+  const nbGD      = ptgFilt.reduce((s,p) => s+(p.lignes||[]).filter(l=>l.gd).length, 0);
+  const nbPaniers = ptgFilt.reduce((s,p) => s+(p.lignes||[]).filter(l=>l.panier).length, 0);
+  const nbPresences = ptgFilt.reduce((s,p) => s+(p.lignes||[]).length, 0);
+  const coutH     = getPrix(chantier, '__heures__');
+  const coutMO    = coutH ? totalH * coutH : null;
+
+  // ── Matériaux ──────────────────────────────────────────────────
   const agg = {};
   dataFilt.forEach(l => {
-    const key = l.element;
-    if (!agg[key]) agg[key] = { element:l.element, unite:l.unite, qte:0, nb:0 };
-    agg[key].qte += l.quantite;
-    agg[key].nb++;
+    if (!agg[l.element]) agg[l.element] = {element:l.element, unite:l.unite, qte:0, nb:0};
+    agg[l.element].qte += l.quantite;
+    agg[l.element].nb++;
   });
 
-  // Calcul total
-  let totalGeneral = 0;
-  let allPriced = Object.keys(agg).length > 0;
+  let totalMat = 0;
   Object.values(agg).forEach(v => {
-    const prix = getPrix(chantier, v.element);
-    if (prix) totalGeneral += v.qte * prix;
-    else allPriced = false;
+    const p = getPrix(chantier, v.element);
+    if (p) totalMat += v.qte * p;
   });
 
+  const totalGen = (coutMO||0) + totalMat;
+  const semLabel = LC_SEM_SEL ? ` · ${getSemLabel(LC_SEM_SEL)}` : '';
+
+  // ── Matériaux rows ─────────────────────────────────────────────
   const matRows = Object.values(agg).map(v => {
     const prix  = getPrix(chantier, v.element);
     const total = prix ? v.qte * prix : null;
     return `<div class="mat-row">
-      <div class="mat-info">
-        ${lcBadge(v.element)}
-        <div class="mat-qty">${v.qte.toLocaleString('fr-FR',{maximumFractionDigits:2})} ${v.unite} · ${v.nb} livraison${v.nb>1?'s':''}</div>
+      <div class="mat-info">${lcBadge(v.element)}
+        <div class="mat-qty">${v.qte.toLocaleString('fr-FR',{maximumFractionDigits:2})} ${v.unite}</div>
       </div>
       <div class="mat-prix-wrap">
         <input class="mat-prix-inp" type="number" step="0.01" min="0"
-          value="${prix||''}" placeholder="Prix"
-          title="Prix €/${v.unite}"
-          onchange="savePrixRef('${chantier.replace(/'/g,"\'")}','${v.element}',this.value)"/>
+          value="${prix||''}" placeholder="€"
+          onchange="savePrixRef('${chantier.replace(/'/g,"\\'")}','${v.element}',this.value)"/>
         <span style="font-size:11px;color:var(--tx3)">€/${v.unite}</span>
       </div>
-      <div class="mat-total ${total?'':'vide'}">${total ? total.toLocaleString('fr-FR',{style:'currency',currency:'EUR'}) : '—'}</div>
+      <div class="mat-total ${total?'':'empty'}">${total?total.toLocaleString('fr-FR',{style:'currency',currency:'EUR'}):'—'}</div>
     </div>`;
   }).join('');
 
   el.innerHTML = `
     <div class="semaine-selector">${semChips}</div>
-    ${Object.keys(agg).length === 0 ? `
-      <div class="vide">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7V8z"/></svg>
-        <h3>Aucune livraison${LC_SEM_SEL?' cette semaine':''}</h3>
-        <p>Sélectionnez une autre semaine ou demandez aux chefs de saisir les livraisons.</p>
-      </div>` : `
-    <div class="cout-total">
-      <div class="cout-total-lbl">Total dépenses — ${chantier}${LC_SEM_SEL?' · '+getSemLabel(LC_SEM_SEL):''}</div>
-      <div class="cout-total-val">${totalGeneral>0 ? totalGeneral.toLocaleString('fr-FR',{style:'currency',currency:'EUR'}) : '—'}</div>
-      <div class="cout-total-sub">${allPriced && totalGeneral>0 ? 'Tous les prix renseignés' : 'Renseignez les prix unitaires ci-dessous'}</div>
+
+    <!-- TOTAL CHANTIER -->
+    <div class="carte" style="margin-bottom:12px;border-left:3px solid var(--acc)">
+      <div class="carte-tit" style="margin-bottom:14px;font-size:15px">💰 Total chantier${semLabel}</div>
+
+      <div style="padding:10px 0;border-bottom:1px solid var(--brd);display:flex;justify-content:space-between;align-items:center;gap:12px">
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--tx)">⏱ Main d'œuvre</div>
+          <div style="font-size:12px;color:var(--tx3);margin-top:2px">
+            ${totalH.toLocaleString('fr-FR',{maximumFractionDigits:1})} h
+            · ${nbPresences} présence${nbPresences>1?'s':''}
+            ${nbGD>0?` · <span style="color:var(--in)">${nbGD} GD</span>`:''}
+            ${nbPaniers>0?` · <span style="color:var(--wa)">${nbPaniers} panier${nbPaniers>1?'s':''}</span>`:''}
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+          <input class="mat-prix-inp" type="number" step="0.01" min="0"
+            value="${coutH||''}" placeholder="€/h"
+            title="Coût horaire moyen"
+            onchange="savePrixRef('${chantier.replace(/'/g,"\\'")}','__heures__',this.value)"/>
+          <span style="font-size:11px;color:var(--tx3)">€/h</span>
+          <div style="font-weight:700;min-width:70px;text-align:right;font-family:var(--mo);color:${coutMO?'var(--ok)':'var(--tx3)'}">
+            ${coutMO?coutMO.toLocaleString('fr-FR',{style:'currency',currency:'EUR'}):'—'}
+          </div>
+        </div>
+      </div>
+
+      <div style="padding:10px 0;border-bottom:1px solid var(--brd);display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:13px;font-weight:600;color:var(--tx)">📦 Matériaux</div>
+        <div style="font-weight:700;font-family:var(--mo);color:${totalMat?'var(--ok)':'var(--tx3)'}">
+          ${totalMat?totalMat.toLocaleString('fr-FR',{style:'currency',currency:'EUR'}):'—'}
+        </div>
+      </div>
+
+      <div style="padding:12px 0 2px;display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:14px;font-weight:700;color:var(--acc)">Total général</div>
+        <div style="font-size:20px;font-weight:700;font-family:var(--mo);color:var(--acc)">
+          ${totalGen>0?totalGen.toLocaleString('fr-FR',{style:'currency',currency:'EUR'}):'—'}
+        </div>
+      </div>
     </div>
-    <div class="carte">
-      <div class="carte-ent"><div class="carte-tit">Matériaux</div><div class="carte-sub">${dataFilt.length} livraison${dataFilt.length>1?'s':''}</div></div>
+
+    <!-- MATÉRIAUX DÉTAIL -->
+    ${Object.keys(agg).length > 0 ? `
+    <div class="carte" style="margin-bottom:12px">
+      <div class="carte-ent">
+        <div class="carte-tit">📦 Matériaux</div>
+        <div class="carte-sub">${dataFilt.length} livraison${dataFilt.length>1?'s':''}</div>
+      </div>
       <div style="padding:0 14px 8px">${matRows}</div>
-    </div>
+    </div>` : (!ptgFilt.length && !dataFilt.length) ? `
+    <div class="vide"><h3>Aucune donnée${LC_SEM_SEL?' cette semaine':''}</h3></div>` : ''}
+
     <button class="btn bs np" style="margin-top:4px" onclick="exportLCExcel()">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline;margin-right:6px;vertical-align:middle"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-      Exporter Excel${LC_SEM_SEL?' (semaine)':' (tout le chantier)'}
-    </button>`}`;
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline;margin-right:6px;vertical-align:-2px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Exporter Excel${LC_SEM_SEL?' (semaine)':' (tout)'}
+    </button>`;
 }
+
 
 function getSemLabel(k) {
   if (!k) return '';
@@ -1846,7 +1791,7 @@ function selSemaine(k) {
 
 // ── VUE CHEF : liste de ses livraisons ───────────────────────────
 function renderChefLivraisons(container) {
-  const data = LC_DATA; // already filtered to auteur server-side
+  const data = LC_DATA;
   if (!data.length) {
     container.innerHTML = `<div class="vide">
       <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7V8z"/></svg>
@@ -1855,49 +1800,26 @@ function renderChefLivraisons(container) {
     return;
   }
   const parDate = {};
-  data.forEach(l => { if(!parDate[l.date_liv]) parDate[l.date_liv]=[]; parDate[l.date_liv].push(l); });
-
+  data.forEach(l => { if (!parDate[l.date_liv]) parDate[l.date_liv]=[]; parDate[l.date_liv].push(l); });
   container.innerHTML = Object.keys(parDate).sort().reverse().map(date => {
-    const dt = new Date(date+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'2-digit',month:'long'});
+    const dt = new Date(date+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'2-digit',month:'short'});
     return `<div class="lc-section-title">${dt}</div>` +
-      parDate[date].map(l => {
-        return `<div class="lc-card" onclick="ouvrirLC('${l.id}')">
-          <div class="lc-card-top">
-            <div>
-              ${lcBadge(l.element)}
-              <div style="font-size:13px;color:var(--tx2);margin-top:5px">📍 ${l.chantier}</div>
-              ${l.notes?`<div style="font-size:12px;color:var(--tx3);margin-top:2px;font-style:italic">${l.notes}</div>`:''}
-            </div>
-            <div style="text-align:right">
-              <span class="lc-qty">${l.quantite.toLocaleString('fr-FR',{maximumFractionDigits:2})}</span>
-              <span class="lc-unit">${l.unite}</span>
-            </div>
+      parDate[date].map(l => `<div class="lc-card" onclick="ouvrirLC('${l.id}')">
+        <div class="lc-card-top">
+          <div>
+            ${lcBadge(l.element)}
+            <div style="font-size:13px;color:var(--tx2);margin-top:5px">📍 ${l.chantier}</div>
+            ${l.notes?`<div style="font-size:12px;color:var(--tx3);margin-top:2px;font-style:italic">${l.notes}</div>`:''}
           </div>
-        </div>`;
-      }).join('');
-  }).join('');
+          <div style="text-align:right">
+            <span class="lc-qty">${l.quantite.toLocaleString('fr-FR',{maximumFractionDigits:2})}</span>
+            <span class="lc-unit">${l.unite}</span>
+          </div>
+        </div>
+      </div>`).join('');
+  }).join('') + '<div style="height:24px"></div>';
 }
 
-// ── Prix référence ────────────────────────────────────────────────
-async function savePrixRef(chantier, element, val) {
-  const prix = val === '' ? 0 : parseFloat(val);
-  try {
-    const r = await fetch('/api/prix_reference', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({chantier, element, prix_unitaire: prix}),
-    });
-    const d = await r.json();
-    if (d.ok) {
-      const idx = PRIX_REF.findIndex(p => p.chantier===chantier && p.element===element);
-      if (idx >= 0) PRIX_REF[idx].prix_unitaire = prix;
-      else PRIX_REF.push({chantier, element, prix_unitaire: prix});
-      if (LC_CHANTIER_SEL) renderAdminChantierDetail(LC_CHANTIER_SEL);
-      toast('Prix enregistré ✓');
-    }
-  } catch(e) { toast('Erreur sauvegarde prix'); }
-}
-
-// ── CRUD livraisons ───────────────────────────────────────────────
 function lcElementChange() {
   const el    = document.getElementById('lc-element').value;
   const unite = document.getElementById('lc-unite');
