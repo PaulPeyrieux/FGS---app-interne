@@ -438,7 +438,7 @@ textarea{resize:vertical;min-height:80px}
 </div>
 
 <!-- MODALES -->
-<div class="fmod" id="mm"><div class="mod">
+<div class="fmod" id="mm" onclick="if(event.target===this)fm('mm')"><div class="mod">
   <div class="poignee"></div>
   <div class="mod-tit" id="mm-tit">Ajouter une machine</div>
   <div class="gch"><label>Catégorie</label><select id="f-cat"></select></div>
@@ -456,7 +456,7 @@ textarea{resize:vertical;min-height:80px}
   <button class="btn bd np" id="del-mm" style="margin-top:12px;display:none" onclick="delMach()">Supprimer cette machine</button>
 </div></div>
 
-<div class="fmod" id="mp"><div class="mod">
+<div class="fmod" id="mp" onclick="if(event.target===this)fm('mp')"><div class="mod">
   <div class="poignee"></div>
   <div class="mod-tit" id="mp-tit">Ajouter une pièce</div>
   <div class="gch"><label>Nom *</label><input id="p-nom" placeholder="Filtre huile"/></div>
@@ -469,7 +469,7 @@ textarea{resize:vertical;min-height:80px}
   <button class="btn bd np" id="del-mp" style="margin-top:12px;display:none" onclick="delPiece()">Supprimer cette pièce</button>
 </div></div>
 
-<div class="fmod" id="mi"><div class="mod">
+<div class="fmod" id="mi" onclick="if(event.target===this)fm('mi')"><div class="mod">
   <div class="poignee"></div>
   <div class="mod-tit" id="mi-tit">Nouvelle intervention</div>
   <div class="gch"><label>Machine</label><select id="i-mach" onchange="updPcList()"></select></div>
@@ -488,14 +488,14 @@ textarea{resize:vertical;min-height:80px}
   <button class="btn bd np" id="del-mi" style="margin-top:8px;display:none" onclick="delInt()">Supprimer cette intervention</button>
 </div></div>
 
-<div class="fmod" id="mh"><div class="mod">
+<div class="fmod" id="mh" onclick="if(event.target===this)fm('mh')"><div class="mod">
   <div class="poignee"></div>
   <div class="mod-tit">Mettre à jour les heures</div>
   <div class="gch"><label>Heures actuelles</label><div class="sr"><input id="h-v" type="number" placeholder="0"/><span class="unite">h</span></div></div>
   <div class="rbtn np"><button class="btn bs" onclick="fm('mh')">Annuler</button><button class="btn bp" onclick="savH()">Mettre à jour</button></div>
 </div></div>
 
-<div class="fmod" id="ml"><div class="mod">
+<div class="fmod" id="ml" onclick="if(event.target===this)fm('ml')"><div class="mod">
   <div class="poignee"></div>
   <div class="mod-tit">Saisir une réception</div>
   <div class="gch"><label>Référence pièce *</label><input id="l-ref" placeholder="FH-123" autocomplete="off"/></div>
@@ -629,6 +629,26 @@ function ncat(cid){const c=BD.categories.find(x=>x.id===cid);return c?c.nom:'—
 function lblTy(t){return{entretien:'Entretien préventif',reparation:'Réparation',VGP:'VGP',remplacement:'Remplacement de pièce'}[t]||t;}
 function usure(m,pa){ const p=BD.pieces.find(x=>x.id===pa.pieceId); if(!p||p.dureeUnite!=='heures')return null; const u=m.heures-pa.heuresInstallation,pct=u/p.dureeVal; return{u,pct,rest:Math.max(p.dureeVal-u,0),st:pct>=1?'da':pct>=.8?'wa':'ok'}; }
 function V(id){return(document.getElementById(id)||{}).value||'';}
+
+// ── Modales et utilitaires ─────────────────────────────────────────────
+function om(id){
+  // Ferme tous les modaux ouverts, ouvre celui demandé
+  document.querySelectorAll('.fmod.on').forEach(el=>el.classList.remove('on'));
+  const el=document.getElementById(id);
+  if(el){el.classList.add('on');document.body.style.overflow='hidden';}
+}
+function fm(id){
+  const el=document.getElementById(id);
+  if(el)el.classList.remove('on');
+  // Réactive scroll seulement si plus aucun modal ouvert
+  if(!document.querySelector('.fmod.on'))document.body.style.overflow='';
+}
+function toast(msg,dur=2800){
+  let t=document.getElementById('_toast');
+  if(!t){t=document.createElement('div');t.id='_toast';t.className='toast';document.body.appendChild(t);}
+  t.textContent=msg;t.classList.add('on');
+  clearTimeout(t._to);t._to=setTimeout(()=>t.classList.remove('on'),dur);
+}
 
 // ── Accueil ──────────────────────────────────────────────────────────
 function pgHome(){
@@ -977,7 +997,7 @@ ${iv?.notes?`<h2>Notes</h2><div style="padding:10px 12px;background:#f9fafb;bord
 
 
 <!-- MODAL LIVRAISON CHANTIER -->
-<div class="fmod" id="mlc"><div class="mod">
+<div class="fmod" id="mlc" onclick="if(event.target===this)fm('mlc')"><div class="mod">
   <div class="poignee"></div>
   <div class="mod-tit" id="mlc-tit">Nouvelle livraison</div>
   <div class="gch"><label>Date</label><input id="lc-date" type="date"/></div>
@@ -1014,7 +1034,7 @@ ${iv?.notes?`<h2>Notes</h2><div style="padding:10px 12px;background:#f9fafb;bord
 </div></div>
 
 <!-- MODAL POINTAGE -->
-<div class="fmod" id="mpt"><div class="mod" style="max-height:95vh">
+<div class="fmod" id="mpt" onclick="if(event.target===this)fm('mpt')"><div class="mod" style="max-height:95vh">
   <div class="poignee"></div>
   <div class="mod-tit" id="mpt-tit">Nouveau pointage</div>
   <div class="gch"><label>Date</label><input id="pt-date" type="date"/></div>
@@ -1098,7 +1118,7 @@ ${ivs.length?`<table><tr><th>Date</th><th>Type</th><th>Heures</th><th>Pièces</t
 
 
 <!-- MODAL LIVRAISON CHANTIER -->
-<div class="fmod" id="mlc"><div class="mod">
+<div class="fmod" id="mlc" onclick="if(event.target===this)fm('mlc')"><div class="mod">
   <div class="poignee"></div>
   <div class="mod-tit" id="mlc-tit">Nouvelle livraison</div>
   <div class="gch"><label>Date</label><input id="lc-date" type="date"/></div>
@@ -1135,7 +1155,7 @@ ${ivs.length?`<table><tr><th>Date</th><th>Type</th><th>Heures</th><th>Pièces</t
 </div></div>
 
 <!-- MODAL POINTAGE -->
-<div class="fmod" id="mpt"><div class="mod" style="max-height:95vh">
+<div class="fmod" id="mpt" onclick="if(event.target===this)fm('mpt')"><div class="mod" style="max-height:95vh">
   <div class="poignee"></div>
   <div class="mod-tit" id="mpt-tit">Nouveau pointage</div>
   <div class="gch"><label>Date</label><input id="pt-date" type="date"/></div>
