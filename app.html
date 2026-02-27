@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -228,15 +229,15 @@ textarea{resize:vertical;min-height:80px}
 .cmd-detail span{background:var(--sur2);border:1px solid var(--brd);border-radius:6px;padding:3px 8px}
 .cmd-qty{font-size:22px;font-weight:700;font-family:var(--mo);color:var(--acc);white-space:nowrap}
 .cmd-engins{font-size:11px;color:var(--tx3);margin-top:6px;padding-top:6px;border-top:1px solid var(--brd);line-height:1.6}
-.fab-cmd{position:fixed;bottom:92px;right:calc(50% - 240px + 16px);background:var(--acc);color:#fff;border:none;border-radius:24px;padding:12px 20px;font-family:var(--fn);font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;box-shadow:0 4px 20px rgba(192,57,43,.35);z-index:99;transition:transform .15s}
-.fab-cmd:active{transform:scale(.95)}
+.fab-cmd{position:fixed;bottom:92px;left:16px;background:var(--acc);color:#fff;border:none;border-radius:24px;padding:12px 20px;font-family:var(--fn);font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;box-shadow:0 4px 20px rgba(192,57,43,.35);z-index:98;transition:opacity .15s}
+.fab-cmd:active{opacity:.8}
 .fab-cmd svg{width:18px;height:18px;stroke:#fff;stroke-width:2.5}
 @media(max-width:480px){.fab-cmd{right:16px}}
 
 
 /* ── SOUS-ONGLETS CHANTIER ── */
 .sub-nav{display:flex;gap:0;background:var(--sur);border-radius:var(--r);border:1px solid var(--brd);padding:4px;margin-bottom:14px;box-shadow:var(--sh2)}
-.sub-ni{flex:1;padding:9px 12px;border-radius:var(--r2);font-size:13px;font-weight:700;text-align:center;cursor:pointer;color:var(--tx3);transition:all .2s;letter-spacing:.1px}
+.sub-ni{flex:1;padding:7px 6px;border-radius:var(--r2);font-size:12px;font-weight:700;text-align:center;cursor:pointer;color:var(--tx3);transition:all .2s;letter-spacing:0}
 .sub-ni.on{background:var(--acc);color:#fff;box-shadow:0 2px 8px rgba(var(--acc-rgb),.3)}
 .sub-ni:not(.on):hover{background:var(--sur2);color:var(--tx2)}
 
@@ -421,19 +422,8 @@ textarea{resize:vertical;min-height:80px}
 <!-- APP -->
 <div id="app">
   <div class="main" id="main"><div class="spin-c"><div class="spin"></div>Chargement...</div></div>
-  <nav class="nav">
-    <div class="ni on" data-p="accueil" onclick="nav('accueil')">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Accueil</span></div>
-    <div class="ni" data-p="parc" onclick="nav('parc')">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg><span>Parc</span></div>
-    <div class="ni" data-p="entretien" onclick="nav('entretien')">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg><span>Entretien</span></div>
-    <div class="ni" data-p="pieces" onclick="nav('pieces')">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg><span>Pièces</span></div>
-    <div class="ni" data-p="livraisons" onclick="nav('livraisons')">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg><span>Réceptions</span></div>
-    <div class="ni" data-p="chantier" onclick="nav('chantier')">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><path d="M9 22V12h6v10"/><line x1="12" y1="2" x2="12" y2="6"/></svg><span>Chantier</span></div>
+  <nav class="nav" id="main-nav">
+    <!-- remplie par buildNav() selon le rôle -->
   </nav>
   <button class="fab np" id="fab" onclick="fab()">
     <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -512,6 +502,10 @@ textarea{resize:vertical;min-height:80px}
 <div id="toast" class="toast"></div>
 
 <script>
+
+
+
+
 
 
 
@@ -604,12 +598,54 @@ async function save(){
 // ── Init ─────────────────────────────────────────────────────────────
 async function init(){
   document.getElementById('main').innerHTML='<div class="spin-c"><div class="spin"></div>Chargement des données...</div>';
-  await load(); if(BD)render();
+  await load();
+  buildNav();
+  if(BD){ render(); }
+  // Charger les anomalies en arrière-plan pour les afficher sur l'accueil (admin)
+  var isAdmin = USER && (USER.role==='admin' || USER.role==='rh');
+  if(isAdmin){
+    try {
+      var r = await fetch('/api/anomalies?role=admin');
+      ANOMALIES = await r.json();
+      if(PAGE==='accueil') render(); // Refresh accueil avec anomalies
+    } catch(e){}
+  }
 }
 
 // ── Nav ───────────────────────────────────────────────────────────────
 let PAGE='accueil', DET=null, MOD_ID=null, MOD_INT=null;
-function nav(p){ PAGE=p; DET=null; render(); document.querySelectorAll('.ni').forEach(n=>n.classList.toggle('on',n.dataset.p===p)); }
+let PARCMAT_TAB = 'parc'; // sous-onglet actif dans Parc Matériel
+let ANOMALIES = []; // cache des anomalies
+function buildNav(){
+  var isAdmin = USER && (USER.role==='admin' || USER.role==='rh');
+  var navEl = document.getElementById('main-nav');
+  if(!navEl) return;
+  var svgAccueil  = '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>';
+  var svgParc     = '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>';
+  var svgAno      = '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+  var svgLiv      = '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>';
+  var svgChantier = '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><path d="M9 22V12h6v10"/><line x1="12" y1="2" x2="12" y2="6"/></svg>';
+  var items = isAdmin ? [
+    {p:'accueil',    label:'Accueil',    svg:svgAccueil},
+    {p:'parcmat',    label:'Parc mat.',  svg:svgParc},
+    {p:'livraisons', label:'Réceptions', svg:svgLiv},
+    {p:'chantier',   label:'Chantier',   svg:svgChantier},
+  ] : [
+    {p:'accueil',    label:'Accueil',    svg:svgAccueil},
+    {p:'anomalie',   label:'Anomalie',   svg:svgAno},
+    {p:'livraisons', label:'Réceptions', svg:svgLiv},
+    {p:'chantier',   label:'Chantier',   svg:svgChantier},
+  ];
+  navEl.innerHTML = items.map(function(it){
+    return '<div class="ni'+(PAGE===it.p?' on':'')+'" data-p="'+it.p+'" onclick="nav(\''+it.p+'\')">'
+      +it.svg+'<span>'+it.label+'</span></div>';
+  }).join('');
+}
+
+function nav(p){
+  PAGE=p; DET=null; render();
+  document.querySelectorAll('.ni').forEach(function(n){n.classList.toggle('on',n.dataset.p===p);});
+}
 function render(){
   if(!BD)return;
   const m=document.getElementById('main'); m.innerHTML='';
@@ -617,11 +653,10 @@ function render(){
   if(DET?.t==='machine'){document.getElementById('fab').style.display='none'; m.innerHTML=pageMach(DET.id);return;}
   if(DET?.t==='cat'){renderCat(m,DET.id);return;}
   if(PAGE==='accueil')m.innerHTML=pgHome();
-  else if(PAGE==='parc')m.innerHTML=pgParc();
-  else if(PAGE==='entretien')m.innerHTML=pgEnt();
-  else if(PAGE==='pieces')m.innerHTML=pgPc();
+  else if(PAGE==='parcmat'){m.innerHTML=pgParcMat();renderParcMatContent();}
   else if(PAGE==='livraisons')m.innerHTML=pgLiv();
   else if(PAGE==='chantier'){m.innerHTML=pgChantier();initChantierTab();}
+  else if(PAGE==='anomalie'){m.innerHTML=pgAnomalie();chargerAnomalies();}
 }
 
 // ── Calculs ──────────────────────────────────────────────────────────
@@ -694,24 +729,120 @@ function pgHome(){
     </div>
     <div class="carte"><div class="carte-ent"><div class="carte-tit">Interventions — 6 mois</div></div><div class="gbars">${gH}</div></div>
     <div class="ts">🔔 Alertes prioritaires</div>${alsH}
+    ${(USER&&(USER.role==='admin'||USER.role==='rh')&&ANOMALIES.filter(a=>a.statut!=='resolu').length>0)?`
+    <div class="ts" style="margin-top:16px;color:var(--da)">⚠️ Fiches anomalie en attente (${ANOMALIES.filter(a=>a.statut!=='resolu').length})</div>
+    ${ANOMALIES.filter(a=>a.statut!=='resolu').slice(0,5).map(a=>`<div class="carte" style="margin-bottom:8px;border-left:3px solid ${a.statut==='en_cours'?'var(--wa)':'var(--da)'}">
+      <div style="display:flex;justify-content:space-between"><b>${a.nom_machine}</b>${a.num_parc?'<span style="font-size:11px;color:var(--tx3)">N°'+a.num_parc+'</span>':''}</div>
+      <div style="font-size:12px;color:var(--tx);margin:4px 0">${a.description.length>80?a.description.slice(0,80)+'…':a.description}</div>
+      <div style="font-size:11px;color:var(--tx3)">${a.auteur} · ${new Date(a.cree_le).toLocaleDateString('fr-FR')}</div>
+    </div>`).join('')}
+    `:''}
   </div>`;
 }
 
 // ── Parc ──────────────────────────────────────────────────────────────
-function pgParc(){
-  const cats=BD.categories.map(c=>{const n=BD.machines.filter(m=>m.catId===c.id).length;return`<div class="ecat" onclick="ouvrirCat('${c.id}')"><div class="ico-cat">${c.icone}</div><div class="nom-cat">${c.nom}</div><div class="cnt-cat">${n} engin${n!==1?'s':''}</div></div>`;}).join('');
-  return`<div class="ent"><h1>Parc matériel</h1></div><div class="pg on">
-    <div class="ts">Catégories</div><div class="gcat">${cats}</div>
-    <div class="ts" style="margin-top:4px">Toutes les machines</div>
-    ${BD.machines.length?BD.machines.map(m=>rowMach(m)).join(''):`<div class="vide"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/></svg><h3>Aucune machine</h3><p>Ajoutez via le bouton +</p></div>`}
-  </div>`;
+function pgParcMat(){
+  var isAdmin = USER && (USER.role==='admin' || USER.role==='rh');
+  var p = PARCMAT_TAB;
+  var tabParc  = '<div class="sub-ni'+(p==='parc'?' on':'')+'" onclick="switchParcMatTab('parc')">🏗 Parc</div>';
+  var tabEnt   = '<div class="sub-ni'+(p==='entretien'?' on':'')+'" onclick="switchParcMatTab('entretien')">🔧 Entretiens</div>';
+  var tabPc    = '<div class="sub-ni'+(p==='pieces'?' on':'')+'" onclick="switchParcMatTab('pieces')">📦 Pièces</div>';
+  var tabAno   = isAdmin ? '<div class="sub-ni'+(p==='anomalies'?' on':'')+'" onclick="switchParcMatTab('anomalies')">⚠️ Anomalies</div>' : '';
+  return '<div class="ent"><div><h1>Parc matériel</h1></div><div class="ent-act" id="parcmat-act"></div></div>'
+    + '<div class="pg on"><div class="sub-nav">'
+    + tabParc + tabEnt + tabPc + tabAno
+    + '</div><div id="parcmat-content"></div><div style="height:80px"></div></div>';
+}
+
+function switchParcMatTab(tab){
+  PARCMAT_TAB = tab;
+  document.querySelectorAll('#parcmat-content').forEach(function(){});
+  // Update sub-nav
+  var nis = document.querySelectorAll('.sub-nav .sub-ni');
+  var tabs = ['parc','entretien','pieces','anomalies'];
+  nis.forEach(function(el,i){ el.classList.toggle('on', tabs[i]===tab); });
+  renderParcMatContent();
+}
+
+function renderParcMatContent(){
+  var el = document.getElementById('parcmat-content');
+  if(!el) return;
+  var fabEl = document.getElementById('fab');
+  // Masquer FAB sur onglet anomalies admin (lecture seule)
+  if(fabEl) fabEl.style.display = (PARCMAT_TAB==='anomalies') ? 'none' : 'flex';
+  if(PARCMAT_TAB==='parc')      el.innerHTML = renderParcContent();
+  else if(PARCMAT_TAB==='entretien') el.innerHTML = renderEntContent();
+  else if(PARCMAT_TAB==='pieces')    el.innerHTML = renderPcContent();
+  else if(PARCMAT_TAB==='anomalies') renderAdminAnomalies(el);
+}
+
+function renderParcContent(){
+  var cats = BD.categories.map(function(c){
+    var n = BD.machines.filter(function(m){return m.catId===c.id;}).length;
+    return '<div class="ecat" onclick="ouvrirCat(''+c.id+'')">'
+      +'<div class="ico-cat">'+c.icone+'</div>'
+      +'<div class="nom-cat">'+c.nom+'</div>'
+      +'<div class="cnt-cat">'+n+' engin'+(n!==1?'s':'')+'</div></div>';
+  }).join('');
+  var machines = BD.machines.length
+    ? BD.machines.map(function(m){return rowMach(m);}).join('')
+    : '<div class="vide"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/></svg><h3>Aucune machine</h3><p>Ajoutez via le bouton +</p></div>';
+  return '<div class="ts">Catégories</div><div class="gcat">'+cats+'</div>'
+    + '<div class="ts" style="margin-top:4px">Toutes les machines</div>'+machines;
+}
+
+function renderEntContent(){
+  var ivs=[...BD.interventions].sort(function(a,b){return new Date(b.date)-new Date(a.date);});
+  if(!ivs.length) return '<div class="vide"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg><h3>Aucune intervention</h3></div>';
+  return ivs.map(function(i){
+    var m=BD.machines.find(function(x){return x.id===i.machineId;});
+    var pcs=(i.piecesChangees||[]).map(function(pid){var p=BD.pieces.find(function(x){return x.id===pid;});return p?'<span class="bdg bl">'+p.nom+'</span>':'';}).join('');
+    return '<div class="eint" onclick="openMImod(''+i.id+'')"><div class="pt-int" style="background:'+(i.type==='VGP'?'var(--in)':i.type==='reparation'?'var(--da)':'var(--ok)')+'"></div>'
+      +'<div class="info-int"><div class="dt-int">'+fdt(i.date)+(i.datePrevue?' · Prévu:'+fdt(i.datePrevue):'')+'</div>'
+      +'<div class="tit-int">'+lblTy(i.type)+' — '+(m?m.nom:'?')+'</div>'
+      +(i.notes?'<div class="ss-int">'+i.notes+'</div>':'')+'<div class="pcs-int">'+pcs+'</div></div>'
+      +'<button class="ico-btn" style="width:30px;height:30px;flex-shrink:0" onclick="event.stopPropagation();printInt(''+i.id+'')">'
+      +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>'
+      +'</button></div>';
+  }).join('');
+}
+
+function renderPcContent(){
+  var b = calculerBesoins();
+  var manquants = b.manquants;
+  var badgeH = manquants>0
+    ? '<span class="bdg da" style="font-size:12px">'+manquants+' référence'+(manquants>1?'s':'')+' à commander</span>'
+    : '<span class="bdg ok" style="font-size:12px">Stocks OK</span>';
+  // Update header badge
+  var act = document.getElementById('parcmat-act');
+  if(act) act.innerHTML = badgeH;
+  if(!BD.pieces.length) return '<div class="vide"><h3>Aucune pièce</h3></div>';
+  var rows = BD.pieces.map(function(p){
+    var besoins=calculerBesoinsPiece(p.id);
+    var manque=Math.max(besoins.besoin-(p.stock||0),0);
+    return '<div class="epc" onclick="openMPmod(''+p.id+'')">'
+      +'<div class="epc-ent"><div><div class="epc-nom">'+p.nom+'</div><div class="epc-ref">'+p.ref+'</div></div>'
+      +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">'
+      +'<span class="bdg '+(p.stock>0?'ok':'da')+'">'+(p.stock||0)+' en stock</span>'
+      +(manque>0?'<span class="bdg da" style="font-size:10px">⚠ '+manque+' à commander</span>':'')
+      +'</div></div>'
+      +'<div style="font-size:12px;color:var(--tx3)">Durée de vie : <b style="color:var(--tx)">'+p.dureeVal+' '+p.dureeUnite+'</b>'
+      +(besoins.engins.length?' · Utilisée par <b style="color:var(--tx)">'+besoins.engins.length+' engin'+(besoins.engins.length>1?'s':'')+'</b>':'')+'</div>'
+      +(p.notes?'<div style="font-size:12px;color:var(--tx3);margin-top:7px;padding-top:7px;border-top:1px solid var(--brd)">'+p.notes+'</div>':'')
+      +'</div>';
+  }).join('');
+  var cmdBtn = '<button class="fab-cmd np" onclick="ouvrirCommandes()">'
+    +'<svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>'
+    +'Commandes'+(manquants>0?'<span style="background:#fff;color:var(--acc);border-radius:10px;padding:1px 7px;font-size:12px">'+manquants+'</span>':'')
+    +'</button>';
+  return rows + cmdBtn;
 }
 function rowMach(m){const s=stMach(m);return`<div class="emach" onclick="ouvrirDet('${m.id}')"><div class="ico-mach">${ico(m.catId)}</div><div class="info-mach"><div class="nom-mach">${m.nom}</div><div class="mod-mach">${m.modele||''}${m.site?' · '+m.site:''}</div><div class="meta-mach"><span class="bdg ${s}">${lblSt(s)}</span><span class="h-mach">${m.heures}h</span></div></div><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>`;}
 function renderCat(el,cid){const cat=BD.categories.find(c=>c.id===cid),ms=BD.machines.filter(m=>m.catId===cid);el.innerHTML=`<div class="ent-det"><div class="btn-ret" onclick="DET=null;render()"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></div><div class="tit-det">${cat.icone} ${cat.nom}</div></div><div class="pg on">${ms.length?ms.map(m=>rowMach(m)).join(''):`<div class="vide"><h3>Aucune machine dans cette catégorie</h3></div>`}</div>`;}
 
 // ── Détail machine ────────────────────────────────────────────────────
-function ouvrirDet(id){DET={t:'machine',id};render();}
-function ouvrirCat(id){DET={t:'cat',id};render();}
+function ouvrirDet(id){DET={t:'machine',id};PAGE='parcmat';render();}
+function ouvrirCat(id){DET={t:'cat',id};PAGE='parcmat';render();}
 function pageMach(id){
   const m=BD.machines.find(x=>x.id===id); if(!m)return'';
   const s=stMach(m),seuil=m.seuil||250,d=m.heures-m.hEntretien,pct=Math.min(d/seuil,1);
@@ -867,12 +998,14 @@ function pgLiv(){
 
 // ── FAB ───────────────────────────────────────────────────────────────
 function fab(){
-  if(PAGE==='parc')openMM();
-  else if(PAGE==='entretien')openMI();
-  else if(PAGE==='pieces')openMP();
-  else if(PAGE==='livraisons')openML();
+  if(PAGE==='parcmat'){
+    if(PARCMAT_TAB==='parc')openMM();
+    else if(PARCMAT_TAB==='entretien')openMI();
+    else if(PARCMAT_TAB==='pieces')openMP();
+    else if(PARCMAT_TAB==='anomalies'){}
+  } else if(PAGE==='livraisons')openML();
   else if(PAGE==='chantier')chantierFab();
-  else openMM();
+  else if(PAGE==='anomalie')ouvrirNouvelleAnomalie();
 }
 
 // ── MACHINES CRUD ─────────────────────────────────────────────────────
@@ -1845,6 +1978,166 @@ async function savePrixRef(chantier, element, val) {
   } catch(e) { toast('Erreur réseau'); }
 }
 
+
+// ══════════════════════════════════════════════════════════════════
+// MODULE ANOMALIES
+// ══════════════════════════════════════════════════════════════════
+
+let ANO_EDIT_ID = null;
+
+async function chargerAnomalies() {
+  try {
+    const r = await fetch('/api/anomalies?role='+encodeURIComponent(USER?.role||'chef')+'&auteur='+encodeURIComponent(USER?.nom||''));
+    ANOMALIES = await r.json();
+    renderListeAnomalies();
+  } catch(e){ toast('Erreur chargement anomalies'); }
+}
+
+function pgAnomalie(){
+  return '<div class="ent"><div><h1>Fiches d'anomalie</h1></div></div>'
+    + '<div class="pg on"><div id="ano-liste"><div class="spin-c"><div class="spin"></div>Chargement...</div></div>'
+    + '<div style="height:80px"></div></div>';
+}
+
+function renderListeAnomalies(){
+  var el = document.getElementById('ano-liste');
+  if(!el) return;
+  if(!ANOMALIES.length){
+    el.innerHTML = '<div class="vide"><h3>Aucune anomalie signalée</h3><p>Utilisez le bouton + pour signaler un problème sur une machine.</p></div>';
+    return;
+  }
+  // Group by date
+  var byDate = {};
+  ANOMALIES.forEach(function(a){
+    var d = a.date_ano;
+    if(!byDate[d]) byDate[d]=[];
+    byDate[d].push(a);
+  });
+  var html = '';
+  Object.keys(byDate).sort().reverse().forEach(function(d){
+    html += '<div class="ts">'+new Date(d+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'2-digit',month:'long'}).toUpperCase()+'</div>';
+    byDate[d].forEach(function(a){
+      var statColor = a.statut==='resolu'?'var(--ok)':a.statut==='en_cours'?'var(--wa)':'var(--da)';
+      var statLabel = a.statut==='resolu'?'Résolu':a.statut==='en_cours'?'En cours':'Ouvert';
+      html += '<div class="carte" style="margin-bottom:8px;border-left:3px solid '+statColor+'">'
+        +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">'
+        +'<div><div style="font-size:14px;font-weight:700">'+a.nom_machine+'</div>'
+        +(a.num_parc?'<div style="font-size:12px;color:var(--tx3)">N° parc : '+a.num_parc+'</div>':'')
+        +'</div>'
+        +'<span class="bdg" style="background:'+statColor+';color:#fff;flex-shrink:0">'+statLabel+'</span>'
+        +'</div>'
+        +'<div style="font-size:13px;color:var(--tx);margin-bottom:8px">'+a.description+'</div>'
+        +'<div style="font-size:11px;color:var(--tx3)">Signalé par '+a.auteur+' · '+new Date(a.cree_le).toLocaleDateString('fr-FR')+'</div>'
+        +(USER&&(USER.role==='admin'||USER.role==='rh')?'<div style="display:flex;gap:6px;margin-top:10px">'
+          +(a.statut!=='en_cours'?'<button class="btn bs np" style="font-size:11px;padding:5px 10px" onclick="changerStatutAno('+a.id+','en_cours')">En cours</button>':'')
+          +(a.statut!=='resolu'?'<button class="btn bp np" style="font-size:11px;padding:5px 10px;background:var(--ok)" onclick="changerStatutAno('+a.id+','resolu')">Résolu ✓</button>':'')
+          +(a.statut==='resolu'?'<button class="btn bs np" style="font-size:11px;padding:5px 10px" onclick="changerStatutAno('+a.id+','ouvert')">Réouvrir</button>':'')
+          +'<button class="btn bd np" style="font-size:11px;padding:5px 10px" onclick="supprimerAno('+a.id+')">Supprimer</button>'
+          +'</div>':'')
+        +'</div>';
+    });
+  });
+  el.innerHTML = html;
+}
+
+function ouvrirNouvelleAnomalie(){
+  ANO_EDIT_ID = null;
+  document.getElementById('mano-tit').textContent = 'Nouvelle anomalie';
+  document.getElementById('ano-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('ano-machine').value = '';
+  document.getElementById('ano-numparc').value = '';
+  document.getElementById('ano-desc').value = '';
+  om('mano');
+  setTimeout(function(){ document.getElementById('ano-machine').focus(); }, 100);
+}
+
+async function savAnomalie(){
+  var date_ano    = document.getElementById('ano-date').value;
+  var nom_machine = document.getElementById('ano-machine').value.trim();
+  var num_parc    = document.getElementById('ano-numparc').value.trim();
+  var description = document.getElementById('ano-desc').value.trim();
+  if(!nom_machine){ toast('Indiquez le nom de la machine'); return; }
+  if(!description){ toast('Décrivez l'anomalie'); return; }
+  try {
+    var body = { date_ano, nom_machine, num_parc, description, auteur: USER?.nom||'', statut:'ouvert' };
+    if(ANO_EDIT_ID) body.id = ANO_EDIT_ID;
+    var r = await fetch('/api/anomalies', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+    var d = await r.json();
+    if(d.ok){
+      fm('mano');
+      toast('Anomalie enregistrée ✓');
+      await chargerAnomalies();
+    } else { toast('Erreur : '+(d.erreur||'?')); }
+  } catch(e){ toast('Erreur réseau'); }
+}
+
+async function changerStatutAno(id, statut){
+  try {
+    var r = await fetch('/api/anomalies/'+id+'/statut', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({statut}) });
+    var d = await r.json();
+    if(d.ok){
+      var ano = ANOMALIES.find(function(a){return a.id===id;});
+      if(ano) ano.statut = statut;
+      if(PAGE==='anomalie') renderListeAnomalies();
+      else if(PAGE==='parcmat') renderAdminAnomalies(document.getElementById('parcmat-content'));
+      toast('Statut mis à jour ✓');
+    }
+  } catch(e){ toast('Erreur réseau'); }
+}
+
+async function supprimerAno(id){
+  if(!confirm('Supprimer cette fiche anomalie ?')) return;
+  try {
+    var r = await fetch('/api/anomalies/'+id+'?role='+encodeURIComponent(USER?.role||'')+'&auteur='+encodeURIComponent(USER?.nom||''), { method:'DELETE' });
+    var d = await r.json();
+    if(d.ok){
+      ANOMALIES = ANOMALIES.filter(function(a){return a.id!==id;});
+      if(PAGE==='anomalie') renderListeAnomalies();
+      else if(PAGE==='parcmat') renderAdminAnomalies(document.getElementById('parcmat-content'));
+      toast('Anomalie supprimée');
+    }
+  } catch(e){ toast('Erreur réseau'); }
+}
+
+async function renderAdminAnomalies(el){
+  if(!el) return;
+  el.innerHTML = '<div class="spin-c"><div class="spin"></div>Chargement...</div>';
+  try {
+    var r = await fetch('/api/anomalies?role=admin');
+    ANOMALIES = await r.json();
+  } catch(e){ el.innerHTML = '<div class="vide"><h3>Erreur de chargement</h3></div>'; return; }
+  if(!ANOMALIES.length){
+    el.innerHTML = '<div class="vide"><h3>Aucune anomalie signalée</h3><p>Les chefs de chantier peuvent soumettre des fiches via leur onglet dédié.</p></div>';
+    return;
+  }
+  var ouverts   = ANOMALIES.filter(function(a){return a.statut==='ouvert';});
+  var en_cours  = ANOMALIES.filter(function(a){return a.statut==='en_cours';});
+  var resolus   = ANOMALIES.filter(function(a){return a.statut==='resolu';});
+  function renderGroup(list, color, label){
+    if(!list.length) return '';
+    return '<div class="ts" style="color:'+color+';margin-top:12px">'+label+' ('+list.length+')</div>'
+      + list.map(function(a){
+        return '<div class="carte" style="margin-bottom:8px;border-left:3px solid '+color+'">'
+          +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">'
+          +'<div><div style="font-size:14px;font-weight:700">'+a.nom_machine+'</div>'
+          +(a.num_parc?'<div style="font-size:12px;color:var(--tx3)">N° parc : '+a.num_parc+'</div>':'')
+          +'</div>'
+          +'<span class="bdg" style="background:'+color+';color:#fff;flex-shrink:0">'+(a.statut==='resolu'?'Résolu':a.statut==='en_cours'?'En cours':'Ouvert')+'</span>'
+          +'</div>'
+          +'<div style="font-size:13px;color:var(--tx);margin-bottom:8px">'+a.description+'</div>'
+          +'<div style="font-size:11px;color:var(--tx3)">Signalé par '+a.auteur+' · '+new Date(a.cree_le).toLocaleDateString('fr-FR')+'</div>'
+          +'<div style="display:flex;gap:6px;margin-top:10px">'
+          +(a.statut!=='en_cours'?'<button class="btn bs np" style="font-size:11px;padding:5px 10px" onclick="changerStatutAno('+a.id+','en_cours')">En cours</button>':'')
+          +(a.statut!=='resolu'?'<button class="btn bp np" style="font-size:11px;padding:5px 10px;background:var(--ok)" onclick="changerStatutAno('+a.id+','resolu')">Résolu ✓</button>':'')
+          +(a.statut==='resolu'?'<button class="btn bs np" style="font-size:11px;padding:5px 10px" onclick="changerStatutAno('+a.id+','ouvert')">Réouvrir</button>':'')
+          +'<button class="btn bd np" style="font-size:11px;padding:5px 10px" onclick="supprimerAno('+a.id+')">Supprimer</button>'
+          +'</div></div>';
+      }).join('');
+  }
+  el.innerHTML = renderGroup(ouverts,'var(--da)','🔴 Ouvertes')
+    + renderGroup(en_cours,'var(--wa)','🟡 En cours')
+    + renderGroup(resolus,'var(--ok)','✅ Résolues');
+}
 function exportLCExcel() {
   // Filter to selected chantier + semaine if admin
   const isAdmin = USER?.role === 'admin' || USER?.role === 'rh';
@@ -2131,7 +2424,7 @@ function renderTotalBody() {
 }
 
 
-</script>
+ript>
 
 <!-- MODAL LIVRAISON CHANTIER -->
 <div class="fmod" id="mlc" onclick="if(event.target===this)fm('mlc')"><div class="mod">
@@ -2207,6 +2500,27 @@ function renderTotalBody() {
   </div>
   <div class="cmd-body" id="cmd-body"></div>
 </div>
+
+<!-- MODAL ANOMALIE -->
+<div class="fmod" id="mano" onclick="if(event.target===this)fm('mano')"><div class="mod" style="max-height:95vh">
+  <div class="poignee"></div>
+  <div class="mod-tit" id="mano-tit">Nouvelle anomalie</div>
+  <div class="gch"><label>Date</label><input id="ano-date" type="date"/></div>
+  <div class="gch"><label>Nom de la machine *</label>
+    <input id="ano-machine" placeholder="Ex: Minipelle, Chariot télescopique..." autocomplete="off"/>
+  </div>
+  <div class="gch"><label>N° parc (optionnel)</label>
+    <input id="ano-numparc" placeholder="Ex: EQ-001, 23..." autocomplete="off"/>
+  </div>
+  <div class="gch"><label>Description de l'anomalie *</label>
+    <textarea id="ano-desc" placeholder="Décrivez le problème observé..." style="min-height:100px"></textarea>
+  </div>
+  <div class="rbtn np">
+    <button class="btn bs" onclick="fm('mano')">Annuler</button>
+    <button class="btn bp" onclick="savAnomalie()">Enregistrer</button>
+  </div>
+</div></div>
+
 
 </body>
 </html>
