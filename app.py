@@ -594,3 +594,124 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     print(f"Serveur demarre sur http://0.0.0.0:{port}")
     app.run(host="0.0.0.0", port=port, debug=False)
+
+
+# ── Anomalies ─────────────────────────────────────────────────────────────────
+
+SCHEMA_ANOMALIES = """
+CREATE TABLE IF NOT EXISTS anomalies (
+    id          SERIAL PRIMARY KEY,
+    date_ano    DATE NOT NULL DEFAULT CURRENT_DATE,
+    nom_machine TEXT NOT NULL,
+    num_parc    TEXT NOT NULL DEFAULT '',
+    auteur      TEXT NOT NULL,
+    description TEXT NOT NULL,
+    statut      TEXT NOT NULL DEFAULT 'ouvert',
+    cree_le     TIMESTAMPTZ DEFAULT NOW()
+)
+"""
+
+def init_anomalies():
+    conn = get_conn()
+    conn.run(SCHEMA_ANOMALIES)
+    conn.close()
+
+try:
+    init_anomalies()
+except Exception as e:
+    print(f"AVERTISSEMENT init_anomalies: {e}")
+
+
+@app.route("/api/anomalies", methods=["GET"])
+def get_anomalies():
+    try:
+        role   = request.args.get("role", "chef")
+        auteur = request.args.get("auteur", "")
+        conn   = get_conn()
+        if role in ("admin", "rh"):
+            rows = conn.run(
+                "SELECT id,date_ano,nom_machine,num_parc,auteur,description,statut,cree_le "
+                "FROM anomalies ORDER BY cree_le DESC LIMIT 200"
+            )
+        else:
+            rows = conn.run(
+                "SELECT id,date_ano,nom_machine,num_parc,auteur,description,statut,cree_le "
+                "FROM anomalies WHERE auteur ILIKE :a ORDER BY cree_le DESC LIMIT 100",
+                a=auteur
+            )
+        conn.close()
+        cols = ["id","date_ano","nom_machine","num_parc","auteur","description","statut","cree_le"]
+        result = []
+        for row in rows:
+            d = dict(zip(cols, row))
+            d["date_ano"] = str(d["date_ano"])
+            d["cree_le"]  = str(d["cree_le"])
+            result.append(d)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"erreur": str(e)}), 500
+
+
+@app.route("/api/anomalies", methods=["POST"])
+def save_anomalie():
+    try:
+        data        = request.get_json(force=True, silent=True)
+        if not data:
+            return jsonify({"erreur": "Données invalides"}), 400
+        aid         = data.get("id")
+        date_ano    = data.get("date_ano", "")
+        nom_machine = data.get("nom_machine", "").strip()
+        num_parc    = data.get("num_parc", "").strip()
+        auteur      = data.get("auteur", "")
+        description = data.get("description", "").strip()
+        statut      = data.get("statut", "ouvert")
+        if not nom_machine or not description:
+            return jsonify({"erreur": "Champs obligatoires manquants"}), 400
+        conn = get_conn()
+        if aid:
+            conn.run(
+                "UPDATE anomalies SET statut=:s, description=:d WHERE id=:id",
+                s=statut, d=description, id=aid
+            )
+            new_id = aid
+        else:
+            rows = conn.run(
+                """INSERT INTO anomalies (date_ano,nom_machine,num_parc,auteur,description,statut)
+                   VALUES (:da,:nm,:np,:au,:de,:st) RETURNING id""",
+                da=date_ano, nm=nom_machine, np=num_parc, au=auteur, de=description, st=statut
+            )
+            new_id = rows[0][0]
+        conn.close()
+        return jsonify({"ok": True, "id": new_id})
+    except Exception as e:
+        return jsonify({"erreur": str(e)}), 500
+
+
+@app.route("/api/anomalies/<int:aid>", methods=["DELETE"])
+def delete_anomalie(aid):
+    try:
+        role   = request.args.get("role", "chef")
+        auteur = request.args.get("auteur", "")
+        conn   = get_conn()
+        if role in ("admin", "rh"):
+            conn.run("DELETE FROM anomalies WHERE id=:id", id=aid)
+        else:
+            conn.run("DELETE FROM anomalies WHERE id=:id AND auteur ILIKE :a", id=aid, a=auteur)
+        conn.close()
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"erreur": str(e)}), 500
+
+
+@app.route("/api/anomalies/<int:aid>/statut", methods=["POST"])
+def update_statut_anomalie(aid):
+    """Admin peut changer le statut : ouvert -> en_cours -> resolu"""
+    try:
+        data   = request.get_json(force=True, silent=True)
+        statut = data.get("statut", "ouvert")
+        conn   = get_conn()
+        conn.run("UPDATE anomalies SET statut=:s WHERE id=:id", s=statut, id=aid)
+        conn.close()
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"erreur": str(e)}), 500
