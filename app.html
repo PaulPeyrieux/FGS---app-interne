@@ -760,6 +760,76 @@ function pgEnt(){
 }
 
 // ── Pièces ────────────────────────────────────────────────────────────
+// ── Calculs besoins pièces ──────────────────────────────────────────
+function calculerBesoinsPiece(pieceId) {
+  const engins = BD.machines.filter(m =>
+    (m.piecesAssociees || []).some(pa => pa.pieceId === pieceId)
+  );
+  return { besoin: engins.length, engins };
+}
+
+function calculerBesoins() {
+  let total = 0, manquants = 0;
+  BD.pieces.forEach(p => {
+    const b = calculerBesoinsPiece(p.id);
+    if (b.besoin > 0) {
+      total++;
+      if ((p.stock || 0) < b.besoin) manquants++;
+    }
+  });
+  return { total, manquants };
+}
+
+function rowCommande(l) {
+  const urgent = l.aCommander > 0;
+  const nomsEngins = l.engins.map(m => m.nom).join(', ');
+  return `<div class="cmd-row ${urgent ? 'urgent' : ''}">
+    <div class="cmd-row-top">
+      <div>
+        <div class="cmd-nom">${l.piece.nom}</div>
+        <div class="cmd-ref">Réf : ${l.piece.ref}</div>
+      </div>
+      ${urgent
+        ? `<div style="text-align:right"><div class="cmd-qty">${l.aCommander}</div><div style="font-size:10px;color:var(--da);font-weight:700">À COMMANDER</div></div>`
+        : `<div style="text-align:right"><div style="font-size:18px;font-weight:700;color:var(--ok)">✓</div><div style="font-size:10px;color:var(--ok);font-weight:700">SUFFISANT</div></div>`
+      }
+    </div>
+    <div class="cmd-detail">
+      <span>Besoin : <b>${l.besoin}</b></span>
+      <span>Stock : <b style="color:${l.stock >= l.besoin ? 'var(--ok)' : 'var(--da)'}">${l.stock}</b></span>
+      ${urgent ? `<span style="background:var(--da-bg);border-color:var(--da-b);color:var(--da)">Manque : <b>${l.aCommander}</b></span>` : ''}
+    </div>
+    <div class="cmd-engins">🔧 Utilisée par : ${nomsEngins}</div>
+  </div>`;
+}
+
+function ouvrirCommandes() {
+  const body = document.getElementById('cmd-body');
+  const lignes = [];
+  BD.pieces.forEach(p => {
+    const b = calculerBesoinsPiece(p.id);
+    if (b.besoin === 0) return;
+    const stock = p.stock || 0;
+    lignes.push({ piece: p, besoin: b.besoin, stock, aCommander: Math.max(b.besoin - stock, 0), engins: b.engins });
+  });
+  lignes.sort((a, b) => b.aCommander - a.aCommander);
+  if (!lignes.length) {
+    body.innerHTML = `<div class="vide" style="padding:60px 24px"><h3>Aucune pièce rattachée à des engins</h3></div>`;
+  } else {
+    const aCmd = lignes.filter(l => l.aCommander > 0);
+    const ok   = lignes.filter(l => l.aCommander === 0);
+    let html = '';
+    if (aCmd.length) html += `<div class="ts" style="color:var(--da)">⚠ ${aCmd.length} référence${aCmd.length>1?'s':''} à commander</div>` + aCmd.map(rowCommande).join('');
+    if (ok.length)   html += `<div class="ts" style="margin-top:8px;color:var(--ok)">✓ ${ok.length} référence${ok.length>1?'s':''} en stock suffisant</div>` + ok.map(rowCommande).join('');
+    body.innerHTML = html;
+  }
+  document.getElementById('cmd-overlay').classList.add('on');
+}
+
+function fermerCommandes() {
+  document.getElementById('cmd-overlay').classList.remove('on');
+}
+
 function pgPc(){
   // Calcul des besoins pour l'indicateur
   const {total, manquants} = calculerBesoins();
@@ -1297,24 +1367,21 @@ function exportExcelSemaine() {
 let CHANTIER_TAB = 'pointage'; // 'pointage' | 'livraisons'
 
 function pgChantier() {
-  const isAdmin = USER?.role === 'admin' || USER?.role === 'rh';
-  const totalTab = isAdmin ? `<div class="sub-ni ${CHANTIER_TAB==='total'?'on':''}" onclick="switchChantierTab('total')">💰 Total</div>` : '';
-  return `
-  <div class="ent">
-    <div><h1>Chantier</h1></div>
-    <div class="ent-act" id="chantier-act"></div>
-  </div>
-  <div class="pg on">
-    <div class="sub-nav">
-      <div class="sub-ni ${CHANTIER_TAB==='pointage'?'on':''}" onclick="switchChantierTab('pointage')">📋 Pointage</div>
-      <div class="sub-ni ${CHANTIER_TAB==='livraisons'?'on':''}" onclick="switchChantierTab('livraisons')">🚚 Livraisons</div>
-      ${totalTab}
-    </div>
-    <div id="chantier-content"></div>
-    <div style="height:80px"></div>
-  </div>`;
+  var isAdmin = USER && (USER.role === 'admin' || USER.role === 'rh');
+  var cTab = CHANTIER_TAB;
+  var ptOn  = cTab === 'pointage'   ? ' on' : '';
+  var livOn = cTab === 'livraisons' ? ' on' : '';
+  var totOn = cTab === 'total'      ? ' on' : '';
+  var totalTabHtml = isAdmin
+    ? '<div class="sub-ni' + totOn + '" onclick="switchChantierTab(\'total\')">&#x1F4B0; Total</div>'
+    : '';
+  return '<div class="ent"><div><h1>Chantier</h1></div><div class="ent-act" id="chantier-act"></div></div>'
+    + '<div class="pg on"><div class="sub-nav">'
+    + '<div class="sub-ni' + ptOn  + '" onclick="switchChantierTab(\'pointage\')">&#x1F4CB; Pointage</div>'
+    + '<div class="sub-ni' + livOn + '" onclick="switchChantierTab(\'livraisons\')">&#x1F69A; Livraisons</div>'
+    + totalTabHtml
+    + '</div><div id="chantier-content"></div><div style="height:80px"></div></div>';
 }
-
 function switchChantierTab(tab) {
   CHANTIER_TAB = tab;
   // Update sub-nav styling
