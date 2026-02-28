@@ -747,10 +747,10 @@ function pgHome(){
 function pgParcMat(){
   var isAdmin = USER && (USER.role==='admin' || USER.role==='rh');
   var p = PARCMAT_TAB;
-  var tabParc  = '<div class="sub-ni'+(p==='parc'?' on':'')+'" onclick="switchParcMatTab("parc")">🏗 Parc</div>';
-  var tabEnt   = '<div class="sub-ni'+(p==='entretien'?' on':'')+'" onclick="switchParcMatTab("entretien")">🔧 Entretiens</div>';
-  var tabPc    = '<div class="sub-ni'+(p==='pieces'?' on':'')+'" onclick="switchParcMatTab("pieces")">📦 Pièces</div>';
-  var tabAno   = isAdmin ? '<div class="sub-ni'+(p==='anomalies'?' on':'')+'" onclick="switchParcMatTab("anomalies")">⚠️ Anomalies</div>' : '';
+  var tabParc  = '<div class="sub-ni'+(p==='parc'?' on':'')+'" onclick="switchParcMatTab(\'parc\')">🏗 Parc</div>';
+  var tabEnt   = '<div class="sub-ni'+(p==='entretien'?' on':'')+'" onclick="switchParcMatTab(\'entretien\')">🔧 Entretiens</div>';
+  var tabPc    = '<div class="sub-ni'+(p==='pieces'?' on':'')+'" onclick="switchParcMatTab(\'pieces\')">📦 Pièces</div>';
+  var tabAno   = isAdmin ? '<div class="sub-ni'+(p==='anomalies'?' on':'')+'" onclick="switchParcMatTab(\'anomalies\')">⚠️ Anomalies</div>' : '';
   return '<div class="ent"><div><h1>Parc matériel</h1></div><div class="ent-act" id="parcmat-act"></div></div>'
     + '<div class="pg on"><div class="sub-nav">'
     + tabParc + tabEnt + tabPc + tabAno
@@ -1509,23 +1509,23 @@ function pgChantier() {
   var livOn = cTab === 'livraisons' ? ' on' : '';
   var totOn = cTab === 'total'      ? ' on' : '';
   var totalTabHtml = isAdmin
-    ? '<div class="sub-ni' + totOn + '" onclick="switchChantierTab(\'total\')">&#x1F4B0; Total</div>'
+    ? '<div class="sub-ni' + totOn + '" data-tab="total" onclick="switchChantierTab(\'total\')">&#x1F4B0; Total</div>'
     : '';
   return '<div class="ent"><div><h1>Chantier</h1></div><div class="ent-act" id="chantier-act"></div></div>'
     + '<div class="pg on"><div class="sub-nav">'
-    + '<div class="sub-ni' + ptOn  + '" onclick="switchChantierTab(\'pointage\')">&#x1F4CB; Pointage</div>'
-    + '<div class="sub-ni' + livOn + '" onclick="switchChantierTab(\'livraisons\')">&#x1F69A; Livraisons</div>'
+    + '<div class="sub-ni' + ptOn  + '" data-tab="pointage" onclick="switchChantierTab(\'pointage\')">&#x1F4CB; Pointage</div>'
+    + '<div class="sub-ni' + livOn + '" data-tab="livraisons" onclick="switchChantierTab(\'livraisons\')">&#x1F69A; Livraisons</div>'
     + totalTabHtml
     + '</div><div id="chantier-content"></div><div style="height:80px"></div></div>';
 }
 function switchChantierTab(tab) {
   CHANTIER_TAB = tab;
-  // Update sub-nav styling
-  document.querySelectorAll('.sub-ni').forEach((el,i) => {
-    el.classList.toggle('on', (i===0 && tab==='pointage') || (i===1 && tab==='livraisons'));
+  // Update sub-nav styling using data attribute matching
+  document.querySelectorAll('.sub-nav .sub-ni').forEach(el => {
+    const t = el.getAttribute('data-tab');
+    if (t) el.classList.toggle('on', t === tab);
   });
   renderChantierContent();
-  // Update FAB behavior
 }
 
 async function initChantierTab() {
@@ -1829,31 +1829,71 @@ function selSemaine(k) {
 function renderChefLivraisons(container) {
   const data = LC_DATA;
   if (!data.length) {
-    container.innerHTML = `<div class="vide">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7V8z"/></svg>
-      <h3>Aucune livraison</h3><p>Appuyez sur + pour enregistrer une livraison.</p>
+    container.innerHTML = `<div style="text-align:center;padding:40px 20px">
+      <div style="font-size:48px;margin-bottom:16px">🚛</div>
+      <div style="font-size:16px;font-weight:700;color:var(--tx2);margin-bottom:8px">Aucune livraison enregistrée</div>
+      <div style="font-size:13px;color:var(--tx3);line-height:1.6">Appuyez sur <b style="color:var(--acc)">+</b> pour saisir votre première livraison.</div>
     </div>`;
     return;
   }
+
+  // ── Calcul résumé ─────────────────────────────────────────────
+  const totaux = {};
+  data.forEach(l => {
+    const k = l.element;
+    if (!totaux[k]) totaux[k] = { qte: 0, unite: l.unite, count: 0 };
+    totaux[k].qte += l.quantite;
+    totaux[k].count++;
+  });
+  const resumeItems = Object.entries(totaux).map(([el, v]) =>
+    `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--brd)">
+      <div>${lcBadge(el)}</div>
+      <div style="font-family:var(--mo);font-size:15px;font-weight:700;color:var(--tx)">${v.qte.toLocaleString('fr-FR',{maximumFractionDigits:2})} <span style="font-size:11px;color:var(--tx3);font-weight:400">${v.unite}</span></div>
+    </div>`
+  ).join('');
+
+  // ── Groupement par date ───────────────────────────────────────
   const parDate = {};
   data.forEach(l => { if (!parDate[l.date_liv]) parDate[l.date_liv]=[]; parDate[l.date_liv].push(l); });
-  container.innerHTML = Object.keys(parDate).sort().reverse().map(date => {
-    const dt = new Date(date+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'2-digit',month:'short'});
-    return `<div class="lc-section-title">${dt}</div>` +
-      parDate[date].map(l => `<div class="lc-card" onclick="ouvrirLC('${l.id}')">
-        <div class="lc-card-top">
-          <div>
+
+  const listeHTML = Object.keys(parDate).sort().reverse().map(date => {
+    const d = new Date(date+'T12:00:00');
+    const dateLabel = d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+    const dateCourt = d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'});
+    const items = parDate[date];
+    const totalQteJour = items.reduce((s,l) => s + l.quantite, 0);
+
+    return `<div style="margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--tx3)">${dateLabel}</div>
+        <div style="font-size:11px;font-weight:700;color:var(--acc);background:var(--acc-l);border-radius:10px;padding:2px 8px">${items.length} livraison${items.length>1?'s':''}</div>
+      </div>
+      ${items.map(l => `<div class="lc-card" onclick="ouvrirLC('${l.id}')" style="margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+          <div style="flex:1;min-width:0">
             ${lcBadge(l.element)}
-            <div style="font-size:13px;color:var(--tx2);margin-top:5px">📍 ${l.chantier}</div>
-            ${l.notes?`<div style="font-size:12px;color:var(--tx3);margin-top:2px;font-style:italic">${l.notes}</div>`:''}
+            <div style="font-size:13px;font-weight:600;color:var(--tx);margin-top:6px">📍 ${l.chantier}</div>
+            ${l.notes?`<div style="font-size:12px;color:var(--tx3);margin-top:3px;font-style:italic">💬 ${l.notes}</div>`:''}
           </div>
-          <div style="text-align:right">
-            <span class="lc-qty">${l.quantite.toLocaleString('fr-FR',{maximumFractionDigits:2})}</span>
-            <span class="lc-unit">${l.unite}</span>
+          <div style="text-align:right;flex-shrink:0">
+            <div style="font-size:26px;font-weight:700;font-family:var(--mo);color:var(--acc);line-height:1">${l.quantite.toLocaleString('fr-FR',{maximumFractionDigits:2})}</div>
+            <div style="font-size:12px;color:var(--tx3);font-weight:600">${l.unite}</div>
           </div>
         </div>
-      </div>`).join('');
-  }).join('') + '<div style="height:24px"></div>';
+      </div>`).join('')}
+    </div>`;
+  }).join('');
+
+  container.innerHTML = `
+    <!-- RÉSUMÉ TOTAL -->
+    <div class="carte" style="margin-bottom:16px;border-left:3px solid var(--acc)">
+      <div class="carte-tit" style="margin-bottom:10px">📊 Cumul total — ${data.length} livraison${data.length>1?'s':''}</div>
+      ${resumeItems}
+    </div>
+
+    <!-- LISTE PAR DATE -->
+    ${listeHTML}
+    <div style="height:24px"></div>`;
 }
 
 function lcElementChange() {
