@@ -535,6 +535,7 @@ async function login(){
     const data = await r.json();
     if(data.ok){
       USER = {identifiant:id, nom:data.nom, role: data.role||'chef'};
+      console.log('[FGS] USER role recu:', data.role, '-> USER.role:', USER.role);
       document.getElementById('login').style.display='none';
       document.getElementById('app').classList.add('on');
       init();
@@ -617,6 +618,7 @@ let PARCMAT_TAB = 'parc'; // sous-onglet actif dans Parc Matériel
 let ANOMALIES = []; // cache des anomalies
 function buildNav(){
   var isAdmin = USER && (USER.role==='admin' || USER.role==='rh');
+  console.log('[FGS] buildNav: USER=', USER, 'isAdmin=', isAdmin);
   var navEl = document.getElementById('main-nav');
   if(!navEl) return;
   var svgAccueil  = '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>';
