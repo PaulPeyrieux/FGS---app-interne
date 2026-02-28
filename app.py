@@ -186,6 +186,24 @@ def get_role(identifiant):
     return "chef"
 
 
+@app.route("/api/whoami")
+def whoami():
+    """Debug: retourne les variables d'env disponibles (sans les valeurs) pour diagnostic"""
+    comptes = []
+    for key, value in os.environ.items():
+        if key.lower() in ('admin', 'rh') or (len(key) < 20 and not key.startswith('_') and not key.startswith('RENDER') and not key.startswith('DATABASE') and not key.startswith('PORT') and not key.startswith('PATH') and not key.startswith('HOME') and not key.startswith('USER') and not key.startswith('PWD') and not key.startswith('LANG') and not key.startswith('LC_') and not key.startswith('PYTHON') and not key.startswith('PIP') and not key.startswith('VIRTUAL')):
+            # Déduire le rôle comme auth() le ferait
+            id_lower = key.lower()
+            role_deduit = "admin" if id_lower == "admin" else ("rh" if id_lower == "rh" else "chef")
+            has_colon = ":" in value
+            if has_colon:
+                last_colon = value.rfind(":")
+                role_candidat = value[last_colon+1:].strip().lower()
+                if role_candidat in ("chef", "admin", "rh"):
+                    role_deduit = role_candidat
+            comptes.append({"identifiant": key, "role_deduit": role_deduit, "format": "nouveau" if has_colon else "ancien"})
+    return jsonify({"comptes": comptes})
+
 @app.route("/api/auth", methods=["POST"])
 def auth():
     try:
@@ -200,33 +218,24 @@ def auth():
             if key.lower() != identifiant.lower():
                 continue
             value = value.strip()
-            # Format nouveau : motdepasse:role (ex: MonMDP:chef ou MonMDP:admin)
-            # Format ancien  : motdepasse seul (ex: Illite@8020)
-            # Cas spécial    : le mdp lui-même contient des ":" (ex: Illite@8020)
-            # => on vérifie d'abord si la valeur entière correspond au mdp (ancien format)
-            # => sinon on sépare sur le dernier ":" pour extraire le rôle
-            # Rôle par défaut : si l'identifiant est "admin" ou "rh", on l'utilise comme rôle
-            role = "admin" if identifiant.lower() == "admin" else ("rh" if identifiant.lower() == "rh" else "chef")
-            if value == mdp:
-                # Ancien format exact — rôle déduit de l'identifiant
-                mdp_stocke = value
-            elif ":" in value:
-                # Nouveau format : le rôle est le dernier segment après ":"
+            # Format variable Render : "motdepasse:role" (ex: MonMDP:admin, MonMDP:chef)
+            # ou "motdepasse" seul (ancien format sans rôle -> chef par défaut)
+            # L'utilisateur saisit UNIQUEMENT le mot de passe, sans le :role
+            role = "chef"
+            mdp_stocke = value
+            if ":" in value:
                 last_colon = value.rfind(":")
-                mdp_stocke = value[:last_colon]
                 role_candidat = value[last_colon+1:].strip().lower()
                 if role_candidat in ("chef", "admin", "rh"):
                     role = role_candidat
-                else:
-                    # Le ":" fait partie du mot de passe
-                    mdp_stocke = value
-            else:
-                mdp_stocke = value
+                    mdp_stocke = value[:last_colon]
+                # sinon le ":" fait partie du mdp (ex: "Illite@8020") -> mdp_stocke = value entier
             if mdp_stocke == mdp:
                 return jsonify({"ok": True, "nom": key, "role": role})
         return jsonify({"ok": False})
     except Exception as e:
         return jsonify({"ok": False, "erreur": str(e)}), 500
+
 
 
 @app.route("/api/pointages", methods=["GET"])
