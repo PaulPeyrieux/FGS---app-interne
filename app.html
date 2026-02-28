@@ -716,7 +716,6 @@ function pgHome(){
   return`<div class="ent">
     <div class="ent-logo"><img src="${LOGO}" alt="FGS" style="height:36px;object-fit:contain"/><div class="ent-logo-txt">Gestion<br>Matériel</div></div>
     <div class="ent-act">
-      <div class="ico-btn np" onclick="exportCSV()" title="Export CSV"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
       <div class="ico-btn deco np" onclick="decon()" title="Déconnexion (${USER?.nom})"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div>
     </div></div>
   <div class="pg on">
@@ -751,7 +750,9 @@ function pgParcMat(){
   var tabEnt   = '<div class="sub-ni'+(p==='entretien'?' on':'')+'" onclick="switchParcMatTab(\'entretien\')">🔧 Entretiens</div>';
   var tabPc    = '<div class="sub-ni'+(p==='pieces'?' on':'')+'" onclick="switchParcMatTab(\'pieces\')">📦 Pièces</div>';
   var tabAno   = isAdmin ? '<div class="sub-ni'+(p==='anomalies'?' on':'')+'" onclick="switchParcMatTab(\'anomalies\')">⚠️ Anomalies</div>' : '';
-  return '<div class="ent"><div><h1>Parc matériel</h1></div><div class="ent-act" id="parcmat-act"></div></div>'
+  return '<div class="ent"><div><h1>Parc matériel</h1></div><div class="ent-act" id="parcmat-act">'
+    + (p==='parc' ? '<button class="ico-btn np" onclick="exportXlsParc()" title="Exporter Excel Parc"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg></button>' : '')
+    + '</div></div>'
     + '<div class="pg on"><div class="sub-nav">'
     + tabParc + tabEnt + tabPc + tabAno
     + '</div><div id="parcmat-content"></div><div style="height:80px"></div></div>';
@@ -759,11 +760,18 @@ function pgParcMat(){
 
 function switchParcMatTab(tab){
   PARCMAT_TAB = tab;
-  document.querySelectorAll('#parcmat-content').forEach(function(){});
   // Update sub-nav
   var nis = document.querySelectorAll('.sub-nav .sub-ni');
   var tabs = ['parc','entretien','pieces','anomalies'];
   nis.forEach(function(el,i){ el.classList.toggle('on', tabs[i]===tab); });
+  // Update header export button
+  var act = document.getElementById('parcmat-act');
+  if(act) {
+    if(tab==='parc') act.innerHTML = '<button class="ico-btn np" onclick="exportXlsParc()" title="Exporter Excel"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg></button>';
+    else if(tab==='entretien') act.innerHTML = '<button class="ico-btn np" onclick="exportXlsEntretiens()" title="Exporter Excel"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg></button>';
+    else if(tab==='pieces') act.innerHTML = ''; // set by renderPcContent
+    else act.innerHTML = '';
+  }
   renderParcMatContent();
 }
 
@@ -773,9 +781,16 @@ function renderParcMatContent(){
   var fabEl = document.getElementById('fab');
   // Masquer FAB sur onglet anomalies admin (lecture seule)
   if(fabEl) fabEl.style.display = (PARCMAT_TAB==='anomalies') ? 'none' : 'flex';
+  // Update action buttons in header
+  var act = document.getElementById('parcmat-act');
+  if(act) act.innerHTML = ''; // reset, each tab sets its own
   if(PARCMAT_TAB==='parc')      el.innerHTML = renderParcContent();
-  else if(PARCMAT_TAB==='entretien') el.innerHTML = renderEntContent();
-  else if(PARCMAT_TAB==='pieces')    el.innerHTML = renderPcContent();
+  else if(PARCMAT_TAB==='entretien') {
+    el.innerHTML = renderEntContent();
+    // Add export button for entretiens
+    if(act) act.innerHTML = '<button class="ico-btn np" onclick="exportXlsEntretiens()" title="Exporter Excel"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg></button>';
+  }
+  else if(PARCMAT_TAB==='pieces') el.innerHTML = renderPcContent(); // button set inside renderPcContent
   else if(PARCMAT_TAB==='anomalies') renderAdminAnomalies(el);
 }
 
@@ -818,7 +833,12 @@ function renderPcContent(){
     : '<span class="bdg ok" style="font-size:12px">Stocks OK</span>';
   // Update header badge
   var act = document.getElementById('parcmat-act');
-  if(act) act.innerHTML = badgeH;
+  var cmdBadge = manquants>0
+    ? '<span style="background:#fff;color:var(--acc);border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px">'+manquants+'</span>'
+    : '';
+  if(act) act.innerHTML = '<button class="btn bp np" style="width:auto;padding:7px 12px;font-size:12px;gap:5px" onclick="ouvrirCommandes()">'
+    +'<svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" width="14" height="14"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>'
+    +'Commandes'+cmdBadge+'</button>';
   if(!BD.pieces.length) return '<div class="vide"><h3>Aucune pièce</h3></div>';
   var rows = BD.pieces.map(function(p){
     var besoins=calculerBesoinsPiece(p.id);
@@ -834,10 +854,7 @@ function renderPcContent(){
       +(p.notes?'<div style="font-size:12px;color:var(--tx3);margin-top:7px;padding-top:7px;border-top:1px solid var(--brd)">'+p.notes+'</div>':'')
       +'</div>';
   }).join('');
-  var cmdBtn = '<button class="fab-cmd np" onclick="ouvrirCommandes()">'
-    +'<svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>'
-    +'Commandes'+(manquants>0?'<span style="background:#fff;color:var(--acc);border-radius:10px;padding:1px 7px;font-size:12px">'+manquants+'</span>':'')
-    +'</button>';
+  var cmdBtn = '';
   return rows + cmdBtn;
 }
 function rowMach(m){const s=stMach(m);return`<div class="emach" onclick="ouvrirDet('${m.id}')"><div class="ico-mach">${ico(m.catId)}</div><div class="info-mach"><div class="nom-mach">${m.nom}</div><div class="mod-mach">${m.modele||''}${m.site?' · '+m.site:''}</div><div class="meta-mach"><span class="bdg ${s}">${lblSt(s)}</span><span class="h-mach">${m.heures}h</span></div></div><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>`;}
@@ -977,12 +994,7 @@ function pgPc(){
       return `<div class="epc" onclick="openMPmod('${p.id}')"><div class="epc-ent"><div><div class="epc-nom">${p.nom}</div><div class="epc-ref">${p.ref}</div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><span class="bdg ${p.stock>0?'ok':'da'}">${p.stock||0} en stock</span>${manque>0?`<span class="bdg da" style="font-size:10px">⚠ ${manque} à commander</span>`:''}</div></div><div style="font-size:12px;color:var(--tx3)">Durée de vie : <b style="color:var(--tx)">${p.dureeVal} ${p.dureeUnite}</b>${besoins.engins.length?` · Utilisée par <b style="color:var(--tx)">${besoins.engins.length} engin${besoins.engins.length>1?'s':''}</b>`:''}</div>${p.notes?`<div style="font-size:12px;color:var(--tx3);margin-top:7px;padding-top:7px;border-top:1px solid var(--brd)">${p.notes}</div>`:''}</div>`;
     }).join(''):`<div class="vide"><h3>Aucune pièce</h3></div>`}
     <div style="height:70px"></div>
-  </div>
-  <button class="fab-cmd np" onclick="ouvrirCommandes()">
-    <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
-    Commandes
-    ${manquants>0?`<span style="background:#fff;color:var(--acc);border-radius:10px;padding:1px 7px;font-size:12px">${manquants}</span>`:''}
-  </button>`;
+  </div>`;
 }
 
 // ── Livraisons ────────────────────────────────────────────────────────
@@ -1210,12 +1222,474 @@ ${ivs.length?`<table><tr><th>Date</th><th>Type</th><th>Heures</th><th>Pièces</t
   w.document.close();w.focus();setTimeout(()=>w.print(),400);
 }
 
-// ── Export CSV ────────────────────────────────────────────────────────
-function exportCSV(){
-  const l=[['ID','Nom','Modèle','Catégorie','Site','Heures','Dernier entretien','Date VGP','Statut']];
-  BD.machines.forEach(m=>l.push([m.id,m.nom,m.modele||'',ncat(m.catId),m.site||'',m.heures,m.hEntretien,m.vgp||'',lblSt(stMach(m))]));
-  const csv=l.map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');
-  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);a.download='fgs-parc.csv';a.click();toast('Export CSV ✓');
+// ══════════════════════════════════════════════════════════════════
+// EXPORTS EXCEL PROFESSIONNELS — FGS Travaux Spéciaux
+// Format : HTML → .xls (compatible Excel / LibreOffice)
+// Cartouche : logo société, nom document, date, exporteur
+// Mise en page A4, imprimable directement
+// ══════════════════════════════════════════════════════════════════
+
+const XLS_STYLE = `
+<style>
+  * { font-family: Arial, sans-serif; font-size: 10pt; }
+  body { margin: 0; padding: 0; }
+  @page { size: A4; margin: 1.5cm; }
+  @media print { body { margin: 0; } }
+  table { border-collapse: collapse; width: 100%; }
+  th { background: #C0392B; color: #fff; font-size: 9pt; font-weight: bold;
+       padding: 7px 10px; border: 1px solid #96281B; text-align: left; letter-spacing: .3px; }
+  td { padding: 6px 10px; border: 1px solid #DDE0E8; vertical-align: top; }
+  tr:nth-child(even) td { background: #F9FAFB; }
+  .total-row td { background: #FEF4F3 !important; font-weight: bold; border-top: 2px solid #C0392B; }
+  .section-row td { background: #1a1a2e !important; color: #fff; font-weight: bold; font-size: 10pt; }
+  .cartouche { background: #1a1a2e; color: #fff; padding: 16px 20px; margin-bottom: 16px;
+               display: flex; justify-content: space-between; align-items: center; }
+  .cartouche-left { display: flex; align-items: center; gap: 16px; }
+  .cartouche-logo { background: #C0392B; color: #fff; font-size: 18pt; font-weight: 900;
+                    padding: 6px 14px; border-radius: 4px; letter-spacing: 1px; }
+  .cartouche-title { font-size: 14pt; font-weight: bold; color: #fff; line-height: 1.3; }
+  .cartouche-sub { font-size: 9pt; color: #aaa; margin-top: 3px; }
+  .cartouche-right { text-align: right; font-size: 9pt; color: #ccc; line-height: 1.7; }
+  .section-label { font-size: 9pt; font-weight: bold; text-transform: uppercase; letter-spacing: .6px;
+                   color: #C0392B; padding: 10px 0 5px; border-bottom: 2px solid #C0392B;
+                   margin: 16px 0 8px; }
+  .footer { text-align: center; font-size: 8pt; color: #999; margin-top: 20px;
+            padding-top: 10px; border-top: 1px solid #eee; }
+  .badge-ok  { background: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 10px; font-size: 9pt; font-weight: bold; }
+  .badge-wa  { background: #fef9c3; color: #854d0e; padding: 2px 8px; border-radius: 10px; font-size: 9pt; font-weight: bold; }
+  .badge-da  { background: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 10px; font-size: 9pt; font-weight: bold; }
+  .num       { text-align: right; font-family: monospace; }
+  .center    { text-align: center; }
+</style>`;
+
+function xlsCartouche(titre, soustitre) {
+  const date = new Date().toLocaleDateString('fr-FR', {day:'2-digit',month:'long',year:'numeric'});
+  const heure = new Date().toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'});
+  return `<div class="cartouche">
+    <div class="cartouche-left">
+      <div class="cartouche-logo">FGS</div>
+      <div>
+        <div class="cartouche-title">${titre}</div>
+        <div class="cartouche-sub">${soustitre||'FGS Travaux Spéciaux'}</div>
+      </div>
+    </div>
+    <div class="cartouche-right">
+      Exporté le ${date} à ${heure}<br/>
+      par <strong style="color:#fff">${USER?.nom||'—'}</strong><br/>
+      <span style="font-size:8pt;color:#888">Usage interne FGS</span>
+    </div>
+  </div>`;
+}
+
+function xlsFooter() {
+  return `<div class="footer">Document généré le ${new Date().toLocaleDateString('fr-FR')} — FGS Travaux Spéciaux — Usage interne exclusif</div>`;
+}
+
+function telechargerXls(html, nom) {
+  const full = `<html xmlns:o="urn:schemas-microsoft-com:office:office"
+    xmlns:x="urn:schemas-microsoft-com:office:excel"
+    xmlns="http://www.w3.org/TR/REC-html40">
+    <head><meta charset="UTF-8">${XLS_STYLE}</head>
+    <body>${html}</body></html>`;
+  const blob = new Blob(['\uFEFF'+full], {type:'application/vnd.ms-excel;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download=nom+'.xls'; a.click();
+  URL.revokeObjectURL(url);
+  toast('Export Excel ✓');
+}
+
+// ── Export Parc machines ──────────────────────────────────────────
+function exportXlsParc() {
+  const titre = 'Parc Matériel';
+  const soustitre = `${BD.machines.length} machine${BD.machines.length>1?'s':''} enregistrée${BD.machines.length>1?'s':''}`;
+  const rows = BD.machines.map(m => {
+    const s=stMach(m); const d=m.heures-m.hEntretien; const seuil=m.seuil||250;
+    const badgeCls = s==='ok'?'badge-ok':s==='wa'?'badge-wa':'badge-da';
+    return `<tr>
+      <td>${m.nom}</td>
+      <td>${ncat(m.catId)}</td>
+      <td>${m.modele||'—'}</td>
+      <td>${m.annee||'—'}</td>
+      <td>${m.site||'—'}</td>
+      <td class="num">${m.heures} h</td>
+      <td class="num">${m.hEntretien} h</td>
+      <td class="num">${d} h / ${seuil} h</td>
+      <td class="center"><span class="${badgeCls}">${lblSt(s)}</span></td>
+      <td>${fdt(m.vgp)||'—'}</td>
+    </tr>`;
+  }).join('');
+  const html = xlsCartouche(titre, soustitre)
+    + `<div class="section-label">Liste du parc matériel</div>
+    <table>
+      <thead><tr>
+        <th>Machine</th><th>Catégorie</th><th>Modèle</th><th>Année</th><th>Site / Chantier</th>
+        <th>Heures actuelles</th><th>Dernier entretien</th><th>Écart / Seuil</th><th>Statut</th><th>VGP prochaine</th>
+      </tr></thead>
+      <tbody>${rows||'<tr><td colspan="10" style="text-align:center;color:#999">Aucune machine</td></tr>'}</tbody>
+    </table>
+    ${xlsFooter()}`;
+  telechargerXls(html, `fgs-parc-${new Date().toISOString().split('T')[0]}`);
+}
+
+// ── Export Entretiens ──────────────────────────────────────────────
+function exportXlsEntretiens() {
+  const ivs = [...BD.interventions].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const titre = 'Historique des Entretiens';
+  const soustitre = `${ivs.length} intervention${ivs.length>1?'s':''} enregistrée${ivs.length>1?'s':''}`;
+  const rows = ivs.map(i => {
+    const m=BD.machines.find(x=>x.id===i.machineId);
+    const pcs=(i.piecesChangees||[]).map(pid=>{const p=BD.pieces.find(x=>x.id===pid);return p?p.nom:'';}).filter(Boolean).join(', ')||'—';
+    return `<tr>
+      <td>${fdt(i.date)}</td>
+      <td>${m?m.nom:'—'}</td>
+      <td>${m?ncat(m.catId):'—'}</td>
+      <td>${m?m.site||'—':'—'}</td>
+      <td>${lblTy(i.type)}</td>
+      <td class="num">${i.heures||'—'}${i.heures?' h':''}</td>
+      <td>${pcs}</td>
+      <td>${i.notes||'—'}</td>
+    </tr>`;
+  }).join('');
+  const html = xlsCartouche(titre, soustitre)
+    + `<div class="section-label">Détail des interventions</div>
+    <table>
+      <thead><tr>
+        <th>Date</th><th>Machine</th><th>Catégorie</th><th>Site</th>
+        <th>Type d'intervention</th><th>Heures</th><th>Pièces changées</th><th>Notes</th>
+      </tr></thead>
+      <tbody>${rows||'<tr><td colspan="8" style="text-align:center;color:#999">Aucune intervention</td></tr>'}</tbody>
+    </table>
+    ${xlsFooter()}`;
+  telechargerXls(html, `fgs-entretiens-${new Date().toISOString().split('T')[0]}`);
+}
+
+// ── Export Pointage par journée ────────────────────────────────────
+function exportXlsPointageJour() {
+  const titre = 'Pointages — Détail par journée';
+  const soustitre = `${POINTAGES.length} pointage${POINTAGES.length>1?'s':''}`;
+  const sorted = [...POINTAGES].sort((a,b)=>b.date_jour.localeCompare(a.date_jour));
+  let rows = '';
+  let totalHGlobal=0, totalGD=0, totalPan=0, totalPres=0;
+  sorted.forEach(p => {
+    const dt = new Date(p.date_jour+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+    const lignes = p.lignes||[];
+    const totalH = lignes.reduce((s,l)=>s+(parseFloat(l.heures)||0),0);
+    const nbGD   = lignes.filter(l=>l.gd).length;
+    const nbPan  = lignes.filter(l=>l.panier).length;
+    totalHGlobal+=totalH; totalGD+=nbGD; totalPan+=nbPan; totalPres+=lignes.length;
+    rows += `<tr class="section-row"><td colspan="6">${dt} — ${p.chantier} — Saisi par ${p.auteur}</td></tr>`;
+    lignes.forEach(l => {
+      rows += `<tr>
+        <td></td>
+        <td>${l.nom}</td>
+        <td class="num">${l.heures||0} h</td>
+        <td class="center">${l.gd?'✔ Oui':'—'}</td>
+        <td class="center">${l.panier?'✔ Oui':'—'}</td>
+        <td>${p.notes||'—'}</td>
+      </tr>`;
+    });
+    rows += `<tr class="total-row">
+      <td colspan="2">Sous-total journée</td>
+      <td class="num">${totalH.toFixed(1)} h</td>
+      <td class="center">${nbGD} GD</td>
+      <td class="center">${nbPan} paniers</td>
+      <td>${lignes.length} présence${lignes.length>1?'s':''}</td>
+    </tr>`;
+  });
+  const html = xlsCartouche(titre, soustitre)
+    + `<div class="section-label">Récapitulatif global</div>
+    <table>
+      <thead><tr><th>Total heures</th><th>Présences</th><th>Grands déplacements</th><th>Paniers repas</th></tr></thead>
+      <tbody><tr>
+        <td class="num" style="font-size:13pt;font-weight:bold">${totalHGlobal.toFixed(1)} h</td>
+        <td class="num">${totalPres}</td>
+        <td class="num">${totalGD}</td>
+        <td class="num">${totalPan}</td>
+      </tr></tbody>
+    </table>
+    <div class="section-label">Détail par journée</div>
+    <table>
+      <thead><tr>
+        <th>Journée / Chantier</th><th>Employé</th><th>Heures</th>
+        <th>Grand déplacement</th><th>Panier repas</th><th>Notes</th>
+      </tr></thead>
+      <tbody>${rows||'<tr><td colspan="6" style="text-align:center;color:#999">Aucun pointage</td></tr>'}</tbody>
+    </table>
+    ${xlsFooter()}`;
+  telechargerXls(html, `fgs-pointage-jour-${new Date().toISOString().split('T')[0]}`);
+}
+
+// ── Export Pointage par semaine ────────────────────────────────────
+function exportXlsPointageSemaine() {
+  const titre = 'Pointages — Récapitulatif hebdomadaire';
+  // Group by week
+  const semMap = {};
+  POINTAGES.forEach(p => {
+    const d = new Date(p.date_jour+'T12:00:00');
+    const day = (d.getDay()+6)%7;
+    const lun = new Date(d); lun.setDate(d.getDate()-day);
+    const wk = lun.toISOString().split('T')[0];
+    if(!semMap[wk]) semMap[wk]=[];
+    semMap[wk].push(p);
+  });
+  const jours=['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Sam.','Dim.'];
+  let html = xlsCartouche(titre, `${Object.keys(semMap).length} semaine${Object.keys(semMap).length>1?'s':''}`);
+  Object.keys(semMap).sort().reverse().forEach(wk => {
+    const ptgs = semMap[wk];
+    const lun = new Date(wk+'T12:00:00');
+    const dim = new Date(lun); dim.setDate(lun.getDate()+6);
+    const lblW = `Semaine du ${lun.toLocaleDateString('fr-FR',{day:'2-digit',month:'long'})} au ${dim.toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'})}`;
+    // Aggregate by employee+chantier
+    const empMap = {};
+    ptgs.forEach(p => {
+      const d = new Date(p.date_jour+'T12:00:00');
+      const dow = (d.getDay()+6)%7;
+      (p.lignes||[]).forEach(l => {
+        const k = `${l.nom}||${p.chantier}`;
+        if(!empMap[k]) empMap[k]={nom:l.nom,chantier:p.chantier,h:[0,0,0,0,0,0,0],gd:0,pan:0};
+        empMap[k].h[dow]+=(parseFloat(l.heures)||0);
+        if(l.gd) empMap[k].gd++;
+        if(l.panier) empMap[k].pan++;
+      });
+    });
+    const rows = Object.values(empMap).map(e => {
+      const tot = e.h.reduce((s,v)=>s+v,0);
+      return `<tr>
+        <td><strong>${e.nom}</strong></td>
+        <td>${e.chantier}</td>
+        ${e.h.map(h=>`<td class="num">${h>0?h.toFixed(1)+'h':'—'}</td>`).join('')}
+        <td class="num" style="font-weight:bold;background:#FEF4F3">${tot.toFixed(1)} h</td>
+        <td class="center">${e.gd>0?`<span class="badge-ok">${e.gd}</span>`:'—'}</td>
+        <td class="center">${e.pan>0?`<span class="badge-wa">${e.pan}</span>`:'—'}</td>
+      </tr>`;
+    }).join('');
+    html += `<div class="section-label">${lblW}</div>
+    <table>
+      <thead><tr>
+        <th>Employé</th><th>Chantier</th>
+        ${jours.map(j=>`<th class="center">${j}</th>`).join('')}
+        <th>Total</th><th>GD</th><th>Paniers</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+  });
+  html += xlsFooter();
+  telechargerXls(html, `fgs-pointage-semaine-${new Date().toISOString().split('T')[0]}`);
+}
+
+// ── Export Livraisons Chantier (admin) ────────────────────────────
+function exportXlsLivAdmin() {
+  const chantier = LC_CHANTIER_SEL;
+  let data = LC_DATA;
+  if (chantier) {
+    data = LC_DATA.filter(l=>l.chantier===chantier);
+    if (LC_SEM_SEL) {
+      const fin=new Date(LC_SEM_SEL+'T12:00:00'); fin.setDate(fin.getDate()+6);
+      const finStr=fin.toISOString().split('T')[0];
+      data=data.filter(l=>l.date_liv>=LC_SEM_SEL&&l.date_liv<=finStr);
+    }
+  }
+  if(!data.length){toast('Aucune livraison à exporter');return;}
+  const titre = chantier ? `Livraisons — ${chantier}` : 'Livraisons — Tous chantiers';
+  const filtre = LC_SEM_SEL ? ` · ${getSemLabel(LC_SEM_SEL)}` : '';
+  // Recap par matériau
+  const agg={};
+  data.forEach(l=>{
+    if(!agg[l.element]) agg[l.element]={element:l.element,unite:l.unite,qte:0,nb:0};
+    agg[l.element].qte+=l.quantite; agg[l.element].nb++;
+  });
+  let totalMat=0, recapRows='';
+  Object.values(agg).forEach(v=>{
+    const prix=getPrix(chantier||'',v.element);
+    const tot=prix?v.qte*prix:null;
+    if(tot) totalMat+=tot;
+    recapRows+=`<tr>
+      <td><strong>${v.element}</strong></td>
+      <td class="num">${v.qte.toLocaleString('fr-FR',{maximumFractionDigits:2})} ${v.unite}</td>
+      <td class="num">${v.nb}</td>
+      <td class="num">${prix?prix.toLocaleString('fr-FR',{style:'currency',currency:'EUR'}):'—'}</td>
+      <td class="num" style="font-weight:bold">${tot?tot.toLocaleString('fr-FR',{style:'currency',currency:'EUR'}):'—'}</td>
+    </tr>`;
+  });
+  recapRows += `<tr class="total-row">
+    <td colspan="3">TOTAL MATÉRIAUX</td><td></td>
+    <td class="num">${totalMat?totalMat.toLocaleString('fr-FR',{style:'currency',currency:'EUR'}):'—'}</td>
+  </tr>`;
+  const detailRows = [...data].sort((a,b)=>b.date_liv.localeCompare(a.date_liv)).map(l=>{
+    const prix=getPrix(l.chantier,l.element);
+    const cout=prix?(l.quantite*prix):null;
+    return `<tr>
+      <td>${fdt(l.date_liv)}</td>
+      <td>${l.chantier}</td>
+      <td>${l.auteur}</td>
+      <td><strong>${l.element}</strong></td>
+      <td class="num">${l.quantite.toLocaleString('fr-FR',{maximumFractionDigits:2})} ${l.unite}</td>
+      <td class="num">${prix?prix.toLocaleString('fr-FR',{style:'currency',currency:'EUR'}):'—'}</td>
+      <td class="num" style="font-weight:bold">${cout?cout.toLocaleString('fr-FR',{style:'currency',currency:'EUR'}):'—'}</td>
+      <td>${l.notes||'—'}</td>
+    </tr>`;
+  }).join('');
+  const html = xlsCartouche(titre, filtre||`${data.length} livraison${data.length>1?'s':''}`)
+    + `<div class="section-label">Récapitulatif par matériau</div>
+    <table>
+      <thead><tr><th>Matériau</th><th>Quantité totale</th><th>Nb livraisons</th><th>Prix unitaire</th><th>Coût total</th></tr></thead>
+      <tbody>${recapRows}</tbody>
+    </table>
+    <div class="section-label">Détail des livraisons</div>
+    <table>
+      <thead><tr><th>Date</th><th>Chantier</th><th>Chef chantier</th><th>Matériau</th><th>Quantité</th><th>Prix unit.</th><th>Coût</th><th>Notes</th></tr></thead>
+      <tbody>${detailRows}</tbody>
+    </table>
+    ${xlsFooter()}`;
+  telechargerXls(html, `fgs-livraisons-${chantier||'tout'}-${new Date().toISOString().split('T')[0]}`);
+}
+
+// ── Export Livraisons (vue chef) ──────────────────────────────────
+function exportXlsLivChef() {
+  const data = LC_DATA;
+  if(!data.length){toast('Aucune livraison à exporter');return;}
+  const titre = 'Mes Livraisons Chantier';
+  const agg={};
+  data.forEach(l=>{
+    if(!agg[l.element]) agg[l.element]={element:l.element,unite:l.unite,qte:0};
+    agg[l.element].qte+=l.quantite;
+  });
+  const recapRows=Object.values(agg).map(v=>`<tr>
+    <td><strong>${v.element}</strong></td>
+    <td class="num">${v.qte.toLocaleString('fr-FR',{maximumFractionDigits:2})} ${v.unite}</td>
+  </tr>`).join('');
+  const detailRows=[...data].sort((a,b)=>b.date_liv.localeCompare(a.date_liv)).map(l=>`<tr>
+    <td>${fdt(l.date_liv)}</td>
+    <td>${l.chantier}</td>
+    <td><strong>${l.element}</strong></td>
+    <td class="num">${l.quantite.toLocaleString('fr-FR',{maximumFractionDigits:2})} ${l.unite}</td>
+    <td>${l.notes||'—'}</td>
+  </tr>`).join('');
+  const html = xlsCartouche(titre, `${USER?.nom||''} — ${data.length} livraison${data.length>1?'s':''}`)
+    + `<div class="section-label">Récapitulatif</div>
+    <table><thead><tr><th>Matériau</th><th>Quantité totale</th></tr></thead><tbody>${recapRows}</tbody></table>
+    <div class="section-label">Détail des livraisons</div>
+    <table>
+      <thead><tr><th>Date</th><th>Chantier</th><th>Matériau</th><th>Quantité</th><th>Notes</th></tr></thead>
+      <tbody>${detailRows}</tbody>
+    </table>${xlsFooter()}`;
+  telechargerXls(html, `fgs-mes-livraisons-${new Date().toISOString().split('T')[0]}`);
+}
+
+// ── Export Total chantier ─────────────────────────────────────────
+function exportXlsTotal() {
+  if(!TOTAL_CHANTIER_SEL){toast('Sélectionnez un chantier');return;}
+  const chantier=TOTAL_CHANTIER_SEL;
+  const ptgC=POINTAGES.filter(p=>p.chantier===chantier);
+  const livC=LC_DATA.filter(l=>l.chantier===chantier);
+  const titre=`Synthèse Chantier — ${chantier}`;
+  // MO
+  const totalH=ptgC.reduce((s,p)=>s+(p.lignes||[]).reduce((ss,l)=>ss+(parseFloat(l.heures)||0),0),0);
+  const nbPres=ptgC.reduce((s,p)=>s+(p.lignes||[]).length,0);
+  const nbGD=ptgC.reduce((s,p)=>s+(p.lignes||[]).filter(l=>l.gd).length,0);
+  const nbPan=ptgC.reduce((s,p)=>s+(p.lignes||[]).filter(l=>l.panier).length,0);
+  const coutH=getPrix(chantier,'__heures__');
+  const coutMO=coutH?totalH*coutH:null;
+  // Matériaux
+  const agg={};
+  livC.forEach(l=>{if(!agg[l.element])agg[l.element]={element:l.element,unite:l.unite,qte:0};agg[l.element].qte+=l.quantite;});
+  let totalMat=0;
+  const matRows=Object.values(agg).map(v=>{
+    const prix=getPrix(chantier,v.element);
+    const tot=prix?v.qte*prix:null;
+    if(tot) totalMat+=tot;
+    return `<tr>
+      <td>${v.element}</td>
+      <td class="num">${v.qte.toLocaleString('fr-FR',{maximumFractionDigits:2})} ${v.unite}</td>
+      <td class="num">${prix?prix.toLocaleString('fr-FR',{style:'currency',currency:'EUR'}):'—'}</td>
+      <td class="num" style="font-weight:bold">${tot?tot.toLocaleString('fr-FR',{style:'currency',currency:'EUR'}):'—'}</td>
+    </tr>`;
+  }).join('');
+  const totalGen=(coutMO||0)+totalMat;
+  // Pointages détail
+  const ptgRows=[...ptgC].sort((a,b)=>b.date_jour.localeCompare(a.date_jour)).map(p=>{
+    const lignes=p.lignes||[];
+    const tH=lignes.reduce((s,l)=>s+(parseFloat(l.heures)||0),0);
+    return `<tr>
+      <td>${fdt(p.date_jour)}</td>
+      <td>${p.auteur}</td>
+      <td>${lignes.map(l=>l.nom).join(', ')||'—'}</td>
+      <td class="num">${lignes.length}</td>
+      <td class="num">${tH.toFixed(1)} h</td>
+      <td class="center">${lignes.filter(l=>l.gd).length>0?lignes.filter(l=>l.gd).length+' GD':'—'}</td>
+      <td class="center">${lignes.filter(l=>l.panier).length>0?lignes.filter(l=>l.panier).length+' 🍽':'—'}</td>
+    </tr>`;
+  }).join('');
+  const html = xlsCartouche(titre, `Synthèse complète — main d'œuvre & matériaux`)
+    + `<div class="section-label">💰 Synthèse financière</div>
+    <table>
+      <thead><tr><th>Poste</th><th>Détail</th><th>Montant</th></tr></thead>
+      <tbody>
+        <tr><td>⏱ Main d'œuvre</td>
+          <td>${totalH.toFixed(1)} h · ${nbPres} présences · ${nbGD} GD · ${nbPan} paniers · ${coutH?coutH.toLocaleString('fr-FR',{style:'currency',currency:'EUR'})+'/h':'prix non défini'}</td>
+          <td class="num" style="font-weight:bold">${coutMO?coutMO.toLocaleString('fr-FR',{style:'currency',currency:'EUR'}):'—'}</td>
+        </tr>
+        <tr><td>📦 Matériaux</td><td>${Object.keys(agg).join(', ')||'—'}</td>
+          <td class="num" style="font-weight:bold">${totalMat?totalMat.toLocaleString('fr-FR',{style:'currency',currency:'EUR'}):'—'}</td>
+        </tr>
+        <tr class="total-row"><td colspan="2" style="font-size:12pt">TOTAL GÉNÉRAL</td>
+          <td class="num" style="font-size:14pt;color:#C0392B">${totalGen>0?totalGen.toLocaleString('fr-FR',{style:'currency',currency:'EUR'}):'—'}</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="section-label">📦 Matériaux livrés</div>
+    <table>
+      <thead><tr><th>Matériau</th><th>Quantité totale</th><th>Prix unitaire</th><th>Coût total</th></tr></thead>
+      <tbody>${matRows||'<tr><td colspan="4" style="text-align:center;color:#999">Aucune livraison</td></tr>'}</tbody>
+    </table>
+    <div class="section-label">⏱ Détail des pointages</div>
+    <table>
+      <thead><tr><th>Date</th><th>Saisi par</th><th>Employés</th><th>Présences</th><th>Heures</th><th>GD</th><th>Paniers</th></tr></thead>
+      <tbody>${ptgRows||'<tr><td colspan="7" style="text-align:center;color:#999">Aucun pointage</td></tr>'}</tbody>
+    </table>
+    ${xlsFooter()}`;
+  telechargerXls(html, `fgs-total-${chantier}-${new Date().toISOString().split('T')[0]}`);
+}
+
+// ── Garder les anciens noms pour compatibilité ────────────────────
+function exportExcelJour()    { exportXlsPointageJour(); }
+function exportExcelSemaine() { exportXlsPointageSemaine(); }
+function exportLCExcel()      { exportXlsLivAdmin(); }
+function exportCSV()          { exportXlsParc(); }
+function exportCommandesPDF() {
+  // Export de la liste de commandes au format XLS imprimable
+  const lignes = [];
+  BD.pieces.forEach(p => {
+    const b = calculerBesoinsPiece(p.id);
+    if (b.besoin === 0) return;
+    const stock = p.stock || 0;
+    lignes.push({ piece: p, besoin: b.besoin, stock, aCommander: Math.max(b.besoin - stock, 0), engins: b.engins });
+  });
+  lignes.sort((a, b) => b.aCommander - a.aCommander);
+  if (!lignes.length) { toast('Aucune pièce à commander'); return; }
+  const titre = 'Bon de Commande Pièces';
+  const rows = lignes.map(l => {
+    const cls = l.aCommander > 0 ? 'style="background:#FEF2F2"' : '';
+    return `<tr ${cls}>
+      <td><strong>${l.piece.nom}</strong></td>
+      <td style="font-family:monospace">${l.piece.ref}</td>
+      <td class="num">${l.stock}</td>
+      <td class="num"><strong>${l.besoin}</strong></td>
+      <td class="num" style="font-weight:bold;color:${l.aCommander>0?'#C0392B':'#166534'}">${l.aCommander>0?l.aCommander:'✓'}</td>
+      <td style="font-size:9pt;color:#666">${l.engins.map(m=>m.nom).join(', ')}</td>
+      <td></td>
+    </tr>`;
+  }).join('');
+  const html = xlsCartouche(titre, `${lignes.filter(l=>l.aCommander>0).length} référence(s) à commander`)
+    + `<div class="section-label">Liste de commandes</div>
+    <table>
+      <thead><tr>
+        <th>Désignation</th><th>Référence</th><th>Stock actuel</th>
+        <th>Besoin</th><th>À commander</th><th>Machines concernées</th><th>Validé ✓</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>${xlsFooter()}`;
+  telechargerXls(html, `fgs-commandes-${new Date().toISOString().split('T')[0]}`);
 }
 
 
@@ -1425,76 +1899,6 @@ async function delPointage() {
   } catch(e) { toast('Erreur'); }
 }
 
-// ── Exports Excel pointage (admin uniquement) ─────────────────────
-function exportExcelJour() {
-  if (USER?.role !== 'admin' && USER?.role !== 'rh') return;
-  const sep = ';';
-  const lignes = [['Date','Chantier','Saisi par','Employé','Heures','Grand déplacement','Panier repas']];
-  POINTAGES.forEach(p => {
-    const dt = new Date(p.date_jour+'T12:00:00').toLocaleDateString('fr-FR');
-    (p.lignes||[]).forEach(l => {
-      lignes.push([dt, p.chantier, p.auteur, l.nom, l.heures||0, l.gd?'Oui':'Non', l.panier?'Oui':'Non']);
-    });
-    const totalH = (p.lignes||[]).reduce((s,l)=>s+(parseFloat(l.heures)||0),0);
-    lignes.push([dt, p.chantier, '', 'TOTAL', totalH,
-      (p.lignes||[]).filter(l=>l.gd).length+' GD',
-      (p.lignes||[]).filter(l=>l.panier).length+' paniers']);
-    lignes.push([]);
-  });
-  const csv = '\uFEFF' + lignes.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(sep)).join('\n');
-  const a = document.createElement('a');
-  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-  a.download = `pointage-jour-${new Date().toISOString().split('T')[0]}.csv`;
-  a.click();
-  toast('Export Excel ✓');
-}
-
-function exportExcelSemaine() {
-  if (USER?.role !== 'admin' && USER?.role !== 'rh') return;
-  const sep = ';';
-  // Group by week
-  const semMap = {};
-  POINTAGES.forEach(p => {
-    const d   = new Date(p.date_jour + 'T12:00:00');
-    const day = (d.getDay()+6)%7;
-    const lun = new Date(d); lun.setDate(d.getDate()-day);
-    const wk  = lun.toISOString().split('T')[0];
-    if (!semMap[wk]) semMap[wk] = [];
-    semMap[wk].push(p);
-  });
-  const jours = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
-  const lignes = [['Semaine','Employé','Chantier','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche','Total h','GD','Paniers']];
-  Object.keys(semMap).sort().reverse().forEach(wk => {
-    const ptgs = semMap[wk];
-    const lun  = new Date(wk+'T12:00:00');
-    const dim  = new Date(lun); dim.setDate(lun.getDate()+6);
-    const lblW = `${lun.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})} - ${dim.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})}`;
-    // Aggregate by employee+chantier
-    const empMap = {};
-    ptgs.forEach(p => {
-      const d   = new Date(p.date_jour+'T12:00:00');
-      const dow = (d.getDay()+6)%7;
-      (p.lignes||[]).forEach(l => {
-        const k = `${l.nom}||${p.chantier}`;
-        if (!empMap[k]) empMap[k] = {nom:l.nom, chantier:p.chantier, h:[0,0,0,0,0,0,0], gd:0, pan:0};
-        empMap[k].h[dow] += parseFloat(l.heures)||0;
-        if (l.gd)     empMap[k].gd++;
-        if (l.panier) empMap[k].pan++;
-      });
-    });
-    Object.values(empMap).forEach(e => {
-      const tot = e.h.reduce((s,v)=>s+v,0);
-      lignes.push([lblW, e.nom, e.chantier, ...e.h, tot, e.gd, e.pan]);
-    });
-    lignes.push([]);
-  });
-  const csv = '\uFEFF' + lignes.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(sep)).join('\n');
-  const a = document.createElement('a');
-  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-  a.download = `pointage-semaine-${new Date().toISOString().split('T')[0]}.csv`;
-  a.click();
-  toast('Export semaine ✓');
-}
 
 
 
@@ -1554,19 +1958,26 @@ function updateChantierActions() {
   // Hide FAB on total tab
   const fabEl = document.getElementById('fab');
   if (fabEl) fabEl.style.display = CHANTIER_TAB === 'total' ? 'none' : 'flex';
-  if (!isAdmin) { el.innerHTML = ''; return; }
+  const xlsIco = `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" width="18" height="18"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>`;
+  if (!isAdmin) {
+    // Chefs de chantier : export de leurs propres livraisons
+    if (CHANTIER_TAB === 'livraisons') {
+      el.innerHTML = `<div class="ico-btn" onclick="exportXlsLivChef()" title="Export Excel">${xlsIco}</div>`;
+    } else { el.innerHTML = ''; }
+    return;
+  }
   if (CHANTIER_TAB === 'livraisons') {
-    el.innerHTML = `<div class="ico-btn" onclick="exportLCExcel()" title="Export Excel">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-    </div>`;
+    el.innerHTML = `<div class="ico-btn" onclick="exportXlsLivAdmin()" title="Export Excel Livraisons">${xlsIco}</div>`;
   } else if (CHANTIER_TAB === 'pointage') {
     el.innerHTML = `
-      <div class="ico-btn" onclick="exportExcelJour()" title="Export jour">
+      <div class="ico-btn" onclick="exportXlsPointageJour()" title="Export par jour">
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
       </div>
-      <div class="ico-btn" onclick="exportExcelSemaine()" title="Export semaine">
+      <div class="ico-btn" onclick="exportXlsPointageSemaine()" title="Export semaine">
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/></svg>
       </div>`;
+  } else if (CHANTIER_TAB === 'total') {
+    el.innerHTML = `<div class="ico-btn" onclick="exportXlsTotal()" title="Export Excel Total">${xlsIco}</div>`;
   } else { el.innerHTML = ''; }
 }
 
@@ -1801,11 +2212,7 @@ function renderAdminChantierDetail(chantier) {
       <div style="padding:0 14px 8px">${matRows}</div>
     </div>` : (!ptgFilt.length && !dataFilt.length) ? `
     <div class="vide"><h3>Aucune donnée${LC_SEM_SEL?' cette semaine':''}</h3></div>` : ''}
-
-    <button class="btn bs np" style="margin-top:4px" onclick="exportLCExcel()">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline;margin-right:6px;vertical-align:-2px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-      Exporter Excel${LC_SEM_SEL?' (semaine)':' (tout)'}
-    </button>`;
+`;
 }
 
 
@@ -1996,9 +2403,7 @@ async function delLivChantier() {
   } catch(e) { toast('Erreur'); }
 }
 
-// ── Export Excel ──────────────────────────────────────────────────
-
-async function savePrixRef(chantier, element, val) {
+// ── Sauvegarde prix référence ─────────────────────────────────────(chantier, element, val) {
   if (USER?.role !== 'admin' && USER?.role !== 'rh') return;
   const prix = val === '' ? 0 : parseFloat(val);
   try {
@@ -2196,60 +2601,6 @@ async function delAnomalie(id){
   } catch(e){ toast('Erreur r\u00e9seau'); }
 }
 
-function exportLCExcel() {
-  // Filter to selected chantier + semaine if admin
-  const isAdmin = USER?.role === 'admin' || USER?.role === 'rh';
-  let data = LC_DATA;
-  if (isAdmin && LC_CHANTIER_SEL) {
-    data = LC_DATA.filter(l => l.chantier === LC_CHANTIER_SEL);
-    if (LC_SEM_SEL) {
-      const fin = new Date(LC_SEM_SEL+'T12:00:00'); fin.setDate(fin.getDate()+6);
-      const finStr = fin.toISOString().split('T')[0];
-      data = data.filter(l => l.date_liv >= LC_SEM_SEL && l.date_liv <= finStr);
-    }
-  }
-  if (!data.length) { toast('Aucune livraison à exporter'); return; }
-
-  const sep = ';';
-  const agg = {};
-  data.forEach(l => {
-    const k = l.element;
-    if (!agg[k]) agg[k] = { element:l.element, unite:l.unite, qte:0 };
-    agg[k].qte += l.quantite;
-  });
-
-  const lignes = [
-    ['FGS Travaux Spéciaux — Livraisons chantier'],
-    [`Chantier : ${LC_CHANTIER_SEL||'Tous'} ${LC_SEM_SEL?'· '+getSemLabel(LC_SEM_SEL):''}`],
-    [`Exporté le ${new Date().toLocaleDateString('fr-FR')} par ${USER?.nom||''}`],
-    [],
-    ['RÉCAPITULATIF PAR MATÉRIAU'],
-    ['Matériau','Quantité totale','Unité','Prix unitaire (€)','Coût total (€)'],
-    ...Object.values(agg).map(v => {
-      const prix  = getPrix(LC_CHANTIER_SEL||'', v.element);
-      const total = prix ? (v.qte * prix).toFixed(2) : '';
-      return [v.element, v.qte, v.unite, prix||'', total];
-    }),
-    [],
-    ['DÉTAIL DES LIVRAISONS'],
-    ['Date','Chantier','Chef de chantier','Matériau','Quantité','Unité','Prix unitaire (€)','Coût (€)','Notes'],
-    ...data.map(l => {
-      const prix = getPrix(l.chantier, l.element);
-      const cout = prix ? (l.quantite * prix).toFixed(2) : '';
-      return [
-        new Date(l.date_liv+'T12:00:00').toLocaleDateString('fr-FR'),
-        l.chantier, l.auteur, l.element, l.quantite, l.unite, prix||'', cout, l.notes||'',
-      ];
-    }),
-  ];
-
-  const csv = '\uFEFF' + lignes.map(r=>r.map(v=>`"${String(v===null||v===undefined?'':v).replace(/"/g,'""')}"`).join(sep)).join('\n');
-  const a = document.createElement('a');
-  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-  a.download = `livraisons-${LC_CHANTIER_SEL||'tout'}-${new Date().toISOString().split('T')[0]}.csv`;
-  a.click();
-  toast('Export Excel ✓');
-}
 
 
 // ══════════════════════════════════════════════════════════════════
