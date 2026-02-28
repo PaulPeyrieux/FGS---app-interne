@@ -205,9 +205,10 @@ def auth():
             # Cas spécial    : le mdp lui-même contient des ":" (ex: Illite@8020)
             # => on vérifie d'abord si la valeur entière correspond au mdp (ancien format)
             # => sinon on sépare sur le dernier ":" pour extraire le rôle
-            role = "chef"  # défaut
+            # Rôle par défaut : si l'identifiant est "admin" ou "rh", on l'utilise comme rôle
+            role = "admin" if identifiant.lower() == "admin" else ("rh" if identifiant.lower() == "rh" else "chef")
             if value == mdp:
-                # Ancien format exact — pas de rôle défini
+                # Ancien format exact — rôle déduit de l'identifiant
                 mdp_stocke = value
             elif ":" in value:
                 # Nouveau format : le rôle est le dernier segment après ":"
@@ -217,7 +218,7 @@ def auth():
                 if role_candidat in ("chef", "admin", "rh"):
                     role = role_candidat
                 else:
-                    # Le ":" fait partie du mot de passe (ex: MonM:DP sans role)
+                    # Le ":" fait partie du mot de passe
                     mdp_stocke = value
             else:
                 mdp_stocke = value
