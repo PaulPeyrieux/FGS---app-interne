@@ -636,14 +636,14 @@ function buildNav(){
     {p:'chantier',   label:'Chantier',   svg:svgChantier},
   ];
   navEl.innerHTML = items.map(function(it){
-    return '<div class="ni'+(PAGE===it.p?' on':'')+'" data-p="'+it.p+'" onclick="nav(\''+it.p+'\')">'
-      +it.svg+'<span>'+it.label+'</span></div>';
+    var cls = 'ni' + (PAGE===it.p ? ' on' : '');
+    return '<div class="' + cls + '" data-p="' + it.p + '" onclick="nav(this.dataset.p)">'
+      + it.svg + '<span>' + it.label + '</span></div>';
   }).join('');
 }
 
 function nav(p){
-  PAGE=p; DET=null; render();
-  document.querySelectorAll('.ni').forEach(function(n){n.classList.toggle('on',n.dataset.p===p);});
+  PAGE = p; DET = null; render(); buildNav();
 }
 function render(){
   if(!BD)return;
