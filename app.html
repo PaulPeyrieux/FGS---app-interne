@@ -2403,7 +2403,8 @@ async function delLivChantier() {
   } catch(e) { toast('Erreur'); }
 }
 
-// ── Sauvegarde prix référence ─────────────────────────────────────(chantier, element, val) {
+// ── Sauvegarde prix référence ─────────────────────────────────────
+async function savePrixRef(chantier, element, val) {
   if (USER?.role !== 'admin' && USER?.role !== 'rh') return;
   const prix = val === '' ? 0 : parseFloat(val);
   try {
