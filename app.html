@@ -535,7 +535,7 @@ async function login(){
     const data = await r.json();
     if(data.ok){
       USER = {identifiant:id, nom:data.nom, role: data.role||'chef'};
-      console.log('[FGS] USER role recu:', data.role, '-> USER.role:', USER.role);
+
       document.getElementById('login').style.display='none';
       document.getElementById('app').classList.add('on');
       init();
@@ -618,7 +618,6 @@ let PARCMAT_TAB = 'parc'; // sous-onglet actif dans Parc Matériel
 let ANOMALIES = []; // cache des anomalies
 function buildNav(){
   var isAdmin = USER && (USER.role==='admin' || USER.role==='rh');
-  console.log('[FGS] buildNav: USER=', USER, 'isAdmin=', isAdmin);
   var navEl = document.getElementById('main-nav');
   if(!navEl) return;
   var svgAccueil  = '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>';
@@ -721,7 +720,10 @@ function pgHome(){
       <div class="ico-btn deco np" onclick="decon()" title="Déconnexion (${USER?.nom})"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div>
     </div></div>
   <div class="pg on">
-    <div style="font-size:12px;color:var(--tx3)">Connecté : <b style="color:var(--tx2)">${USER?.nom}</b></div>
+    <div style="font-size:12px;color:var(--tx3)">Connecté : <b style="color:var(--tx2)">${USER?.nom}</b>
+    <span style="font-size:11px;color:var(--tx3);margin-left:6px;background:var(--sur);border:1px solid var(--brd);border-radius:10px;padding:2px 8px;font-weight:600">
+      ${USER?.role==='admin'||USER?.role==='rh' ? '&#x1F4CB; Encadrement' : '&#x1F477; Chef de chantier'}
+    </span></div>
     <div class="gkpi">
       <div class="kpi"><div class="kpi-l">Machines</div><div class="kpi-v">${tot}</div><div class="kpi-s">${tot-ret-prev} à jour · ${prev} à prévoir</div></div>
       <div class="kpi ${ret>0?'al':v30.length>0?'at':''}"><div class="kpi-l">En retard</div><div class="kpi-v">${ret}</div><div class="kpi-s">Entretien dépassé</div></div>
