@@ -795,7 +795,7 @@ function switchParcMatTab(tab){
   if(act) {
     if(tab==='parc') act.innerHTML = '<div class="ico-btn np" onclick="exportXlsParc()" title="Exporter Excel">'+XLS_ICO+'</div>';
     else if(tab==='entretien') act.innerHTML = '<div class="ico-btn np" onclick="exportXlsEntretiens()" title="Exporter Excel">'+XLS_ICO+'</div>';
-    else if(tab==='pieces') act.innerHTML = ''; // set by renderPcContent
+    else if(tab==='pieces') act.innerHTML = '<div class="ico-btn np" onclick="exportXlsPieces()" title="Exporter Excel">'+XLS_ICO+'</div>'; // set by renderPcContent
     else act.innerHTML = '';
   }
   renderParcMatContent();
@@ -864,7 +864,7 @@ function renderPcContent(){
   var cmdBadge = manquants>0
     ? '<span style="background:#fff;color:var(--acc);border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px">'+manquants+'</span>'
     : '';
-  if(act) act.innerHTML = '<div class="ico-btn np" onclick="exportXlsParc()" title="Exporter Excel" style="margin-right:4px">'+XLS_ICO+'</div>'
+  if(act) act.innerHTML = '<div class="ico-btn np" onclick="exportXlsPieces()" title="Exporter Excel" style="margin-right:4px">'+XLS_ICO+'</div>'
     + '<button class="btn bp np" style="width:auto;padding:7px 12px;font-size:12px;gap:5px" onclick="ouvrirCommandes()">'
     +'<svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" width="14" height="14"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>'
     +'Commandes'+cmdBadge+'</button>';
@@ -1400,321 +1400,119 @@ const PDF_ICO = `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" width="18
 </svg>`;
 
 // ── Chargement SheetJS (CDN) ──────────────────────────────────────
-function _getXLSX() {
-  return new Promise((resolve, reject) => {
-    if (window.XLSX) { resolve(window.XLSX); return; }
-    const s = document.createElement('script');
-    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
-    s.onload = () => resolve(window.XLSX);
-    s.onerror = () => reject(new Error('SheetJS non chargé'));
-    document.head.appendChild(s);
-  });
-}
+// ══════════════════════════════════════════════════════════════════════════════
+// EXPORTS XLSX — Appels au serveur (openpyxl, logo FGS, cartouche professionnel)
+// ══════════════════════════════════════════════════════════════════════════════
 
-// ── Helpers cartouche (pour PDF uniquement) ───────────────────────
-function _cartoucheHTML(titre, soustitre) {
-  const date = new Date().toLocaleDateString('fr-FR', {day:'2-digit',month:'long',year:'numeric'});
-  const heure = new Date().toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'});
-  return `<div style="background:#1a1a2e;color:#fff;padding:16px 22px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;border-radius:4px">
-    <div style="display:flex;align-items:center;gap:16px">
-      <div style="background:#C0392B;color:#fff;font-size:18pt;font-weight:900;padding:6px 14px;border-radius:4px;letter-spacing:1px">FGS</div>
-      <div>
-        <div style="font-size:14pt;font-weight:700">${titre}</div>
-        <div style="font-size:9pt;color:#aaa;margin-top:2px">${soustitre||'FGS Travaux Spéciaux'}</div>
-      </div>
-    </div>
-    <div style="text-align:right;font-size:9pt;color:#ccc;line-height:1.8">
-      Édité le ${date} à ${heure}<br/>
-      par <strong style="color:#fff">${USER?.nom||'—'}</strong>
-    </div>
-  </div>`;
-}
-
-// ── Téléchargement XLSX via SheetJS ──────────────────────────────
-async function _xlsx(nomFichier, feuilles) {
-  // feuilles = [{nom, entetes:[...], lignes:[[...]], largeurs:[...]}]
+/**
+ * Appelle le serveur pour générer et télécharger un fichier XLSX professionnel.
+ * @param {string} type  - Identifiant du type d'export (ex: 'parc', 'entretiens')
+ * @param {object} payload - Données à envoyer (bd, data, auteur)
+ */
+async function _exportServeur(type, payload) {
   try {
-    const XLSX = await _getXLSX();
-    const wb = XLSX.utils.book_new();
-
-    const ROUGE      = 'C0392B';
-    const ROUGE_CLR  = 'F9EBEA';
-    const GRIS_ENT   = '1a1a2e';
-    const BLANC      = 'FFFFFF';
-
-    // Style helpers
-    const st = (opts) => Object.assign({
-      font: {name:'Arial', sz:10},
-      alignment: {wrapText:true, vertical:'center'}
-    }, opts);
-
-    feuilles.forEach(({nom, entetes, lignes, largeurs, titre, soustitre}) => {
-      const ws_data = [];
-
-      // Ligne de titre (cartouche simplifié)
-      const date = new Date().toLocaleDateString('fr-FR');
-      ws_data.push([`FGS Travaux Spéciaux — ${titre||nom}`]);
-      ws_data.push([soustitre||'']);
-      ws_data.push([`Édité le ${date} par ${USER?.nom||'—'}`]);
-      ws_data.push([]); // ligne vide
-
-      // En-têtes
-      ws_data.push(entetes);
-
-      // Données
-      lignes.forEach(r => ws_data.push(r));
-
-      const ws = XLSX.utils.aoa_to_sheet(ws_data);
-
-      // Styles cellule par cellule
-      const range = XLSX.utils.decode_range(ws['!ref']);
-      for (let R = range.s.r; R <= range.e.r; R++) {
-        for (let C = range.s.c; C <= range.e.c; C++) {
-          const addr = XLSX.utils.encode_cell({r:R, c:C});
-          if (!ws[addr]) ws[addr] = {v:'', t:'s'};
-          ws[addr].s = {
-            font: {name:'Arial', sz:10, bold: R===0 || R===4},
-            alignment: {wrapText:false, vertical:'center', horizontal: R===4?'center':'left'},
-            border: R>=4 ? {
-              top:{style:'thin',color:{rgb:'DDDDDD'}},
-              bottom:{style:'thin',color:{rgb:'DDDDDD'}},
-              left:{style:'thin',color:{rgb:'DDDDDD'}},
-              right:{style:'thin',color:{rgb:'DDDDDD'}}
-            } : {},
-            fill: R===0 ? {fgColor:{rgb:GRIS_ENT},patternType:'solid'}
-                : R===4 ? {fgColor:{rgb:ROUGE},patternType:'solid'}
-                : R%2===0 && R>4 ? {fgColor:{rgb:'F7F7F7'},patternType:'solid'}
-                : {patternType:'none'}
-          };
-          // Couleur texte
-          if (R===0||R===1||R===2) ws[addr].s.font.color = {rgb:BLANC};
-          if (R===4) { ws[addr].s.font.color = {rgb:BLANC}; ws[addr].s.font.bold = true; }
-        }
-      }
-
-      // Largeurs colonnes
-      ws['!cols'] = (largeurs||entetes.map(()=>20)).map(w => ({wpx: w*7}));
-      // Hauteur ligne en-têtes
-      ws['!rows'] = ws_data.map((_,i) => ({hpx: i===0?28 : i===4?22 : 18}));
-
-      XLSX.utils.book_append_sheet(wb, ws, nom.slice(0,31));
+    toast('Génération en cours…');
+    const resp = await fetch(`/api/export/${type}`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({auteur: USER?.nom || '—', ...payload})
     });
-
-    XLSX.writeFile(wb, nomFichier+'.xlsx');
+    if (!resp.ok) {
+      const err = await resp.json().catch(()=>({}));
+      toast('Erreur export : ' + (err.erreur || resp.statusText)); return;
+    }
+    const blob = await resp.blob();
+    const cd   = resp.headers.get('Content-Disposition') || '';
+    const match = cd.match(/filename="?([^"]+)"?/);
+    const filename = match ? match[1] : `export-${type}.xlsx`;
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
     toast('Export Excel ✓');
   } catch(e) {
     console.error(e);
-    toast('Erreur export : '+e.message);
+    toast('Erreur réseau : ' + e.message);
   }
 }
 
-// ── Export Parc machines ──────────────────────────────────────────
+// ── Export Parc machines ──────────────────────────────────────────────────────
 async function exportXlsParc() {
-  await _xlsx(`fgs-parc-${new Date().toISOString().split('T')[0]}`, [{
-    nom: 'Parc matériel',
-    titre: 'Parc Matériel',
-    soustitre: `${BD.machines.length} machine(s) enregistrée(s)`,
-    largeurs: [22,16,18,8,16,12,14,14,10,14],
-    entetes: ['Machine','Catégorie','Modèle','Année','Site / Chantier','Heures','Dernier entretien','Écart / Seuil','Statut','VGP prochaine'],
-    lignes: BD.machines.map(m => {
-      const s=stMach(m); const d=m.heures-m.hEntretien; const seuil=m.seuil||250;
-      return [m.nom, ncat(m.catId), m.modele||'—', m.annee||'—', m.site||'—',
-        m.heures+' h', m.hEntretien+' h', d+' h / '+seuil+' h', lblSt(s), fdt(m.vgp)||'—'];
-    })
-  }]);
+  await _exportServeur('parc', {bd: BD});
 }
 
-// ── Export Entretiens ─────────────────────────────────────────────
+// ── Export Entretiens ─────────────────────────────────────────────────────────
 async function exportXlsEntretiens() {
-  const ivs = [...BD.interventions].sort((a,b)=>new Date(b.date)-new Date(a.date));
-  await _xlsx(`fgs-entretiens-${new Date().toISOString().split('T')[0]}`, [{
-    nom: 'Entretiens',
-    titre: 'Historique des Entretiens',
-    soustitre: `${ivs.length} intervention(s)`,
-    largeurs: [12,22,16,14,18,10,22,30],
-    entetes: ['Date','Machine','Catégorie','Site','Type','Heures','Pièces changées','Notes'],
-    lignes: ivs.map(i => {
-      const m=BD.machines.find(x=>x.id===i.machineId);
-      const pcs=(i.piecesChangees||[]).map(pid=>{const p=BD.pieces.find(x=>x.id===pid);return p?p.nom:'';}).filter(Boolean).join(', ')||'—';
-      return [fdt(i.date), m?m.nom:'—', m?ncat(m.catId):'—', m?m.site||'—':'—',
-        lblTy(i.type), i.heures?(i.heures+' h'):'—', pcs, i.notes||'—'];
-    })
-  }]);
+  await _exportServeur('entretiens', {bd: BD});
 }
 
-// ── Export Pointage par journée ───────────────────────────────────
+// ── Export Pièces & Stocks ────────────────────────────────────────────────────
+async function exportXlsPieces() {
+  await _exportServeur('pieces', {bd: BD});
+}
+
+// ── Export Pointage journalier ────────────────────────────────────────────────
 async function exportXlsPointageJour() {
-  const sorted = [...POINTAGES].sort((a,b)=>b.date_jour.localeCompare(a.date_jour));
-  const lignes = [];
-  sorted.forEach(p => {
-    const dt = new Date(p.date_jour+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
-    const totalH = (p.lignes||[]).reduce((s,l)=>s+(parseFloat(l.heures)||0),0);
-    lignes.push([`📍 ${dt} — ${p.chantier} — ${p.auteur}`, '', '', '', '', '']);
-    (p.lignes||[]).forEach(l => {
-      lignes.push(['', l.nom, l.heures||0, l.gd?'Oui':'—', l.panier?'Oui':'—', p.notes||'—']);
-    });
-    lignes.push(['Sous-total', '', totalH.toFixed(1)+' h',
-      (p.lignes||[]).filter(l=>l.gd).length+' GD',
-      (p.lignes||[]).filter(l=>l.panier).length+' paniers',
-      (p.lignes||[]).length+' présence(s)']);
-    lignes.push(['', '', '', '', '', '']);
-  });
-  await _xlsx(`fgs-pointage-jour-${new Date().toISOString().split('T')[0]}`, [{
-    nom: 'Pointage journalier',
-    titre: 'Pointages — Détail par journée',
-    soustitre: `${POINTAGES.length} pointage(s)`,
-    largeurs: [30,16,10,12,12,18],
-    entetes: ['Journée / Chantier','Employé','Heures','Gd déplacement','Panier repas','Notes'],
-    lignes
-  }]);
+  await _exportServeur('pointage_jour', {data: {pointages: POINTAGES}});
 }
 
-// ── Export Pointage par semaine ───────────────────────────────────
+// ── Export Pointage hebdomadaire ──────────────────────────────────────────────
 async function exportXlsPointageSemaine() {
-  const semMap = {};
-  POINTAGES.forEach(p => {
-    const d = new Date(p.date_jour+'T12:00:00');
-    const day = (d.getDay()+6)%7;
-    const lun = new Date(d); lun.setDate(d.getDate()-day);
-    const wk = lun.toISOString().split('T')[0];
-    if(!semMap[wk]) semMap[wk]=[];
-    semMap[wk].push(p);
-  });
-  const feuilles = Object.keys(semMap).sort().reverse().slice(0,10).map(wk => {
-    const ptgs = semMap[wk];
-    const lun = new Date(wk+'T12:00:00');
-    const dim = new Date(lun); dim.setDate(lun.getDate()+6);
-    const lblW = `${lun.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})} - ${dim.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'})}`;
-    const empMap = {};
-    ptgs.forEach(p => {
-      const d = new Date(p.date_jour+'T12:00:00');
-      const dow = (d.getDay()+6)%7;
-      (p.lignes||[]).forEach(l => {
-        const k = `${l.nom}||${p.chantier}`;
-        if(!empMap[k]) empMap[k]={nom:l.nom,chantier:p.chantier,h:[0,0,0,0,0,0,0],gd:0,pan:0};
-        empMap[k].h[dow]+=(parseFloat(l.heures)||0);
-        if(l.gd) empMap[k].gd++;
-        if(l.panier) empMap[k].pan++;
-      });
-    });
-    const lignes = Object.values(empMap).map(e => {
-      const tot = e.h.reduce((s,v)=>s+v,0);
-      return [e.nom, e.chantier, ...e.h.map(h=>h>0?h:''), tot.toFixed(1), e.gd||'', e.pan||''];
-    });
-    return {
-      nom: lblW.replace(/\//g,'-').slice(0,31),
-      titre: 'Pointages — Récapitulatif hebdomadaire',
-      soustitre: `Semaine ${lblW}`,
-      largeurs: [16,18,8,8,8,8,8,8,8,8,8,8],
-      entetes: ['Employé','Chantier','Lun','Mar','Mer','Jeu','Ven','Sam','Dim','Total h','GD','Paniers'],
-      lignes
-    };
-  });
-  await _xlsx(`fgs-pointage-semaine-${new Date().toISOString().split('T')[0]}`, feuilles);
+  await _exportServeur('pointage_semaine', {data: {pointages: POINTAGES}});
 }
 
-// ── Export Livraisons (admin) ─────────────────────────────────────
+// ── Export Livraisons admin ───────────────────────────────────────────────────
 async function exportXlsLivAdmin() {
-  const chantier = LC_CHANTIER_SEL;
+  // Construire la liste filtrée comme avant
   let data = LC_DATA;
-  if (chantier) {
-    data = LC_DATA.filter(l=>l.chantier===chantier);
-    if (LC_SEM_SEL) {
+  if(LC_CHANTIER_SEL) {
+    data = LC_DATA.filter(l=>l.chantier===LC_CHANTIER_SEL);
+    if(LC_SEM_SEL){
       const fin=new Date(LC_SEM_SEL+'T12:00:00'); fin.setDate(fin.getDate()+6);
       data=data.filter(l=>l.date_liv>=LC_SEM_SEL&&l.date_liv<=fin.toISOString().split('T')[0]);
     }
   }
   if(!data.length){toast('Aucune livraison à exporter');return;}
-  const agg={};
-  data.forEach(l=>{
-    if(!agg[l.element]) agg[l.element]={element:l.element,unite:l.unite,qte:0,nb:0};
-    agg[l.element].qte+=l.quantite; agg[l.element].nb++;
-  });
-  const recapLignes = Object.values(agg).map(v => {
-    const prix=getPrix(chantier||'',v.element);
-    const tot=prix?v.qte*prix:null;
-    return [v.element, v.qte.toFixed(2)+' '+v.unite, v.nb, prix?prix+' €/'+v.unite:'—', tot?tot.toFixed(2)+' €':'—'];
-  });
-  const detailLignes = [...data].sort((a,b)=>b.date_liv.localeCompare(a.date_liv)).map(l=>{
-    const prix=getPrix(l.chantier,l.element);
-    const cout=prix?(l.quantite*prix).toFixed(2):null;
-    return [fdt(l.date_liv), l.chantier, l.auteur, l.element, l.quantite.toFixed(2)+' '+l.unite,
-      prix?prix+' €':'—', cout?cout+' €':'—', l.notes||'—'];
-  });
-  await _xlsx(`fgs-livraisons-${chantier||'tout'}-${new Date().toISOString().split('T')[0]}`, [
-    {
-      nom: 'Récapitulatif', titre: chantier?`Livraisons — ${chantier}`:'Livraisons — Tous chantiers',
-      soustitre: `${data.length} livraison(s)`,
-      largeurs: [20,18,10,18,20],
-      entetes: ['Matériau','Quantité totale','Nb livraisons','Prix unitaire','Coût total'],
-      lignes: recapLignes
-    },
-    {
-      nom: 'Détail livraisons', titre: 'Détail des livraisons',
-      soustitre: chantier||'Tous chantiers',
-      largeurs: [12,18,14,14,14,12,12,28],
-      entetes: ['Date','Chantier','Chef chantier','Matériau','Quantité','Prix unit.','Coût','Notes'],
-      lignes: detailLignes
+  await _exportServeur('livraisons_admin', {
+    data: {
+      livraisons: data,
+      chantier: LC_CHANTIER_SEL || 'Tous chantiers',
+      semaine: LC_SEM_SEL || ''
     }
-  ]);
+  });
 }
 
-// ── Export Livraisons (chef) ──────────────────────────────────────
+// ── Export Livraisons chef ────────────────────────────────────────────────────
 async function exportXlsLivChef() {
   if(!LC_DATA.length){toast('Aucune livraison à exporter');return;}
-  await _xlsx(`fgs-mes-livraisons-${new Date().toISOString().split('T')[0]}`, [{
-    nom: 'Mes livraisons', titre: 'Mes Livraisons Chantier',
-    soustitre: `${USER?.nom||''} — ${LC_DATA.length} livraison(s)`,
-    largeurs: [12,18,16,14,28],
-    entetes: ['Date','Chantier','Matériau','Quantité','Notes'],
-    lignes: [...LC_DATA].sort((a,b)=>b.date_liv.localeCompare(a.date_liv)).map(l=>[
-      fdt(l.date_liv), l.chantier, l.element, l.quantite.toFixed(2)+' '+l.unite, l.notes||'—'
-    ])
-  }]);
+  await _exportServeur('livraisons_chef', {data: {livraisons: LC_DATA}});
 }
 
-// ── Export Total chantier ─────────────────────────────────────────
+// ── Export Total chantier ─────────────────────────────────────────────────────
 async function exportXlsTotal() {
   if(!TOTAL_CHANTIER_SEL){toast('Sélectionnez un chantier');return;}
-  const chantier=TOTAL_CHANTIER_SEL;
-  const ptgC=POINTAGES.filter(p=>p.chantier===chantier);
-  const livC=LC_DATA.filter(l=>l.chantier===chantier);
-  const totalH=ptgC.reduce((s,p)=>s+(p.lignes||[]).reduce((ss,l)=>ss+(parseFloat(l.heures)||0),0),0);
-  const nbPres=ptgC.reduce((s,p)=>s+(p.lignes||[]).length,0);
-  const nbGD=ptgC.reduce((s,p)=>s+(p.lignes||[]).filter(l=>l.gd).length,0);
-  const nbPan=ptgC.reduce((s,p)=>s+(p.lignes||[]).filter(l=>l.panier).length,0);
-  const coutH=getPrix(chantier,'__heures__');
-  const coutMO=coutH?totalH*coutH:null;
-  const agg={};
-  livC.forEach(l=>{if(!agg[l.element])agg[l.element]={element:l.element,unite:l.unite,qte:0};agg[l.element].qte+=l.quantite;});
-  let totalMat=0;
-  const matLignes=Object.values(agg).map(v=>{
-    const prix=getPrix(chantier,v.element);
-    const tot=prix?v.qte*prix:null;
-    if(tot) totalMat+=tot;
-    return [v.element, v.qte.toFixed(2)+' '+v.unite, prix?prix+' €':'—', tot?tot.toFixed(2)+' €':'—'];
+  const chantier = TOTAL_CHANTIER_SEL;
+  // Construire un dict prix_ref depuis PRIX_REF
+  const prix_ref = {};
+  if(typeof PRIX_REF !== 'undefined') {
+    PRIX_REF.forEach(p => {
+      if(p.chantier === chantier && p.prix_unitaire) {
+        prix_ref[p.element] = p.prix_unitaire;
+      }
+    });
+  }
+  await _exportServeur('total_chantier', {
+    data: {
+      chantier,
+      pointages:  POINTAGES.filter(p=>p.chantier===chantier),
+      livraisons: LC_DATA.filter(l=>l.chantier===chantier),
+      prix_ref
+    },
+    bd: BD
   });
-  const totalGen=(coutMO||0)+totalMat;
-  const synthLignes=[
-    ['Main d\'œuvre', totalH.toFixed(1)+' h · '+nbPres+' présences · '+nbGD+' GD · '+nbPan+' paniers', coutH?coutH+' €/h':'—', coutMO?coutMO.toFixed(2)+' €':'—'],
-    ['Matériaux', Object.keys(agg).join(', ')||'—', '—', totalMat?totalMat.toFixed(2)+' €':'—'],
-    ['TOTAL GÉNÉRAL', '', '', totalGen>0?totalGen.toFixed(2)+' €':'—'],
-  ];
-  const ptgLignes=[...ptgC].sort((a,b)=>b.date_jour.localeCompare(a.date_jour)).map(p=>{
-    const lignes=p.lignes||[];
-    const tH=lignes.reduce((s,l)=>s+(parseFloat(l.heures)||0),0);
-    return [fdt(p.date_jour), p.auteur, lignes.map(l=>l.nom).join(', ')||'—',
-      lignes.length, tH.toFixed(1)+' h', lignes.filter(l=>l.gd).length||'—', lignes.filter(l=>l.panier).length||'—'];
-  });
-  await _xlsx(`fgs-total-${chantier}-${new Date().toISOString().split('T')[0]}`, [
-    {nom:'Synthèse', titre:`Synthèse — ${chantier}`, soustitre:'Main d\'œuvre & matériaux',
-     largeurs:[20,35,14,16], entetes:['Poste','Détail','Taux','Montant'], lignes:synthLignes},
-    {nom:'Matériaux', titre:'Matériaux livrés', soustitre:chantier,
-     largeurs:[18,16,14,14], entetes:['Matériau','Quantité','Prix unitaire','Coût total'], lignes:matLignes},
-    {nom:'Pointages', titre:'Détail des pointages', soustitre:chantier,
-     largeurs:[12,14,28,10,10,8,8], entetes:['Date','Saisi par','Employés','Présences','Heures','GD','Paniers'], lignes:ptgLignes},
-  ]);
 }
+
 
 // ── Bon de commande → PDF imprimable ─────────────────────────────
 function exportCommandesPDF() {
