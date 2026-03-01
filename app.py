@@ -4,9 +4,9 @@ FGS App — Serveur avec base de données PostgreSQL
 Utilise pg8000 (compatible Python 3.14+)
 """
 
-import json, os, re
+import json, os, re, io, base64
 import pg8000.native
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, send_file
 
 app = Flask(__name__, static_folder=".")
 
@@ -725,3 +725,914 @@ def update_statut_anomalie(aid):
         return jsonify({"ok": True})
     except Exception as e:
         return jsonify({"erreur": str(e)}), 500
+
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# MOTEUR D'EXPORT XLSX PROFESSIONNEL — FGS Travaux Spéciaux
+# Génère des fichiers Excel avec logo, cartouche et mise en forme élaborée
+# ══════════════════════════════════════════════════════════════════════════════
+
+try:
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
+    from openpyxl.utils import get_column_letter
+    from openpyxl.drawing.image import Image as XLImage
+    OPENPYXL_OK = True
+except ImportError:
+    OPENPYXL_OK = False
+
+# ── Palette couleurs FGS ──────────────────────────────────────────────────────
+C_ROUGE      = "C0392B"   # Rouge FGS principal
+C_ROUGE_L    = "FDECEA"   # Rouge clair (fond alertes)
+C_ORANGE_L   = "FEF3DC"   # Orange clair
+C_VERT_L     = "EDF7ED"   # Vert clair (OK)
+C_BLEU_FOND  = "1A1A2E"   # Bleu nuit (cartouche)
+C_BLEU_ENT   = "16213E"   # Bleu entêtes
+C_BLEU_ACIER = "2C3E50"   # Bleu acier (entêtes tableau)
+C_GRIS_SEP   = "ECF0F1"   # Gris séparateur
+C_GRIS_LIGNE = "F8F9FA"   # Gris ligne paire
+C_BORDURE    = "CED4DA"   # Gris bordure
+C_BLANC      = "FFFFFF"
+C_TEXTE      = "1A1A2E"
+
+# ── Helpers de style ──────────────────────────────────────────────────────────
+def _S(color=C_BORDURE, style='thin'):
+    return Side(style=style, color=color)
+
+def _fill(color):
+    return PatternFill(fill_type='solid', fgColor=color)
+
+def _font(sz=10, bold=False, color=C_TEXTE, italic=False, name='Calibri'):
+    return Font(name=name, size=sz, bold=bold, color=color, italic=italic)
+
+def _align(h='left', v='center', wrap=False):
+    return Alignment(horizontal=h, vertical=v, wrap_text=wrap, indent=0)
+
+def _border(left=True, right=True, top=True, bottom=True, c=C_BORDURE):
+    s = _S(c)
+    return Border(
+        left=s if left else None,
+        right=s if right else None,
+        top=s if top else None,
+        bottom=s if bottom else None
+    )
+
+def _set_col_widths(ws, widths):
+    for i, w in enumerate(widths, 1):
+        ws.column_dimensions[get_column_letter(i)].width = w
+
+def _date_fr(d_str):
+    """Convertit 'YYYY-MM-DD' en 'DD/MM/YYYY'."""
+    if not d_str or d_str == '—': return '—'
+    try:
+        from datetime import date
+        return date.fromisoformat(str(d_str)).strftime('%d/%m/%Y')
+    except:
+        return str(d_str)
+
+# ── Cartouche professionnel FGS ───────────────────────────────────────────────
+def _cartouche(ws, titre, sous_titre, auteur, nb_cols):
+    """
+    Construit le cartouche FGS sur 7 lignes :
+    L1 : marge vide
+    L2 : fond bleu nuit — Nom société (gauche) + Logo (droite)
+    L3 : fond rouge FGS — Titre document
+    L4 : fond bleu nuit — Sous-titre / description
+    L5 : fond bleu nuit — Date export + Exporté par
+    L6 : ligne rouge fine (séparateur décoratif)
+    L7 : marge vide avant les données
+    Retourne le numéro de la 1ère ligne de données (8).
+    """
+    from datetime import datetime
+    now = datetime.now()
+    date_str  = now.strftime("%d/%m/%Y")
+    heure_str = now.strftime("%Hh%M")
+
+    hauteurs = {1:4, 2:38, 3:30, 4:20, 5:17, 6:5, 7:6}
+    for row, h in hauteurs.items():
+        ws.row_dimensions[row].height = h
+
+    # Couleurs de fond par ligne
+    fonds = {2: C_BLEU_FOND, 3: C_ROUGE, 4: C_BLEU_FOND, 5: C_BLEU_FOND, 6: C_ROUGE}
+    for row, color in fonds.items():
+        for col in range(1, nb_cols + 1):
+            ws.cell(row=row, column=col).fill = _fill(color)
+
+    # L2 : Société
+    c = ws.cell(row=2, column=1, value="FGS TRAVAUX SPÉCIAUX")
+    c.font      = _font(sz=18, bold=True, color=C_BLANC)
+    c.alignment = _align('left', 'center')
+
+    # L3 : Titre document
+    c = ws.cell(row=3, column=1, value=f"  {titre.upper()}")
+    c.font      = _font(sz=15, bold=True, color=C_BLANC)
+    c.alignment = _align('left', 'center')
+
+    # L4 : Sous-titre
+    c = ws.cell(row=4, column=1, value=f"  {sous_titre}")
+    c.font      = _font(sz=10, italic=True, color='AABBCC')
+    c.alignment = _align('left', 'center')
+
+    # L5 : Exporté par + date
+    c = ws.cell(row=5, column=1,
+                value=f"  Exporté le {date_str} à {heure_str}   •   Par : {auteur}")
+    c.font      = _font(sz=9, color='8899AA')
+    c.alignment = _align('left', 'center')
+
+    # Logo (ancré en haut à droite du cartouche)
+    logo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logo_fgs.png')
+    if os.path.exists(logo_path):
+        try:
+            img = XLImage(logo_path)
+            ratio = img.width / max(img.height, 1)
+            img.height = 82
+            img.width  = int(82 * ratio)
+            # Placer dans les 2-3 dernières colonnes
+            col_logo = max(nb_cols - 2, 2)
+            img.anchor = f"{get_column_letter(col_logo)}2"
+            ws.add_image(img)
+        except Exception as e:
+            pass  # Si le logo échoue, on continue sans
+
+    # Figer les lignes d'en-tête (cartouche + entêtes tableau)
+    ws.freeze_panes = "A9"
+    return 8  # première ligne disponible (après cartouche)
+
+
+# ── Ligne d'en-têtes tableau ──────────────────────────────────────────────────
+def _entetes(ws, row, cols, hauteur=22):
+    ws.row_dimensions[row].height = hauteur
+    for i, col in enumerate(cols, 1):
+        c = ws.cell(row=row, column=i, value=col)
+        c.font      = _font(sz=10, bold=True, color=C_BLANC)
+        c.fill      = _fill(C_BLEU_ACIER)
+        c.alignment = _align('center', 'center')
+        c.border    = Border(
+            left   = _S(C_BLEU_ACIER, 'medium'),
+            right  = _S(C_BLANC, 'thin'),
+            top    = _S(C_BLEU_ACIER, 'medium'),
+            bottom = _S(C_BLEU_ACIER, 'medium')
+        )
+
+def _entetes_rouge(ws, row, cols, hauteur=22):
+    """Variante rouge pour les synthèses financières."""
+    ws.row_dimensions[row].height = hauteur
+    for i, col in enumerate(cols, 1):
+        c = ws.cell(row=row, column=i, value=col)
+        c.font      = _font(sz=10, bold=True, color=C_BLANC)
+        c.fill      = _fill(C_ROUGE)
+        c.alignment = _align('center', 'center')
+        c.border    = Border(
+            left   = _S(C_ROUGE, 'medium'),
+            right  = _S(C_BLANC, 'thin'),
+            top    = _S(C_ROUGE, 'medium'),
+            bottom = _S(C_ROUGE, 'medium')
+        )
+
+
+# ── Ligne de données ──────────────────────────────────────────────────────────
+def _ligne(ws, row, data, idx=0, hauteur=18, surbrillance=None, bold_col1=False):
+    ws.row_dimensions[row].height = hauteur
+    bg = surbrillance if surbrillance else (C_GRIS_LIGNE if idx % 2 == 0 else C_BLANC)
+    for i, val in enumerate(data, 1):
+        c = ws.cell(row=row, column=i, value=val)
+        c.font      = _font(sz=10, bold=(bold_col1 and i == 1))
+        c.fill      = _fill(bg)
+        c.alignment = _align('left', 'center', wrap=(i == len(data)))
+        c.border    = Border(
+            bottom = _S(C_BORDURE, 'thin'),
+            right  = _S(C_BORDURE, 'thin')
+        )
+
+
+def _ligne_total(ws, row, data, nb_cols, color=C_BLEU_ACIER, hauteur=22):
+    """Ligne de total en pied de tableau."""
+    ws.row_dimensions[row].height = hauteur
+    for col in range(1, nb_cols + 1):
+        ws.cell(row=row, column=col).fill = _fill(color)
+    for i, val in enumerate(data, 1):
+        if val is None: continue
+        c = ws.cell(row=row, column=i, value=val)
+        c.font      = _font(sz=11, bold=True, color=C_BLANC)
+        c.alignment = _align('left', 'center')
+
+
+def _titre_section(ws, row, texte, nb_cols, color=C_GRIS_SEP, hauteur=16):
+    """Ligne de séparation de section (sous-titre grisé)."""
+    ws.row_dimensions[row].height = hauteur
+    for col in range(1, nb_cols + 1):
+        ws.cell(row=row, column=col).fill = _fill(color)
+    c = ws.cell(row=row, column=1, value=f"  {texte}")
+    c.font      = _font(sz=10, bold=True, color=C_BLEU_ACIER)
+    c.alignment = _align('left', 'center')
+
+
+# ── Workbook helpers ──────────────────────────────────────────────────────────
+def _new_wb():
+    wb = Workbook()
+    wb.remove(wb.active)  # Supprimer la feuille vide par défaut
+    return wb
+
+def _send_wb(wb, filename):
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    return send_file(
+        buf,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name=f"{filename}.xlsx"
+    )
+
+
+# ── Route principale ──────────────────────────────────────────────────────────
+@app.route("/api/export/<type_export>", methods=["POST"])
+def export_xlsx(type_export):
+    if not OPENPYXL_OK:
+        return jsonify({"erreur": "openpyxl non disponible sur ce serveur"}), 500
+    try:
+        payload  = request.get_json(force=True, silent=True) or {}
+        auteur   = payload.get("auteur", "—")
+        bd       = payload.get("bd", {})
+        data     = payload.get("data", {})
+        from datetime import datetime
+        date_iso = datetime.now().strftime("%Y-%m-%d")
+
+        handlers = {
+            "parc":              lambda: _export_parc(bd, auteur, date_iso),
+            "entretiens":        lambda: _export_entretiens(bd, auteur, date_iso),
+            "pieces":            lambda: _export_pieces(bd, auteur, date_iso),
+            "pointage_jour":     lambda: _export_ptg_jour(data.get("pointages",[]), auteur, date_iso),
+            "pointage_semaine":  lambda: _export_ptg_semaine(data.get("pointages",[]), auteur, date_iso),
+            "livraisons_admin":  lambda: _export_liv_admin(data, auteur, date_iso),
+            "livraisons_chef":   lambda: _export_liv_chef(data, auteur, date_iso),
+            "total_chantier":    lambda: _export_total(data, bd, auteur, date_iso),
+        }
+        if type_export not in handlers:
+            return jsonify({"erreur": f"Export inconnu : {type_export}"}), 400
+        return handlers[type_export]()
+    except Exception as e:
+        import traceback; traceback.print_exc()
+        return jsonify({"erreur": str(e)}), 500
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# EXPORT 1 — PARC MATÉRIEL
+# ══════════════════════════════════════════════════════════════════════════════
+def _export_parc(bd, auteur, date_iso):
+    machines   = bd.get("machines", [])
+    categories = bd.get("categories", [])
+
+    def ncat(cid):
+        return next((c.get("nom","—") for c in categories if c.get("id") == cid), "—")
+
+    def st_mach(m):
+        from datetime import date
+        seuil = m.get("seuil", 250) or 250
+        d = (m.get("heures",0) or 0) - (m.get("hEntretien",0) or 0)
+        pct = d / seuil
+        vgp = m.get("vgp","")
+        if vgp:
+            try:
+                days = (date.fromisoformat(vgp) - date.today()).days
+                if days < 0:  return "da"
+                if days < 30: return "wa"
+            except: pass
+        if pct >= 1:   return "da"
+        if pct >= 0.8: return "wa"
+        return "ok"
+
+    ST_LBL  = {"da": "⚠ EN RETARD", "wa": "À PRÉVOIR", "ok": "À jour"}
+    ST_FILL = {"da": C_ROUGE_L,      "wa": C_ORANGE_L,  "ok": C_VERT_L}
+
+    COLS     = ["Machine","Catégorie","Modèle","Année",
+                "Site / Chantier","Heures","Dernier entretien",
+                "Écart","Seuil","Statut","VGP prochaine"]
+    LARGEURS = [28, 18, 22, 8, 20, 12, 16, 10, 10, 14, 14]
+
+    wb = _new_wb()
+    ws = wb.create_sheet("Parc matériel")
+    _set_col_widths(ws, LARGEURS)
+
+    r = _cartouche(ws, "Parc Matériel — Inventaire Engins",
+                   f"{len(machines)} engin(s) · Exporté depuis FGS App", auteur, len(COLS))
+    _entetes(ws, r, COLS); r += 1
+
+    # Grouper par catégorie
+    cat_order = [c.get("nom","—") for c in categories]
+    cat_dict = {cn: [] for cn in cat_order}
+    cat_dict["Autres"] = []
+    for m in machines:
+        cn = ncat(m.get("catId",""))
+        if cn in cat_dict: cat_dict[cn].append(m)
+        else: cat_dict["Autres"].append(m)
+
+    idx = 0
+    for cn in cat_order + ["Autres"]:
+        ms = cat_dict.get(cn, [])
+        if not ms: continue
+        _titre_section(ws, r, f"▸  {cn}  —  {len(ms)} engin(s)", len(COLS)); r += 1
+        for m in ms:
+            st   = st_mach(m)
+            d    = (m.get("heures",0) or 0) - (m.get("hEntretien",0) or 0)
+            seuil = m.get("seuil",250) or 250
+            row_data = [
+                m.get("nom","—"),
+                cn,
+                m.get("modele","—") or "—",
+                m.get("annee","—") or "—",
+                m.get("site","—") or "—",
+                f"{m.get('heures',0)} h",
+                f"{m.get('hEntretien',0)} h",
+                f"{d} h",
+                f"{seuil} h",
+                ST_LBL[st],
+                _date_fr(m.get("vgp","")) or "—"
+            ]
+            _ligne(ws, r, row_data, idx, surbrillance=ST_FILL[st]); idx += 1; r += 1
+
+    # Pied : résumé statuts
+    r += 1
+    nb_da = sum(1 for m in machines if st_mach(m) == "da")
+    nb_wa = sum(1 for m in machines if st_mach(m) == "wa")
+    nb_ok = sum(1 for m in machines if st_mach(m) == "ok")
+    _ligne_total(ws, r, [f"BILAN  :  {nb_da} en retard  •  {nb_wa} à prévoir  •  {nb_ok} à jour",
+                          None, None, None, None, None, None, None, None,
+                          f"{len(machines)} total", None], len(COLS))
+
+    return _send_wb(wb, f"FGS-Parc-{date_iso}")
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# EXPORT 2 — ENTRETIENS
+# ══════════════════════════════════════════════════════════════════════════════
+def _export_entretiens(bd, auteur, date_iso):
+    interventions = sorted(bd.get("interventions",[]), key=lambda x: x.get("date",""), reverse=True)
+    machines   = bd.get("machines",[])
+    pieces     = bd.get("pieces",[])
+    categories = bd.get("categories",[])
+
+    def get_m(mid): return next((m for m in machines if m.get("id")==mid), {})
+    def get_p(pid): return next((p for p in pieces  if p.get("id")==pid), {})
+    def ncat(cid):  return next((c.get("nom","—") for c in categories if c.get("id")==cid), "—")
+    TY = {"entretien":"Entretien préventif","reparation":"Réparation",
+          "VGP":"VGP","remplacement":"Remplacement pièce"}
+    TY_FILL = {"entretien": C_VERT_L, "reparation": C_ROUGE_L,
+               "VGP": "E8EAF6", "remplacement": C_ORANGE_L}
+
+    COLS     = ["Date","Machine","Catégorie","Site","Type",
+                "Heures","Pièces catalogue","Pièces libres","Notes"]
+    LARGEURS = [14, 26, 18, 18, 22, 10, 32, 28, 36]
+
+    wb = _new_wb()
+    ws = wb.create_sheet("Entretiens")
+    _set_col_widths(ws, LARGEURS)
+
+    r = _cartouche(ws, "Historique des Entretiens",
+                   f"{len(interventions)} intervention(s) — Toutes machines", auteur, len(COLS))
+    _entetes(ws, r, COLS); r += 1
+
+    for idx, iv in enumerate(interventions):
+        m  = get_m(iv.get("machineId",""))
+        ty = iv.get("type","entretien")
+        pcs_noms = [get_p(pid).get("nom","?") for pid in (iv.get("piecesChangees") or []) if get_p(pid)]
+        autres   = [f"{ap.get('nom','?')} ({ap.get('ref','—')})"
+                    for ap in (iv.get("autresPieces") or [])]
+        row_data = [
+            _date_fr(iv.get("date","")),
+            m.get("nom","—"),
+            ncat(m.get("catId","")),
+            m.get("site","—") or "—",
+            TY.get(ty, ty),
+            f"{iv.get('heures','—')} h" if iv.get("heures") else "—",
+            ", ".join(pcs_noms) if pcs_noms else "—",
+            ", ".join(autres)   if autres   else "—",
+            iv.get("notes","—") or "—"
+        ]
+        _ligne(ws, r, row_data, idx, surbrillance=TY_FILL.get(ty)); r += 1
+
+    # Légende types
+    r += 1
+    _titre_section(ws, r, "LÉGENDE", len(COLS)); r += 1
+    legende = [
+        ("Entretien préventif", C_VERT_L),
+        ("Réparation",          C_ROUGE_L),
+        ("VGP",                 "E8EAF6"),
+        ("Remplacement pièce",  C_ORANGE_L),
+    ]
+    for i, (lbl, clr) in enumerate(legende):
+        _ligne(ws, r, [lbl, "", "", "", "", "", "", "", ""], i, surbrillance=clr); r += 1
+
+    return _send_wb(wb, f"FGS-Entretiens-{date_iso}")
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# EXPORT 3 — PIÈCES & STOCKS
+# ══════════════════════════════════════════════════════════════════════════════
+def _export_pieces(bd, auteur, date_iso):
+    pieces   = bd.get("pieces",[])
+    machines = bd.get("machines",[])
+
+    def get_compat(p):
+        ids = p.get("machinesCompatibles") or []
+        if not ids:
+            ids = [m.get("id") for m in machines
+                   if any(pa.get("pieceId")==p.get("id")
+                          for pa in (m.get("piecesAssociees") or []))]
+        return [m.get("nom","?") for m in machines if m.get("id") in ids]
+
+    COLS     = ["Nom pièce","Référence","Durée de vie","Unité",
+                "Stock actuel","Besoin (1/engin)","À commander","Statut","Machines compatibles","Notes"]
+    LARGEURS = [26, 16, 14, 10, 14, 14, 14, 18, 40, 30]
+
+    wb = _new_wb()
+    ws = wb.create_sheet("Pièces & Stocks")
+    _set_col_widths(ws, LARGEURS)
+
+    # Trier : pièces à commander en premier
+    def sort_key(p):
+        compat = get_compat(p)
+        manque = max(len(compat) - (p.get("stock",0) or 0), 0)
+        return -manque
+
+    pieces_sorted = sorted(pieces, key=sort_key)
+    nb_alerte = sum(1 for p in pieces if max(len(get_compat(p))-(p.get("stock",0) or 0),0)>0)
+
+    r = _cartouche(ws, "Catalogue Pièces & Stocks",
+                   f"{len(pieces)} référence(s)  •  {nb_alerte} à commander", auteur, len(COLS))
+    _entetes(ws, r, COLS); r += 1
+
+    # Section : pièces à commander
+    a_cmd = [p for p in pieces_sorted if max(len(get_compat(p))-(p.get("stock",0) or 0),0)>0]
+    ok    = [p for p in pieces_sorted if max(len(get_compat(p))-(p.get("stock",0) or 0),0)==0]
+
+    if a_cmd:
+        _titre_section(ws, r, f"⚠  {len(a_cmd)} PIÈCE(S) À COMMANDER", len(COLS), C_ROUGE_L); r += 1
+        for idx, p in enumerate(a_cmd):
+            compat = get_compat(p)
+            stock  = p.get("stock",0) or 0
+            manque = max(len(compat) - stock, 0)
+            row_data = [p.get("nom","—"), p.get("ref","—"),
+                        p.get("dureeVal","—"), p.get("dureeUnite","heures"),
+                        stock, len(compat), manque, f"⚠ {manque} à commander",
+                        ", ".join(compat) if compat else "—",
+                        p.get("notes","—") or "—"]
+            _ligne(ws, r, row_data, idx, surbrillance=C_ROUGE_L); r += 1
+
+    if ok:
+        _titre_section(ws, r, f"✓  {len(ok)} PIÈCE(S) EN STOCK SUFFISANT", len(COLS), C_VERT_L); r += 1
+        for idx, p in enumerate(ok):
+            compat = get_compat(p)
+            stock  = p.get("stock",0) or 0
+            besoin = len(compat)
+            statut = "✓ Stock OK" if besoin > 0 else "Non rattachée"
+            row_data = [p.get("nom","—"), p.get("ref","—"),
+                        p.get("dureeVal","—"), p.get("dureeUnite","heures"),
+                        stock, besoin or "—", "—", statut,
+                        ", ".join(compat) if compat else "—",
+                        p.get("notes","—") or "—"]
+            _ligne(ws, r, row_data, idx, surbrillance=C_VERT_L if besoin > 0 else None); r += 1
+
+    # Total
+    total_stock = sum(p.get("stock",0) or 0 for p in pieces)
+    _ligne_total(ws, r, [f"TOTAL : {len(pieces)} références  •  {total_stock} unités en stock",
+                          None,None,None, total_stock, None, None, None, None, None], len(COLS))
+
+    return _send_wb(wb, f"FGS-Pieces-{date_iso}")
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# EXPORT 4 — POINTAGE JOURNALIER
+# ══════════════════════════════════════════════════════════════════════════════
+def _export_ptg_jour(pointages, auteur, date_iso):
+    from datetime import date
+    sorted_ptg = sorted(pointages, key=lambda x: x.get("date_jour",""), reverse=True)
+    JOURS = ["Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi","Dimanche"]
+
+    COLS     = ["Date","Chantier","Saisi par","Employé",
+                "Heures","Gd Dépl.","Panier","Notes"]
+    LARGEURS = [18, 24, 18, 24, 10, 12, 10, 32]
+
+    wb = _new_wb()
+    ws = wb.create_sheet("Pointage journalier")
+    _set_col_widths(ws, LARGEURS)
+
+    # Calculs globaux
+    total_h_global = sum(float(l.get("heures",0) or 0)
+                         for p in sorted_ptg for l in (p.get("lignes") or []))
+    nb_gd_global   = sum(1 for p in sorted_ptg for l in (p.get("lignes") or []) if l.get("gd"))
+    nb_pan_global  = sum(1 for p in sorted_ptg for l in (p.get("lignes") or []) if l.get("panier"))
+
+    r = _cartouche(ws, "Pointages — Détail par journée",
+                   f"{len(sorted_ptg)} journée(s)  •  {total_h_global:.1f} h totales  •  {nb_gd_global} GD  •  {nb_pan_global} paniers",
+                   auteur, len(COLS))
+    _entetes(ws, r, COLS); r += 1
+
+    for ptg in sorted_ptg:
+        dj = ptg.get("date_jour","")
+        try:
+            d = date.fromisoformat(dj)
+            date_lbl = f"{JOURS[d.weekday()]} {d.strftime('%d/%m/%Y')}"
+        except:
+            date_lbl = dj
+        chantier   = ptg.get("chantier","—")
+        saisie_par = ptg.get("auteur","—")
+        lignes     = ptg.get("lignes") or []
+        notes      = ptg.get("notes","") or "—"
+
+        # En-tête de la journée
+        _titre_section(ws, r, f"  {date_lbl}  —  {chantier}  —  {len(lignes)} présence(s)", len(COLS)); r += 1
+
+        if not lignes:
+            _ligne(ws, r, [date_lbl, chantier, saisie_par, "(aucun employé)",
+                           "—","—","—", notes], 0); r += 1
+        else:
+            for j, l in enumerate(lignes):
+                row_data = [
+                    date_lbl   if j == 0 else "",
+                    chantier   if j == 0 else "",
+                    saisie_par if j == 0 else "",
+                    l.get("nom","—"),
+                    l.get("heures","—") or "—",
+                    "✓" if l.get("gd")     else "—",
+                    "✓" if l.get("panier") else "—",
+                    notes if j == 0 else ""
+                ]
+                # Fond différent pour GD ou panier
+                surb = None
+                if l.get("gd") and l.get("panier"): surb = C_ORANGE_L
+                elif l.get("gd"):     surb = "FFF3E0"
+                elif l.get("panier"): surb = "E8F5E9"
+                _ligne(ws, r, row_data, j, surbrillance=surb, bold_col1=(j==0)); r += 1
+
+        # Sous-total journée
+        th    = sum(float(l.get("heures",0) or 0) for l in lignes)
+        nb_gd = sum(1 for l in lignes if l.get("gd"))
+        nb_p  = sum(1 for l in lignes if l.get("panier"))
+        ws.row_dimensions[r].height = 15
+        c = ws.cell(row=r, column=1,
+                    value=f"     Sous-total : {len(lignes)} présence(s)  ·  {th:.1f} h  ·  {nb_gd} GD  ·  {nb_p} panier(s)")
+        c.font      = _font(sz=9, italic=True, color=C_BLEU_ACIER, bold=True)
+        c.fill      = _fill(C_GRIS_SEP)
+        c.alignment = _align('left','center')
+        for col in range(2, len(COLS)+1):
+            ws.cell(row=r, column=col).fill = _fill(C_GRIS_SEP)
+        r += 1
+        ws.row_dimensions[r].height = 4; r += 1  # espace entre journées
+
+    # Total global
+    _ligne_total(ws, r, [
+        f"TOTAL GÉNÉRAL : {len(sorted_ptg)} journée(s)  ·  {total_h_global:.1f} h  ·  {nb_gd_global} GD  ·  {nb_pan_global} panier(s)",
+        None, None, None, f"{total_h_global:.1f} h",
+        str(nb_gd_global), str(nb_pan_global), None
+    ], len(COLS))
+
+    return _send_wb(wb, f"FGS-Pointage-Jour-{date_iso}")
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# EXPORT 5 — POINTAGE HEBDOMADAIRE (une feuille par semaine)
+# ══════════════════════════════════════════════════════════════════════════════
+def _export_ptg_semaine(pointages, auteur, date_iso):
+    from datetime import date, timedelta
+
+    # Grouper par semaine (lundi)
+    sem_map = {}
+    for ptg in pointages:
+        dj = ptg.get("date_jour","")
+        try:
+            d    = date.fromisoformat(dj)
+            lun  = d - timedelta(days=d.weekday())
+            wk   = lun.isoformat()
+        except:
+            wk = dj[:7]
+        if wk not in sem_map: sem_map[wk] = []
+        sem_map[wk].append(ptg)
+
+    JOURS    = ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"]
+    COLS     = ["Employé","Chantier"] + JOURS + ["Total h","GD","Paniers"]
+    LARGEURS = [26, 24, 8, 8, 8, 8, 8, 8, 8, 12, 10, 10]
+
+    wb = _new_wb()
+
+    for wk in sorted(sem_map.keys(), reverse=True):
+        ptgs = sem_map[wk]
+        try:
+            lun = date.fromisoformat(wk)
+            dim = lun + timedelta(days=6)
+            lbl = f"{lun.strftime('%d/%m')} — {dim.strftime('%d/%m/%Y')}"
+            nom_feuille = f"Sem {lun.strftime('%d.%m.%y')}"[:31]
+        except:
+            lbl = wk; nom_feuille = wk[:31]
+
+        ws = wb.create_sheet(nom_feuille)
+        _set_col_widths(ws, LARGEURS)
+
+        nb_jours = len(ptgs)
+        total_h  = sum(float(l.get("heures",0) or 0) for p in ptgs for l in (p.get("lignes") or []))
+
+        r = _cartouche(ws, "Pointages — Récapitulatif Hebdomadaire",
+                       f"Semaine du {lbl}  •  {nb_jours} journée(s)  •  {total_h:.1f} h totales",
+                       auteur, len(COLS))
+        _entetes(ws, r, COLS); r += 1
+
+        # Construire matrice employé × chantier × jours
+        emp_map = {}
+        for ptg in ptgs:
+            dj = ptg.get("date_jour","")
+            try: dow = date.fromisoformat(dj).weekday()
+            except: dow = 0
+            for l in (ptg.get("lignes") or []):
+                k = f"{l.get('nom','?')}||{ptg.get('chantier','?')}"
+                if k not in emp_map:
+                    emp_map[k] = {"nom": l.get("nom","?"),
+                                  "chantier": ptg.get("chantier","?"),
+                                  "h": [0.0]*7, "gd": 0, "pan": 0}
+                emp_map[k]["h"][dow] += float(l.get("heures",0) or 0)
+                if l.get("gd"):     emp_map[k]["gd"]  += 1
+                if l.get("panier"): emp_map[k]["pan"] += 1
+
+        # Grouper par chantier
+        chantiers = sorted(set(v["chantier"] for v in emp_map.values()))
+        idx = 0
+        for ch in chantiers:
+            emps = [v for v in emp_map.values() if v["chantier"] == ch]
+            _titre_section(ws, r, f"▸ {ch}", len(COLS)); r += 1
+            for e in sorted(emps, key=lambda x: x["nom"]):
+                tot  = sum(e["h"])
+                row_data = ([e["nom"], e["chantier"]] +
+                           [round(h,1) if h > 0 else "" for h in e["h"]] +
+                           [round(tot,1), e["gd"] or "", e["pan"] or ""])
+                # Fond orange si GD ou panier
+                surb = C_ORANGE_L if (e["gd"] or e["pan"]) else None
+                _ligne(ws, r, row_data, idx, surbrillance=surb); idx += 1; r += 1
+
+        # Ligne totaux semaine
+        h_jours = [sum(v["h"][i] for v in emp_map.values()) for i in range(7)]
+        total_sem = sum(h_jours)
+        tot_gd  = sum(v["gd"]  for v in emp_map.values())
+        tot_pan = sum(v["pan"] for v in emp_map.values())
+        _ligne_total(ws, r, (
+            [f"TOTAL SEMAINE : {total_sem:.1f} h", ""] +
+            [round(h,1) if h > 0 else "" for h in h_jours] +
+            [round(total_sem,1), tot_gd or "", tot_pan or ""]
+        ), len(COLS)); r += 1
+
+    return _send_wb(wb, f"FGS-Pointage-Semaine-{date_iso}")
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# EXPORT 6 — LIVRAISONS ADMIN (2 feuilles : récap + détail)
+# ══════════════════════════════════════════════════════════════════════════════
+def _export_liv_admin(data, auteur, date_iso):
+    livraisons = data.get("livraisons", [])
+    chantier   = data.get("chantier", "Tous chantiers") or "Tous chantiers"
+    filtre_sem = data.get("semaine", "")
+
+    if not livraisons:
+        return jsonify({"erreur": "Aucune livraison à exporter"}), 400
+
+    wb = _new_wb()
+
+    # ── Feuille 1 : Récapitulatif ──────────────────────────────────────────────
+    COLS_R   = ["Matériau","Quantité totale","Unité","Nb livraisons","Prix unitaire","Coût total HT"]
+    LARG_R   = [32, 18, 10, 14, 18, 20]
+    ws1 = wb.create_sheet("Récapitulatif")
+    _set_col_widths(ws1, LARG_R)
+
+    sous_t = chantier + (f"  —  Semaine {filtre_sem}" if filtre_sem else "")
+    r = _cartouche(ws1, "Livraisons Chantier — Récapitulatif", sous_t, auteur, len(COLS_R))
+    _entetes_rouge(ws1, r, COLS_R); r += 1
+
+    # Agréger par matériau
+    agg = {}
+    for l in livraisons:
+        el = l.get("element","?")
+        if el not in agg:
+            agg[el] = {"element":el,"unite":l.get("unite",""),"qte":0.0,"nb":0,"prix":None}
+        agg[el]["qte"] += float(l.get("quantite",0) or 0)
+        agg[el]["nb"]  += 1
+        if l.get("prix_unitaire") and not agg[el]["prix"]:
+            agg[el]["prix"] = float(l["prix_unitaire"])
+
+    total_cout = 0.0
+    lignes_sorted = sorted(agg.values(), key=lambda x: x["qte"], reverse=True)
+    for idx, v in enumerate(lignes_sorted):
+        prix = v.get("prix")
+        cout = round(v["qte"] * prix, 2) if prix else None
+        if cout: total_cout += cout
+        row_data = [
+            v["element"],
+            round(v["qte"], 3),
+            v["unite"],
+            v["nb"],
+            f"{prix:.2f} €/{v['unite']}" if prix else "—",
+            f"{cout:.2f} €"               if cout else "—"
+        ]
+        _ligne(ws1, r, row_data, idx); r += 1
+
+    # Total
+    _ligne_total(ws1, r, [
+        f"TOTAL — {len(livraisons)} livraison(s)",
+        None, None, len(livraisons), None,
+        f"{total_cout:.2f} €" if total_cout else "—"
+    ], len(COLS_R), color=C_ROUGE)
+
+    # ── Feuille 2 : Détail livraisons ─────────────────────────────────────────
+    COLS_D = ["Date","Chantier","Chef chantier",
+              "Matériau","Quantité","Unité","Prix unit.","Coût HT","Notes"]
+    LARG_D = [14, 22, 18, 26, 12, 10, 16, 16, 30]
+
+    ws2 = wb.create_sheet("Détail livraisons")
+    _set_col_widths(ws2, LARG_D)
+    r = _cartouche(ws2, "Livraisons Chantier — Détail complet", sous_t, auteur, len(COLS_D))
+    _entetes(ws2, r, COLS_D); r += 1
+
+    livs_sort = sorted(livraisons, key=lambda x: x.get("date_liv",""), reverse=True)
+    for idx, l in enumerate(livs_sort):
+        prix = l.get("prix_unitaire")
+        if prix: prix = float(prix)
+        cout = round(float(l.get("quantite",0) or 0) * prix, 2) if prix else None
+        row_data = [
+            _date_fr(l.get("date_liv","")),
+            l.get("chantier","—"),
+            l.get("auteur","—"),
+            l.get("element","—"),
+            round(float(l.get("quantite",0) or 0), 3),
+            l.get("unite","—"),
+            f"{prix:.2f} €" if prix else "—",
+            f"{cout:.2f} €" if cout else "—",
+            l.get("notes","—") or "—"
+        ]
+        _ligne(ws2, r, row_data, idx); r += 1
+
+    ws1.freeze_panes = ws2.freeze_panes = "A9"
+    nom = chantier.replace(" ","-").replace("/","-")[:20]
+    return _send_wb(wb, f"FGS-Livraisons-{nom}-{date_iso}")
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# EXPORT 7 — LIVRAISONS CHEF (vue simplifiée)
+# ══════════════════════════════════════════════════════════════════════════════
+def _export_liv_chef(data, auteur, date_iso):
+    livraisons = data.get("livraisons", [])
+    if not livraisons:
+        return jsonify({"erreur": "Aucune livraison à exporter"}), 400
+
+    COLS     = ["Date","Chantier","Matériau","Quantité","Unité","Notes"]
+    LARGEURS = [14, 24, 28, 12, 10, 36]
+
+    wb = _new_wb()
+    ws = wb.create_sheet("Mes livraisons")
+    _set_col_widths(ws, LARGEURS)
+
+    r = _cartouche(ws, "Mes Livraisons Chantier",
+                   f"{auteur}  •  {len(livraisons)} livraison(s)", auteur, len(COLS))
+    _entetes(ws, r, COLS); r += 1
+
+    for idx, l in enumerate(sorted(livraisons, key=lambda x: x.get("date_liv",""), reverse=True)):
+        row_data = [
+            _date_fr(l.get("date_liv","")),
+            l.get("chantier","—"),
+            l.get("element","—"),
+            round(float(l.get("quantite",0) or 0), 3),
+            l.get("unite","—"),
+            l.get("notes","—") or "—"
+        ]
+        _ligne(ws, r, row_data, idx); r += 1
+
+    total_items = len(livraisons)
+    _ligne_total(ws, r, [f"TOTAL : {total_items} livraison(s)", None, None, None, None, None], len(COLS))
+
+    return _send_wb(wb, f"FGS-MesLivraisons-{date_iso}")
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# EXPORT 8 — TOTAL CHANTIER (synthèse complète sur 3 feuilles)
+# ══════════════════════════════════════════════════════════════════════════════
+def _export_total(data, bd, auteur, date_iso):
+    chantier   = data.get("chantier","—")
+    pointages  = data.get("pointages",[])
+    livraisons = data.get("livraisons",[])
+    prix_ref   = data.get("prix_ref",{})
+
+    # ── Calculs MO ────────────────────────────────────────────────────────────
+    total_h  = sum(float(l.get("heures",0) or 0)
+                   for p in pointages for l in (p.get("lignes") or []))
+    nb_pres  = sum(len(p.get("lignes") or []) for p in pointages)
+    nb_gd    = sum(1 for p in pointages for l in (p.get("lignes") or []) if l.get("gd"))
+    nb_pan   = sum(1 for p in pointages for l in (p.get("lignes") or []) if l.get("panier"))
+    taux_h   = prix_ref.get("__heures__")
+    cout_mo  = round(total_h * float(taux_h), 2) if taux_h else None
+
+    # ── Calculs matériaux ─────────────────────────────────────────────────────
+    agg_mat = {}
+    for l in livraisons:
+        el = l.get("element","?")
+        if el not in agg_mat:
+            agg_mat[el] = {"qte":0.0,"unite":l.get("unite",""),"prix":None}
+        agg_mat[el]["qte"] += float(l.get("quantite",0) or 0)
+        if l.get("prix_unitaire") and not agg_mat[el]["prix"]:
+            agg_mat[el]["prix"] = float(l["prix_unitaire"])
+
+    total_mat = 0.0
+    mat_lignes = []
+    for el, v in agg_mat.items():
+        # Chercher prix dans prix_ref en priorité
+        prix = float(prix_ref[el]) if el in prix_ref else v.get("prix")
+        cout = round(v["qte"] * prix, 2) if prix else None
+        if cout: total_mat += cout
+        mat_lignes.append((el, round(v["qte"],3), v["unite"], prix, cout))
+
+    total_gen = (cout_mo or 0) + total_mat
+
+    wb = _new_wb()
+
+    # ── Feuille 1 : SYNTHÈSE ──────────────────────────────────────────────────
+    COLS_S   = ["Poste","Détail","Taux / Unité","Montant HT"]
+    LARG_S   = [22, 50, 20, 22]
+    ws1 = wb.create_sheet("Synthèse")
+    _set_col_widths(ws1, LARG_S)
+
+    r = _cartouche(ws1, f"Synthèse Chantier — {chantier}",
+                   "Main d'œuvre & Matériaux & Coût total", auteur, len(COLS_S))
+    _entetes_rouge(ws1, r, COLS_S); r += 1
+
+    _ligne(ws1, r, [
+        "Main d'œuvre",
+        f"{total_h:.1f} h  ·  {nb_pres} présence(s)  ·  {nb_gd} GD  ·  {nb_pan} panier(s)",
+        f"{taux_h} €/h" if taux_h else "Taux non défini",
+        f"{cout_mo:.2f} €" if cout_mo else "—"
+    ], 0, surbrillance="EAF0FB", bold_col1=True); r += 1
+
+    _ligne(ws1, r, [
+        "Matériaux",
+        ", ".join(agg_mat.keys()) or "—",
+        "Voir feuille Matériaux",
+        f"{total_mat:.2f} €" if total_mat else "—"
+    ], 1, surbrillance=C_VERT_L, bold_col1=True); r += 1
+
+    # Total général — ligne en rouge
+    ws1.row_dimensions[r].height = 26
+    for col in range(1, len(COLS_S)+1):
+        ws1.cell(row=r, column=col).fill = _fill(C_ROUGE)
+    ws1.cell(row=r, column=1, value="TOTAL GÉNÉRAL").font  = _font(sz=13, bold=True, color=C_BLANC)
+    ws1.cell(row=r, column=1).alignment = _align('left','center')
+    c = ws1.cell(row=r, column=4, value=f"{total_gen:.2f} €" if total_gen else "—")
+    c.font = _font(sz=14, bold=True, color=C_BLANC); c.alignment = _align('right','center')
+
+    # ── Feuille 2 : MATÉRIAUX ─────────────────────────────────────────────────
+    COLS_M   = ["Matériau","Quantité","Unité","Prix unitaire HT","Coût total HT"]
+    LARG_M   = [32, 16, 12, 20, 20]
+    ws2 = wb.create_sheet("Matériaux")
+    _set_col_widths(ws2, LARG_M)
+
+    r = _cartouche(ws2, f"Matériaux Livrés — {chantier}",
+                   f"{len(mat_lignes)} référence(s)  •  {len(livraisons)} livraison(s)", auteur, len(COLS_M))
+    _entetes(ws2, r, COLS_M); r += 1
+
+    for idx, (el, qte, unite, prix, cout) in enumerate(sorted(mat_lignes, key=lambda x: -(x[4] or 0))):
+        _ligne(ws2, r, [el, qte, unite,
+                        f"{prix:.2f} €/{unite}" if prix else "—",
+                        f"{cout:.2f} €" if cout else "—"], idx); r += 1
+
+    _ligne_total(ws2, r, [
+        f"TOTAL  —  {len(mat_lignes)} matériau(x)", None, None, None,
+        f"{total_mat:.2f} €" if total_mat else "—"
+    ], len(COLS_M), color=C_ROUGE)
+
+    # ── Feuille 3 : POINTAGES ─────────────────────────────────────────────────
+    COLS_P   = ["Date","Saisi par","Employés présents","Présences","Heures totales","GD","Paniers"]
+    LARG_P   = [14, 18, 40, 12, 14, 10, 10]
+    ws3 = wb.create_sheet("Pointages")
+    _set_col_widths(ws3, LARG_P)
+
+    r = _cartouche(ws3, f"Pointages — {chantier}",
+                   f"{len(pointages)} journée(s) saisie(s)  •  {total_h:.1f} h totales", auteur, len(COLS_P))
+    _entetes(ws3, r, COLS_P); r += 1
+
+    for idx, ptg in enumerate(sorted(pointages, key=lambda x: x.get("date_jour",""), reverse=True)):
+        lignes = ptg.get("lignes") or []
+        th  = sum(float(l.get("heures",0) or 0) for l in lignes)
+        ngd = sum(1 for l in lignes if l.get("gd"))
+        npa = sum(1 for l in lignes if l.get("panier"))
+        row_data = [
+            _date_fr(ptg.get("date_jour","")),
+            ptg.get("auteur","—"),
+            ", ".join(l.get("nom","?") for l in lignes) or "—",
+            len(lignes),
+            round(th, 1),
+            ngd or "—",
+            npa or "—"
+        ]
+        _ligne(ws3, r, row_data, idx); r += 1
+
+    _ligne_total(ws3, r, [
+        f"TOTAL : {len(pointages)} journée(s)", None, None,
+        nb_pres, round(total_h,1), nb_gd or "—", nb_pan or "—"
+    ], len(COLS_P))
+
+    ws1.freeze_panes = ws2.freeze_panes = ws3.freeze_panes = "A9"
+    nom = chantier.replace(" ","-").replace("/","-")[:20]
+    return _send_wb(wb, f"FGS-Total-{nom}-{date_iso}")
