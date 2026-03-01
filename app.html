@@ -662,26 +662,19 @@ function render(){
   const m=document.getElementById('main'); m.innerHTML='';
   document.getElementById('fab').style.display='flex';
 
-  // Détail machine ou catégorie : afficher dans parcmat-content si on est sur parcmat
   if(DET?.t==='machine'){
     document.getElementById('fab').style.display='none';
-    if(PAGE==='parcmat'){
-      m.innerHTML=pgParcMat();
-      const pc=document.getElementById('parcmat-content');
-      if(pc) pc.innerHTML=pageMach(DET.id);
-    } else {
-      m.innerHTML=pageMach(DET.id);
-    }
+    // Toujours construire la page parcmat complète puis injecter le détail
+    m.innerHTML=pgParcMat();
+    const pc=document.getElementById('parcmat-content');
+    if(pc) pc.innerHTML=pageMach(DET.id);
     return;
   }
   if(DET?.t==='cat'){
-    if(PAGE==='parcmat'){
-      m.innerHTML=pgParcMat();
-      const pc=document.getElementById('parcmat-content');
-      if(pc) renderCat(pc,DET.id);
-    } else {
-      renderCat(m,DET.id);
-    }
+    // Toujours construire la page parcmat complète puis injecter le détail catégorie
+    m.innerHTML=pgParcMat();
+    const pc=document.getElementById('parcmat-content');
+    if(pc) renderCat(pc,DET.id);
     return;
   }
 
@@ -830,7 +823,7 @@ function renderParcMatContent(){
 function renderParcContent(){
   var cats = BD.categories.map(function(c){
     var n = BD.machines.filter(function(m){return m.catId===c.id;}).length;
-    return '<div class="ecat" onclick="ouvrirCat('+c.id+')">'
+    return '<div class="ecat" onclick="ouvrirCat(\''+c.id+'\')">'
       +'<div class="ico-cat">'+c.icone+'</div>'
       +'<div class="nom-cat">'+c.nom+'</div>'
       +'<div class="cnt-cat">'+n+' engin'+(n!==1?'s':'')+'</div></div>';
