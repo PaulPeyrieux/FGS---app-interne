@@ -470,8 +470,15 @@ textarea{resize:vertical;min-height:80px}
   <div class="gch"><label>Heures au moment</label><input id="i-h" type="number" placeholder="1620"/></div>
   <div class="gch"><label>Type</label>
     <select id="i-ty"><option value="entretien">Entretien préventif</option><option value="reparation">Réparation</option><option value="VGP">VGP</option><option value="remplacement">Remplacement pièce</option></select></div>
-  <div class="gch"><label>Pièces à changer <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--tx3)">(cochez)</span></label>
-    <div class="lpc" id="lpc"><div style="font-size:13px;color:var(--tx3);padding:4px">Sélectionnez d'abord une machine</div></div></div>
+  <div class="gch">
+    <label>Pièces remplacées</label>
+    <div id="lpc" class="lpc"><div style="font-size:13px;color:var(--tx3);padding:4px">Sélectionnez d'abord une machine</div></div>
+    <div id="lpc-autre-wrap" style="margin-top:8px;display:none">
+      <div style="font-size:12px;font-weight:600;color:var(--tx2);margin-bottom:6px">➕ Autre pièce (saisie libre)</div>
+      <div id="lpc-autres-list" style="display:flex;flex-direction:column;gap:6px"></div>
+      <button type="button" class="btn bs np" style="margin-top:6px;width:auto;padding:6px 12px;font-size:12px" onclick="ajouterAutrePiece()">+ Ajouter une pièce</button>
+    </div>
+  </div>
   <div class="gch"><label>Notes</label><textarea id="i-no" placeholder="Observations..."></textarea></div>
   <div class="rbtn np"><button class="btn bs" onclick="fm('mi')">Annuler</button><button class="btn bp" onclick="savInt()">Enregistrer</button></div>
   <button class="btn bb np" style="margin-top:8px" onclick="printIntFromModal()">
@@ -837,11 +844,12 @@ function renderEntContent(){
   return ivs.map(function(i){
     var m=BD.machines.find(function(x){return x.id===i.machineId;});
     var pcs=(i.piecesChangees||[]).map(function(pid){var p=BD.pieces.find(function(x){return x.id===pid;});return p?'<span class="bdg bl">'+p.nom+'</span>':'';}).join('');
+    var autres=(i.autresPieces||[]).map(function(ap){return'<span class="bdg" style="background:var(--sur3);color:var(--tx2);border:1px solid var(--brd)">'+ap.nom+'</span>';}).join('');
     return '<div class="eint" onclick="openMImod(\''+i.id+'\')">'
       +'<div class="pt-int" style="background:'+(i.type==='VGP'?'var(--in)':i.type==='reparation'?'var(--da)':'var(--ok)')+'"></div>'
       +'<div class="info-int"><div class="dt-int">'+fdt(i.date)+(i.datePrevue?' · Prévu:'+fdt(i.datePrevue):'')+'</div>'
       +'<div class="tit-int">'+lblTy(i.type)+' — '+(m?m.nom:'?')+'</div>'
-      +(i.notes?'<div class="ss-int">'+i.notes+'</div>':'')+'<div class="pcs-int">'+pcs+'</div></div>'
+      +(i.notes?'<div class="ss-int">'+i.notes+'</div>':'')+'<div class="pcs-int">'+pcs+autres+'</div></div>'
       +'<button class="ico-btn" style="width:30px;height:30px;flex-shrink:0" onclick="event.stopPropagation();printInt(\''+i.id+'\')">'
       +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>'
       +'</button></div>';
@@ -867,7 +875,7 @@ function renderPcContent(){
   var rows = BD.pieces.map(function(p){
     var besoins=calculerBesoinsPiece(p.id);
     var manque=Math.max(besoins.besoin-(p.stock||0),0);
-    return '<div class="epc" onclick="openMPmod('+p.id+')">'
+    return '<div class="epc" onclick="openMPmod(\''+p.id+'\')">'
       +'<div class="epc-ent"><div><div class="epc-nom">'+p.nom+'</div><div class="epc-ref">'+p.ref+'</div></div>'
       +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">'
       +'<span class="bdg '+(p.stock>0?'ok':'da')+'">'+(p.stock||0)+' en stock</span>'
@@ -1101,19 +1109,86 @@ async function delPiece(){
 
 // ── INTERVENTIONS CRUD ────────────────────────────────────────────────
 function fillMachs(id,sel){document.getElementById(id).innerHTML=BD.machines.map(m=>`<option value="${m.id}" ${m.id===sel?'selected':''}>${m.nom}</option>`).join('');}
-function updPcList(){updPcListFor(V('i-mach'),[]);}
-function updPcListFor(machId,sel){
-  const c=document.getElementById('lpc');
-  if(!machId||!BD.pieces.length){c.innerHTML='<div style="font-size:13px;color:var(--tx3);padding:4px">Aucune pièce disponible</div>';return;}
-  const m=BD.machines.find(x=>x.id===machId);
-  c.innerHTML=BD.pieces.map(p=>{
-    const isSel=sel.includes(p.id),pa=(m?.piecesAssociees||[]).find(x=>x.pieceId===p.id);
-    let iu='';if(pa&&m){const u=usure(m,pa);if(u)iu=` · <span style="color:var(--${u.st});font-weight:700">${Math.round(u.pct*100)}% (${u.rest}h rest.)</span>`;}
-    return`<div class="lpc-item ${isSel?'sel':''}" id="lpi-${p.id}" onclick="tglPc('${p.id}')"><input type="checkbox" id="cb-${p.id}" ${isSel?'checked':''} onclick="event.stopPropagation()"/><div class="lpc-info"><div class="lpc-nom">${p.nom}</div><div class="lpc-det">${p.ref} · ${p.dureeVal} ${p.dureeUnite}${iu}</div></div></div>`;
-  }).join('');
+function updPcList(){updPcListFor(V('i-mach'),[],[]);}
+function updPcListFor(machId, selIds, autresPieces){
+  const c = document.getElementById('lpc');
+  const autreWrap = document.getElementById('lpc-autre-wrap');
+  const autresList = document.getElementById('lpc-autres-list');
+  if(!machId){
+    c.innerHTML='<div style="font-size:13px;color:var(--tx3);padding:4px">Sélectionnez d\'abord une machine</div>';
+    if(autreWrap) autreWrap.style.display='none';
+    return;
+  }
+  const m = BD.machines.find(x=>x.id===machId);
+  const piecesAssoc = (m?.piecesAssociees||[]).map(pa=>{
+    const p = BD.pieces.find(x=>x.id===pa.pieceId);
+    return p ? {p, pa} : null;
+  }).filter(Boolean);
+
+  if(!piecesAssoc.length){
+    c.innerHTML='<div style="font-size:13px;color:var(--tx3);padding:4px">Aucune pièce associée à cet engin</div>';
+  } else {
+    c.innerHTML = piecesAssoc.map(({p, pa})=>{
+      const isSel = selIds.includes(p.id);
+      const u = usure(m, pa);
+      let uHtml = '';
+      if(u){
+        const col = u.st==='da'?'var(--da)':u.st==='wa'?'var(--wa)':'var(--ok)';
+        uHtml = `<span style="color:${col};font-weight:700;font-size:11px">${Math.round(u.pct*100)}% · ${u.rest}h rest.</span>`;
+      }
+      return `<div class="lpc-item ${isSel?'sel':''}" id="lpi-${p.id}" onclick="tglPc('${p.id}')">
+        <input type="checkbox" id="cb-${p.id}" ${isSel?'checked':''} onclick="event.stopPropagation()"/>
+        <div class="lpc-info">
+          <div class="lpc-nom">${p.nom}</div>
+          <div class="lpc-det">${p.ref} · ${p.dureeVal} ${p.dureeUnite} ${uHtml}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Section "Autre pièce" toujours visible quand machine sélectionnée
+  if(autreWrap) autreWrap.style.display='block';
+  // Remettre les autres pièces si on modifie
+  if(autresList){
+    autresList.innerHTML='';
+    (autresPieces||[]).forEach(ap => _addAutrePieceRow(ap));
+  }
 }
-function tglPc(pid){const cb=document.getElementById('cb-'+pid),it=document.getElementById('lpi-'+pid);cb.checked=!cb.checked;it.classList.toggle('sel',cb.checked);}
-function getSelPc(){return BD.pieces.filter(p=>{const cb=document.getElementById('cb-'+p.id);return cb&&cb.checked;}).map(p=>p.id);}
+function tglPc(pid){
+  const cb=document.getElementById('cb-'+pid),it=document.getElementById('lpi-'+pid);
+  cb.checked=!cb.checked;it.classList.toggle('sel',cb.checked);
+}
+let _autresPcCounter = 0;
+function ajouterAutrePiece(){
+  _autresPcCounter++;
+  _addAutrePieceRow({nom:'',ref:''});
+}
+function _addAutrePieceRow(vals){
+  const id = 'ap-'+Date.now()+'-'+(Math.random()*1000|0);
+  const div = document.createElement('div');
+  div.id = id;
+  div.style.cssText='display:grid;grid-template-columns:1fr 1fr auto;gap:6px;align-items:center';
+  div.innerHTML=`
+    <input class="inp" placeholder="Nom pièce" value="${vals.nom||''}" style="font-size:13px;padding:8px;border:1.5px solid var(--brd);border-radius:var(--r2);background:var(--sur);color:var(--tx)" data-ap-nom/>
+    <input class="inp" placeholder="Référence" value="${vals.ref||''}" style="font-size:13px;padding:8px;border:1.5px solid var(--brd);border-radius:var(--r2);background:var(--sur);color:var(--tx)" data-ap-ref/>
+    <button type="button" onclick="this.parentElement.remove()" style="width:30px;height:30px;border:none;border-radius:var(--r2);background:var(--da-bg);color:var(--da);cursor:pointer;font-size:16px;flex-shrink:0">×</button>`;
+  document.getElementById('lpc-autres-list').appendChild(div);
+}
+function getSelPc(){
+  // Pièces standards cochées
+  return BD.pieces.filter(p=>{const cb=document.getElementById('cb-'+p.id);return cb&&cb.checked;}).map(p=>p.id);
+}
+function getAutresPieces(){
+  // Pièces libres saisies manuellement
+  const rows = document.querySelectorAll('#lpc-autres-list > div');
+  const res = [];
+  rows.forEach(row=>{
+    const nom = row.querySelector('[data-ap-nom]')?.value?.trim();
+    const ref = row.querySelector('[data-ap-ref]')?.value?.trim();
+    if(nom||ref) res.push({nom:nom||'—', ref:ref||'—'});
+  });
+  return res;
+}
 function openMI(){
   MOD_INT=null;
   document.getElementById('mi-tit').textContent='Nouvelle intervention';
@@ -1122,14 +1197,14 @@ function openMI(){
   document.getElementById('i-dt').value=new Date().toISOString().split('T')[0];
   ['i-dtp','i-h','i-no'].forEach(k=>document.getElementById(k).value='');
   document.getElementById('i-ty').value='entretien';
-  if(BD.machines[0])updPcListFor(BD.machines[0].id,[]);
+  if(BD.machines[0])updPcListFor(BD.machines[0].id,[],[]);
   om('mi');
 }
 function openMIfor(mid){
   openMI(); document.getElementById('i-mach').value=mid;
   const m=BD.machines.find(x=>x.id===mid);
   if(m)document.getElementById('i-h').value=m.heures||'';
-  updPcListFor(mid,[]);
+  updPcListFor(mid,[],[]);
 }
 function openMImod(id){
   MOD_INT=id;const i=BD.interventions.find(x=>x.id===id);if(!i)return;
@@ -1139,13 +1214,13 @@ function openMImod(id){
   document.getElementById('i-dt').value=i.date||'';document.getElementById('i-dtp').value=i.datePrevue||'';
   document.getElementById('i-h').value=i.heures||'';document.getElementById('i-ty').value=i.type||'entretien';
   document.getElementById('i-no').value=i.notes||'';
-  updPcListFor(i.machineId,i.piecesChangees||[]);
+  updPcListFor(i.machineId,i.piecesChangees||[],i.autresPieces||[]);
   om('mi');
 }
 async function savInt(){
   const dt=V('i-dt');if(!dt){toast('La date est obligatoire');return;}
-  const mid=V('i-mach'),h=parseInt(V('i-h'))||null,ty=V('i-ty'),pcs=getSelPc();
-  const d={machineId:mid,date:dt,datePrevue:V('i-dtp')||null,heures:h,type:ty,notes:V('i-no').trim()||null,piecesChangees:pcs};
+  const mid=V('i-mach'),h=parseInt(V('i-h'))||null,ty=V('i-ty'),pcs=getSelPc(),autres=getAutresPieces();
+  const d={machineId:mid,date:dt,datePrevue:V('i-dtp')||null,heures:h,type:ty,notes:V('i-no').trim()||null,piecesChangees:pcs,autresPieces:autres};
   const m=BD.machines.find(x=>x.id===mid);
   if(m&&h){
     if(ty==='entretien'&&h>=m.hEntretien)m.hEntretien=h;
@@ -1162,7 +1237,7 @@ async function delInt(){
 }
 function printIntFromModal(){
   const mid=V('i-mach'),m=BD.machines.find(x=>x.id===mid);if(!m){toast('Sélectionnez une machine');return;}
-  dorintInt({id:MOD_INT||'tmp',machineId:mid,date:V('i-dt'),datePrevue:V('i-dtp'),heures:parseInt(V('i-h'))||null,type:V('i-ty'),notes:V('i-no').trim(),piecesChangees:getSelPc()},m);
+  dorintInt({id:MOD_INT||'tmp',machineId:mid,date:V('i-dt'),datePrevue:V('i-dtp'),heures:parseInt(V('i-h'))||null,type:V('i-ty'),notes:V('i-no').trim(),piecesChangees:getSelPc(),autresPieces:getAutresPieces()},m);
 }
 
 // ── HEURES ────────────────────────────────────────────────────────────
@@ -1199,9 +1274,10 @@ async function savLiv(){
 // ── IMPRESSIONS ───────────────────────────────────────────────────────
 function printInt(id){const i=BD.interventions.find(x=>x.id===id),m=i?BD.machines.find(x=>x.id===i.machineId):null;if(!m){toast('Machine introuvable');return;}dorintInt(i,m);}
 function dorintInt(iv,m){
-  const s=stMach(m),d=m.heures-m.hEntretien,seuil=m.seuil||250,pcs=iv?.piecesChangees||[];
+  const s=stMach(m),d=m.heures-m.hEntretien,seuil=m.seuil||250,pcs=iv?.piecesChangees||[],autres=iv?.autresPieces||[];
   const tH=[
     ...pcs.map(pid=>{const p=BD.pieces.find(x=>x.id===pid);if(!p)return'';const pa=(m.piecesAssociees||[]).find(x=>x.pieceId===pid);let iu='';if(pa){const u=usure(m,pa);if(u)iu=` — ${Math.round(u.pct*100)}%, ${u.rest}h rest.`;}return`<tr style="background:#FEF2F2"><td style="font-weight:700">🔴 Remplacement</td><td style="font-weight:700">${p.nom}</td><td>${p.ref}${iu}</td><td style="text-align:center"><div style="width:16px;height:16px;border:1.5px solid #999;border-radius:3px;margin:auto"></div></td></tr>`;}),
+    ...autres.map(ap=>`<tr style="background:#FEF2F2"><td style="font-weight:700">🔴 Remplacement</td><td style="font-weight:700">${ap.nom}</td><td>${ap.ref}</td><td style="text-align:center"><div style="width:16px;height:16px;border:1.5px solid #999;border-radius:3px;margin:auto"></div></td></tr>`),
     `<tr><td>Vidange moteur</td><td colspan="2" style="color:#888">—</td><td style="text-align:center"><div style="width:16px;height:16px;border:1.5px solid #999;border-radius:3px;margin:auto"></div></td></tr>`,
     `<tr><td>Contrôle hydraulique</td><td colspan="2" style="color:#888">—</td><td style="text-align:center"><div style="width:16px;height:16px;border:1.5px solid #999;border-radius:3px;margin:auto"></div></td></tr>`,
     `<tr><td>Graissage des axes</td><td colspan="2" style="color:#888">—</td><td style="text-align:center"><div style="width:16px;height:16px;border:1.5px solid #999;border-radius:3px;margin:auto"></div></td></tr>`,
