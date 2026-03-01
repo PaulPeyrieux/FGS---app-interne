@@ -456,6 +456,10 @@ textarea{resize:vertical;min-height:80px}
   <div class="gch"><label>Durée de vie</label><input id="p-dv" type="number" placeholder="250"/></div>
   <div class="gch"><label>Unité</label><select id="p-du"><option value="heures">Heures</option><option value="mois">Mois</option></select></div>
   <div class="gch"><label>Stock</label><input id="p-st" type="number" placeholder="0"/></div>
+  <div class="gch">
+    <label>Machines compatibles <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--tx3)">(cochez)</span></label>
+    <div class="lpc" id="p-machs"><div style="font-size:13px;color:var(--tx3);padding:4px">Aucune machine enregistrée</div></div>
+  </div>
   <div class="gch"><label>Notes</label><textarea id="p-no" placeholder="Utiliser pièce d'origine..."></textarea></div>
   <div class="rbtn np"><button class="btn bs" onclick="fm('mp')">Annuler</button><button class="btn bp" onclick="savPiece()">Enregistrer</button></div>
   <button class="btn bd np" id="del-mp" style="margin-top:12px;display:none" onclick="delPiece()">Supprimer cette pièce</button>
@@ -875,6 +879,7 @@ function renderPcContent(){
   var rows = BD.pieces.map(function(p){
     var besoins=calculerBesoinsPiece(p.id);
     var manque=Math.max(besoins.besoin-(p.stock||0),0);
+    var nbMachines = (p.machinesCompatibles||[]).length || besoins.engins.length;
     return '<div class="epc" onclick="openMPmod(\''+p.id+'\')">'
       +'<div class="epc-ent"><div><div class="epc-nom">'+p.nom+'</div><div class="epc-ref">'+p.ref+'</div></div>'
       +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">'
@@ -882,7 +887,7 @@ function renderPcContent(){
       +(manque>0?'<span class="bdg da" style="font-size:10px">⚠ '+manque+' à commander</span>':'')
       +'</div></div>'
       +'<div style="font-size:12px;color:var(--tx3)">Durée de vie : <b style="color:var(--tx)">'+p.dureeVal+' '+p.dureeUnite+'</b>'
-      +(besoins.engins.length?' · Utilisée par <b style="color:var(--tx)">'+besoins.engins.length+' engin'+(besoins.engins.length>1?'s':'')+'</b>':'')+'</div>'
+      +(nbMachines?' · Compatible <b style="color:var(--tx)">'+nbMachines+' engin'+(nbMachines>1?'s':'')+'</b>':'')+'</div>'
       +(p.notes?'<div style="font-size:12px;color:var(--tx3);margin-top:7px;padding-top:7px;border-top:1px solid var(--brd)">'+p.notes+'</div>':'')
       +'</div>';
   }).join('');
@@ -928,6 +933,27 @@ function pageMach(id){
       <button class="btn bs np" style="margin-top:12px" onclick="printMach('${id}')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Imprimer fiche machine</button>
     </div>
     <div class="carte"><div class="carte-ent"><div class="carte-tit">Usure des pièces</div></div>${puH}</div>
+    <div class="carte">
+      <div class="carte-ent"><div class="carte-tit">Pièces compatibles</div></div>
+      ${(()=>{
+        const compat = BD.pieces.filter(p=>(p.machinesCompatibles||[]).includes(id));
+        if(!compat.length) return '<p style="color:var(--tx3);font-size:13px;padding:6px 0">Aucune pièce référencée pour cet engin</p>';
+        return compat.map(p=>{
+          const pa=(m.piecesAssociees||[]).find(x=>x.pieceId===p.id);
+          const u=pa?usure(m,pa):null;
+          const stockBadge=p.stock>0
+            ?`<span class="bdg ok" style="font-size:11px">${p.stock} en stock</span>`
+            :`<span class="bdg da" style="font-size:11px">0 en stock</span>`;
+          return `<div class="li" style="align-items:flex-start;flex-direction:column;gap:4px;padding:10px 0;border-bottom:1px solid var(--brd)">
+            <div style="display:flex;justify-content:space-between;width:100%;align-items:center">
+              <div><div style="font-weight:700;font-size:14px">${p.nom}</div><div style="font-size:12px;color:var(--tx3);font-family:monospace">${p.ref}</div></div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px">${stockBadge}${u?`<span class="bdg ${u.st}" style="font-size:11px">${Math.round(u.pct*100)}% usée</span>`:''}</div>
+            </div>
+            <div style="font-size:11px;color:var(--tx3)">${p.dureeVal} ${p.dureeUnite}${p.notes?` · ${p.notes}`:''}</div>
+          </div>`;
+        }).join('');
+      })()}
+    </div>
     <div class="carte"><div class="carte-ent"><div class="carte-tit">Historique</div><button class="btn bp np" style="width:auto;padding:7px 14px;font-size:13px" onclick="openMIfor('${id}')">+ Ajouter</button></div>
       ${ivs.length?ivs.map(i=>`<div class="eint np" onclick="openMImod('${i.id}')"><div class="pt-int" style="background:${i.type==='VGP'?'var(--in)':i.type==='reparation'?'var(--da)':'var(--ok)'}"></div><div class="info-int"><div class="dt-int">${fdt(i.date)} · ${i.heures||'—'}h</div><div class="tit-int">${lblTy(i.type)}</div>${i.notes?`<div class="ss-int">${i.notes}</div>`:''}<div class="pcs-int">${(i.piecesChangees||[]).map(pid=>{const p=BD.pieces.find(x=>x.id===pid);return p?`<span class="bdg bl">${p.nom}</span>`:'';}).join('')}</div></div></div>`).join(''):`<p style="color:var(--tx3);font-size:13px;padding:6px 0">Aucune intervention</p>`}
     </div>
@@ -945,9 +971,15 @@ function pgEnt(){
 // ── Pièces ────────────────────────────────────────────────────────────
 // ── Calculs besoins pièces ──────────────────────────────────────────
 function calculerBesoinsPiece(pieceId) {
-  const engins = BD.machines.filter(m =>
-    (m.piecesAssociees || []).some(pa => pa.pieceId === pieceId)
-  );
+  const p = BD.pieces.find(x=>x.id===pieceId);
+  // Machines compatibles définies directement sur la pièce
+  const ids = p?.machinesCompatibles || [];
+  // Fallback : anciennes données via piecesAssociees sur les machines
+  const enginsFallback = ids.length ? [] : BD.machines.filter(m=>(m.piecesAssociees||[]).some(pa=>pa.pieceId===pieceId));
+  const engins = ids.length
+    ? BD.machines.filter(m=>ids.includes(m.id))
+    : enginsFallback;
+  // Besoin = 1 pièce de rechange par machine compatible (avoir 1 en stock d'avance)
   return { besoin: engins.length, engins };
 }
 
@@ -1090,13 +1122,44 @@ function openMP(id){
   const p=id?BD.pieces.find(x=>x.id===id):{};
   ['p-nom','p-ref','p-dv','p-st','p-no'].forEach(k=>document.getElementById(k).value='');
   document.getElementById('p-du').value='heures';
-  if(p&&id){document.getElementById('p-nom').value=p.nom||'';document.getElementById('p-ref').value=p.ref||'';document.getElementById('p-dv').value=p.dureeVal||'';document.getElementById('p-du').value=p.dureeUnite||'heures';document.getElementById('p-st').value=p.stock||0;document.getElementById('p-no').value=p.notes||'';}
+  if(p&&id){
+    document.getElementById('p-nom').value=p.nom||'';
+    document.getElementById('p-ref').value=p.ref||'';
+    document.getElementById('p-dv').value=p.dureeVal||'';
+    document.getElementById('p-du').value=p.dureeUnite||'heures';
+    document.getElementById('p-st').value=p.stock||0;
+    document.getElementById('p-no').value=p.notes||'';
+  }
+  // Remplir la liste des machines compatibles
+  const sel = (p&&id) ? (p.machinesCompatibles||[]) : [];
+  const mc = document.getElementById('p-machs');
+  if(!BD.machines.length){
+    mc.innerHTML='<div style="font-size:13px;color:var(--tx3);padding:4px">Aucune machine enregistrée</div>';
+  } else {
+    mc.innerHTML = BD.machines.map(m=>{
+      const chk = sel.includes(m.id);
+      return `<div class="lpc-item ${chk?'sel':''}" id="pmc-${m.id}" onclick="tglMC('${m.id}')">
+        <input type="checkbox" id="pmcb-${m.id}" ${chk?'checked':''} onclick="event.stopPropagation()"/>
+        <div class="lpc-info">
+          <div class="lpc-nom">${m.nom}</div>
+          <div class="lpc-det">${m.modele||''}${m.site?' · '+m.site:''}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
   om('mp');
+}
+function tglMC(mid){
+  const cb=document.getElementById('pmcb-'+mid),it=document.getElementById('pmc-'+mid);
+  if(cb&&it){cb.checked=!cb.checked;it.classList.toggle('sel',cb.checked);}
+}
+function getSelMachines(){
+  return BD.machines.filter(m=>{const cb=document.getElementById('pmcb-'+m.id);return cb&&cb.checked;}).map(m=>m.id);
 }
 function openMPmod(id){openMP(id);}
 async function savPiece(){
   const nom=V('p-nom').trim(),ref=V('p-ref').trim();if(!nom||!ref){toast('Nom et référence obligatoires');return;}
-  const d={nom,ref,dureeVal:parseInt(V('p-dv'))||0,dureeUnite:V('p-du'),stock:parseInt(V('p-st'))||0,notes:V('p-no').trim()||null};
+  const d={nom,ref,dureeVal:parseInt(V('p-dv'))||0,dureeUnite:V('p-du'),stock:parseInt(V('p-st'))||0,notes:V('p-no').trim()||null,machinesCompatibles:getSelMachines()};
   if(MOD_ID)Object.assign(BD.pieces.find(x=>x.id===MOD_ID),d);
   else BD.pieces.push({id:'P-'+Date.now(),...d});
   if(await save()){toast(MOD_ID?'Pièce mise à jour ✓':'Pièce ajoutée ✓');fm('mp');render();}
@@ -1120,17 +1183,19 @@ function updPcListFor(machId, selIds, autresPieces){
     return;
   }
   const m = BD.machines.find(x=>x.id===machId);
-  const piecesAssoc = (m?.piecesAssociees||[]).map(pa=>{
-    const p = BD.pieces.find(x=>x.id===pa.pieceId);
-    return p ? {p, pa} : null;
-  }).filter(Boolean);
+  // Pièces compatibles définies sur la pièce (machinesCompatibles) OU via piecesAssociees legacy
+  const piecesCompat = BD.pieces.filter(p=>{
+    if((p.machinesCompatibles||[]).includes(machId)) return true;
+    return (m?.piecesAssociees||[]).some(pa=>pa.pieceId===p.id);
+  });
 
-  if(!piecesAssoc.length){
+  if(!piecesCompat.length){
     c.innerHTML='<div style="font-size:13px;color:var(--tx3);padding:4px">Aucune pièce associée à cet engin</div>';
   } else {
-    c.innerHTML = piecesAssoc.map(({p, pa})=>{
+    c.innerHTML = piecesCompat.map(p=>{
       const isSel = selIds.includes(p.id);
-      const u = usure(m, pa);
+      const pa=(m?.piecesAssociees||[]).find(x=>x.pieceId===p.id);
+      const u = pa ? usure(m, pa) : null;
       let uHtml = '';
       if(u){
         const col = u.st==='da'?'var(--da)':u.st==='wa'?'var(--wa)':'var(--ok)';
