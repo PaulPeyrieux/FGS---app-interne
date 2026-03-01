@@ -650,8 +650,30 @@ function render(){
   if(!BD)return;
   const m=document.getElementById('main'); m.innerHTML='';
   document.getElementById('fab').style.display='flex';
-  if(DET?.t==='machine'){document.getElementById('fab').style.display='none'; m.innerHTML=pageMach(DET.id);return;}
-  if(DET?.t==='cat'){renderCat(m,DET.id);return;}
+
+  // Détail machine ou catégorie : afficher dans parcmat-content si on est sur parcmat
+  if(DET?.t==='machine'){
+    document.getElementById('fab').style.display='none';
+    if(PAGE==='parcmat'){
+      m.innerHTML=pgParcMat();
+      const pc=document.getElementById('parcmat-content');
+      if(pc) pc.innerHTML=pageMach(DET.id);
+    } else {
+      m.innerHTML=pageMach(DET.id);
+    }
+    return;
+  }
+  if(DET?.t==='cat'){
+    if(PAGE==='parcmat'){
+      m.innerHTML=pgParcMat();
+      const pc=document.getElementById('parcmat-content');
+      if(pc) renderCat(pc,DET.id);
+    } else {
+      renderCat(m,DET.id);
+    }
+    return;
+  }
+
   if(PAGE==='accueil')m.innerHTML=pgHome();
   else if(PAGE==='parcmat'){m.innerHTML=pgParcMat();renderParcMatContent();}
   else if(PAGE==='livraisons')m.innerHTML=pgLiv();
@@ -815,11 +837,12 @@ function renderEntContent(){
   return ivs.map(function(i){
     var m=BD.machines.find(function(x){return x.id===i.machineId;});
     var pcs=(i.piecesChangees||[]).map(function(pid){var p=BD.pieces.find(function(x){return x.id===pid;});return p?'<span class="bdg bl">'+p.nom+'</span>':'';}).join('');
-    return '<div class="eint" onclick="openMImod('+i.id+')"><div class="pt-int" style="background:'+(i.type==='VGP'?'var(--in)':i.type==='reparation'?'var(--da)':'var(--ok)')+'"></div>'
+    return '<div class="eint" onclick="openMImod(\''+i.id+'\')">'
+      +'<div class="pt-int" style="background:'+(i.type==='VGP'?'var(--in)':i.type==='reparation'?'var(--da)':'var(--ok)')+'"></div>'
       +'<div class="info-int"><div class="dt-int">'+fdt(i.date)+(i.datePrevue?' · Prévu:'+fdt(i.datePrevue):'')+'</div>'
       +'<div class="tit-int">'+lblTy(i.type)+' — '+(m?m.nom:'?')+'</div>'
       +(i.notes?'<div class="ss-int">'+i.notes+'</div>':'')+'<div class="pcs-int">'+pcs+'</div></div>'
-      +'<button class="ico-btn" style="width:30px;height:30px;flex-shrink:0" onclick="event.stopPropagation();printInt('+i.id+')">'
+      +'<button class="ico-btn" style="width:30px;height:30px;flex-shrink:0" onclick="event.stopPropagation();printInt(\''+i.id+'\')">'
       +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>'
       +'</button></div>';
   }).join('');
@@ -871,7 +894,7 @@ function pageMach(id){
   const pas=m.piecesAssociees||[];
   const puH=pas.length?pas.map(pa=>{const p=BD.pieces.find(x=>x.id===pa.pieceId);if(!p)return'';const u=usure(m,pa);if(!u)return'';return`<div class="pu"><div class="pu-ent"><div><div class="pu-nom">${p.nom}</div><div class="pu-ref">${p.ref}</div></div><span class="bdg ${u.st}">${u.rest}h restantes</span></div><div class="pu-det"><span>Installée à ${pa.heuresInstallation}h (${fdt(pa.dateInstallation)})</span><span style="font-weight:700;color:var(--${u.st})">${Math.round(u.pct*100)}%</span></div><div class="bar-bg"><div class="bar ${u.st}" style="width:${Math.min(u.pct*100,100)}%"></div></div></div>`;}).join(''):`<p style="color:var(--tx3);font-size:13px;padding:6px 0">Aucune pièce associée</p>`;
   return`<div class="ent-det">
-    <div class="btn-ret" onclick="DET=null;nav(PAGE||'parc')"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></div>
+    <div class="btn-ret" onclick="DET=null;nav('parcmat')"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></div>
     <div style="flex:1;min-width:0"><div class="tit-det">${m.nom}</div><span class="bdg ${s}" style="margin-top:3px">${lblSt(s)}</span></div>
     <div class="ico-btn np" onclick="openMM('${id}')"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
   </div>
@@ -2030,17 +2053,21 @@ function renderChantierLivraisons() {
 
 // ── VUE ADMIN : choisir chantier → tableau matériaux + prix ──────
 function renderAdminLivraisons(container) {
-  // Liste des chantiers distincts
   const chantiers = [...new Set(LC_DATA.map(l => l.chantier))].sort();
   if (!LC_CHANTIER_SEL && chantiers.length) LC_CHANTIER_SEL = chantiers[0];
 
   const chips = chantiers.map(c =>
-    `<div class="chantier-chip ${c===LC_CHANTIER_SEL?'on':''}" onclick="selChantierAdmin('${c.replace(/'/g,"\'")}')">${c}</div>`
+    `<div class="chantier-chip ${c===LC_CHANTIER_SEL?'on':''}" onclick="selChantierAdmin('${c.replace(/'/g,"\\'")}')">
+      <div class="chantier-chip-name">${c}</div>
+    </div>`
   ).join('');
 
   container.innerHTML = `
-    <div class="chantier-selector" id="adm-chantier-chips">
-      ${chips || '<div style="color:var(--tx3);font-size:13px">Aucun chantier enregistré</div>'}
+    <div style="margin-bottom:14px">
+      <div class="ts" style="margin-bottom:8px">Chantier</div>
+      <div class="chantier-grid" id="adm-chantier-chips">
+        ${chips || '<div style="color:var(--tx3);font-size:13px">Aucun chantier enregistré</div>'}
+      </div>
     </div>
     <div id="adm-chantier-detail"></div>`;
 
@@ -2050,8 +2077,8 @@ function renderAdminLivraisons(container) {
 function selChantierAdmin(chantier) {
   LC_CHANTIER_SEL = chantier;
   LC_SEM_SEL = null;
-  document.querySelectorAll('.chantier-chip').forEach(el => {
-    el.classList.toggle('on', el.textContent === chantier);
+  document.querySelectorAll('#adm-chantier-chips .chantier-chip').forEach(el => {
+    el.classList.toggle('on', el.querySelector('.chantier-chip-name')?.textContent === chantier);
   });
   renderAdminChantierDetail(chantier);
 }
