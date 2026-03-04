@@ -614,6 +614,7 @@ CREATE TABLE IF NOT EXISTS anomalies (
     date_ano    DATE NOT NULL DEFAULT CURRENT_DATE,
     nom_machine TEXT NOT NULL,
     num_parc    TEXT NOT NULL DEFAULT '',
+    heures      INTEGER,
     auteur      TEXT NOT NULL,
     description TEXT NOT NULL,
     statut      TEXT NOT NULL DEFAULT 'ouvert',
@@ -621,9 +622,17 @@ CREATE TABLE IF NOT EXISTS anomalies (
 )
 """
 
+SCHEMA_ANOMALIES_MIGRATION = """
+ALTER TABLE anomalies ADD COLUMN IF NOT EXISTS heures INTEGER
+"""
+
 def init_anomalies():
     conn = get_conn()
     conn.run(SCHEMA_ANOMALIES)
+    try:
+        conn.run(SCHEMA_ANOMALIES_MIGRATION)
+    except Exception:
+        pass  # colonne déjà existante
     conn.close()
 
 try:
@@ -640,17 +649,17 @@ def get_anomalies():
         conn   = get_conn()
         if role in ("admin", "rh"):
             rows = conn.run(
-                "SELECT id,date_ano,nom_machine,num_parc,auteur,description,statut,cree_le "
+                "SELECT id,date_ano,nom_machine,num_parc,heures,auteur,description,statut,cree_le "
                 "FROM anomalies ORDER BY cree_le DESC LIMIT 200"
             )
         else:
             rows = conn.run(
-                "SELECT id,date_ano,nom_machine,num_parc,auteur,description,statut,cree_le "
+                "SELECT id,date_ano,nom_machine,num_parc,heures,auteur,description,statut,cree_le "
                 "FROM anomalies WHERE auteur ILIKE :a ORDER BY cree_le DESC LIMIT 100",
                 a=auteur
             )
         conn.close()
-        cols = ["id","date_ano","nom_machine","num_parc","auteur","description","statut","cree_le"]
+        cols = ["id","date_ano","nom_machine","num_parc","heures","auteur","description","statut","cree_le"]
         result = []
         for row in rows:
             d = dict(zip(cols, row))
@@ -672,6 +681,8 @@ def save_anomalie():
         date_ano    = data.get("date_ano", "")
         nom_machine = data.get("nom_machine", "").strip()
         num_parc    = data.get("num_parc", "").strip()
+        heures_val  = data.get("heures")
+        heures_val  = int(heures_val) if heures_val else None
         auteur      = data.get("auteur", "")
         description = data.get("description", "").strip()
         statut      = data.get("statut", "ouvert")
@@ -686,9 +697,10 @@ def save_anomalie():
             new_id = aid
         else:
             rows = conn.run(
-                """INSERT INTO anomalies (date_ano,nom_machine,num_parc,auteur,description,statut)
-                   VALUES (:da,:nm,:np,:au,:de,:st) RETURNING id""",
-                da=date_ano, nm=nom_machine, np=num_parc, au=auteur, de=description, st=statut
+                """INSERT INTO anomalies (date_ano,nom_machine,num_parc,heures,auteur,description,statut)
+                   VALUES (:da,:nm,:np,:he,:au,:de,:st) RETURNING id""",
+                da=date_ano, nm=nom_machine, np=num_parc, he=heures_val,
+                au=auteur, de=description, st=statut
             )
             new_id = rows[0][0]
         conn.close()
