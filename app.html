@@ -491,9 +491,12 @@ textarea{resize:vertical;min-height:72px}
   <div class="poignee"></div>
   <div class="mod-tit" id="ml-tit">Saisir une réception</div>
   <div class="gch"><label>Date</label><input id="l-date" type="date"/></div>
-  <div class="gch"><label>Référence pièce *</label><input id="l-ref" placeholder="FH-123" autocomplete="off"/></div>
+  <div class="gch"><label>Référence pièce *</label>
+    <input id="l-ref" placeholder="FH-123" autocomplete="off" list="l-ref-list"/>
+    <datalist id="l-ref-list"></datalist>
+  </div>
   <div class="gch"><label>Nom de la pièce *</label><input id="l-nom" placeholder="Filtre huile"/></div>
-  <div id="l-info" style="font-size:12px;color:var(--ok);padding:8px 12px;background:var(--ok-bg);border:1px solid var(--ok-b);border-radius:var(--r2);display:none;margin-bottom:10px"></div>
+  <div id="l-info" style="font-size:12px;padding:8px 12px;border-radius:var(--r2);display:none;margin-bottom:10px"></div>
   <div class="gch"><label>Quantité reçue *</label><input id="l-qt" type="number" placeholder="1" min="1"/></div>
   <div class="gch"><label>Fournisseur</label><input id="l-fo" placeholder="Optionnel"/></div>
   <div class="rbtn np"><button class="btn bs" onclick="fm('ml')">Annuler</button><button class="btn bp" onclick="savLiv()">Enregistrer</button></div>
@@ -1419,18 +1422,35 @@ function openMLEdit(id){
     else infoEl.style.display='none';
   }
   _setupLivRefInput();
+  setTimeout(()=>{ const inp=document.getElementById('l-ref'); if(inp&&inp.value) inp.dispatchEvent(new Event('input')); },50);
   om('ml');
 }
 
+function _fillLivDatalist(){
+  const dl = document.getElementById('l-ref-list');
+  if(!dl) return;
+  dl.innerHTML = BD.pieces.map(p=>`<option value="${p.ref}">${p.nom}</option>`).join('');
+}
+
 function _setupLivRefInput(){
+  _fillLivDatalist();
   const inp = document.getElementById('l-ref');
-  inp.oninput = function(){
-    const ref = this.value.trim().toLowerCase();
+  const _check = function(){
+    const ref = inp.value.trim().toLowerCase();
     const p   = BD.pieces.find(x=>x.ref.toLowerCase()===ref);
     const el  = document.getElementById('l-info');
-    if(p){ document.getElementById('l-nom').value=p.nom; el.textContent=`✓ Pièce trouvée : ${p.nom} — Stock actuel : ${p.stock||0}`; el.style.display='block'; }
-    else el.style.display='none';
+    if(!ref){ el.style.display='none'; return; }
+    if(p){
+      document.getElementById('l-nom').value = p.nom;
+      el.textContent = `✓ Pièce trouvée : ${p.nom} — Stock actuel : ${p.stock||0}`;
+      el.style.cssText = 'display:block;font-size:12px;color:var(--ok);padding:8px 12px;background:var(--ok-bg);border:1px solid var(--ok-b);border-radius:var(--r2);margin-bottom:10px';
+    } else {
+      el.textContent = `⚠ Référence "${inp.value.trim()}" introuvable dans le catalogue — le stock ne sera pas mis à jour`;
+      el.style.cssText = 'display:block;font-size:12px;color:var(--da);padding:8px 12px;background:var(--da-bg);border:1px solid var(--da-b,#fca5a5);border-radius:var(--r2);margin-bottom:10px';
+    }
   };
+  inp.oninput = _check;
+  inp.onchange = _check;
 }
 
 async function savLiv(){
@@ -2255,35 +2275,46 @@ function renderAdminChantierDetail(chantier) {
   el.innerHTML = `
     <div class="semaine-selector">${semChips}</div>
 
-    <!-- TOTAL MATÉRIAUX CHANTIER (livraisons seulement) -->
-    <div class="carte" style="margin-bottom:12px;border-left:3px solid var(--acc)">
-      <div class="carte-tit" style="margin-bottom:14px;font-size:15px">💰 Total chantier${semLabel}</div>
-
-      <div style="padding:10px 0;border-bottom:1px solid var(--brd);display:flex;justify-content:space-between;align-items:center">
-        <div style="font-size:13px;font-weight:600;color:var(--tx)">📦 Matériaux</div>
-        <div style="font-weight:700;font-family:var(--mo);color:${totalMat?'var(--ok)':'var(--tx3)'}">
-          ${totalMat?totalMat.toLocaleString('fr-FR',{style:'currency',currency:'EUR'}):'—'}
-        </div>
-      </div>
-
-      <div style="padding:12px 0 2px;display:flex;justify-content:space-between;align-items:center">
-        <div style="font-size:14px;font-weight:700;color:var(--acc)">Total livraisons</div>
-        <div style="font-size:20px;font-weight:700;font-family:var(--mo);color:var(--acc)">
-          ${totalGen>0?totalGen.toLocaleString('fr-FR',{style:'currency',currency:'EUR'}):'—'}
-        </div>
-      </div>
-    </div>
-
-    <!-- MATÉRIAUX DÉTAIL -->
-    ${Object.keys(agg).length > 0 ? `
-    <div class="carte" style="margin-bottom:12px">
-      <div class="carte-ent">
-        <div class="carte-tit">📦 Matériaux</div>
-        <div class="carte-sub">${dataFilt.length} livraison${dataFilt.length>1?'s':''}</div>
-      </div>
-      <div style="padding:0 14px 8px">${matRows}</div>
-    </div>` : (!ptgFilt.length && !dataFilt.length) ? `
-    <div class="vide"><h3>Aucune donnée${LC_SEM_SEL?' cette semaine':''}</h3></div>` : ''}
+    ${!dataFilt.length && !ptgFilt.length ? `
+      <div class="vide"><h3>Aucune livraison${LC_SEM_SEL?' cette semaine':''}</h3></div>` :
+    !dataFilt.length ? `
+      <div style="text-align:center;padding:20px;color:var(--tx3);font-size:13px">Aucune livraison${LC_SEM_SEL?' cette semaine':''}</div>` :
+    `<!-- LISTE DES LIVRAISONS INDIVIDUELLES -->
+    <div class="ts" style="margin-bottom:8px">${dataFilt.length} livraison${dataFilt.length>1?'s':''}${semLabel?` · ${semLabel}`:''}</div>
+    ${(() => {
+      // Grouper par date
+      const parDate = {};
+      [...dataFilt].sort((a,b)=>b.date_liv.localeCompare(a.date_liv)).forEach(l=>{
+        if(!parDate[l.date_liv]) parDate[l.date_liv]=[];
+        parDate[l.date_liv].push(l);
+      });
+      return Object.entries(parDate).map(([date, items])=>{
+        const d = new Date(date+'T12:00:00');
+        const dateLabel = d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+        return `<div style="margin-bottom:16px">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--tx3);padding:4px 0 8px">${dateLabel}</div>
+          ${items.map(l=>{
+            const prix = getPrix(chantier, l.element);
+            const total = prix ? (l.quantite * prix).toLocaleString('fr-FR',{style:'currency',currency:'EUR'}) : null;
+            return `<div class="lc-card" onclick="ouvrirLC('${l.id}')" style="margin-bottom:8px">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+                <div style="flex:1;min-width:0">
+                  ${lcBadge(l.element)}
+                  ${l.notes?`<div style="font-size:12px;color:var(--tx3);margin-top:4px;font-style:italic">💬 ${l.notes}</div>`:''}
+                  <div style="font-size:11px;color:var(--tx3);margin-top:3px">Par ${l.auteur}</div>
+                </div>
+                <div style="text-align:right;flex-shrink:0">
+                  <div style="font-size:22px;font-weight:700;font-family:var(--mo);color:var(--acc);line-height:1">${l.quantite.toLocaleString('fr-FR',{maximumFractionDigits:2})}</div>
+                  <div style="font-size:11px;color:var(--tx3);font-weight:600">${l.unite}</div>
+                  ${total?`<div style="font-size:12px;font-weight:700;color:var(--ok);margin-top:2px">${total}</div>`:''}
+                </div>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>`;
+      }).join('');
+    })()}
+    `}
 `;
 }
 
