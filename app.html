@@ -441,8 +441,12 @@ textarea{resize:vertical;min-height:72px}
   <div class="gch"><label>Unité</label><select id="p-du"><option value="heures">Heures</option><option value="mois">Mois</option></select></div>
   <div class="gch"><label>Stock</label><input id="p-st" type="number" placeholder="0"/></div>
   <div class="gch">
-    <label>Machines compatibles <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--tx3)">(cochez)</span></label>
+    <label>Machines principales <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--tx3)">— pièce montée, usure suivie, stock commandé</span></label>
     <div class="lpc" id="p-machs"><div style="font-size:13px;color:var(--tx3);padding:4px">Aucune machine enregistrée</div></div>
+  </div>
+  <div class="gch">
+    <label>Aussi compatibles <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--tx3)">— références alternatives, non commandées automatiquement</span></label>
+    <div class="lpc" id="p-machs-alt"><div style="font-size:13px;color:var(--tx3);padding:4px">Aucune machine enregistrée</div></div>
   </div>
   <div class="gch"><label>Notes</label><textarea id="p-no" placeholder="Utiliser pièce d'origine..."></textarea></div>
   <div class="rbtn np"><button class="btn bs" onclick="fm('mp')">Annuler</button><button class="btn bp" onclick="savPiece()">Enregistrer</button></div>
@@ -896,7 +900,7 @@ function pageMach(id){
       <div class="li"><span class="li-k">Modèle</span><span class="li-v">${m.modele||'—'}</span></div>
       <div class="li"><span class="li-k">Année</span><span class="li-v">${m.annee||'—'}</span></div>
       ${m.site?`<div class="li"><span class="li-k">Site</span><span class="li-v">${m.site}</span></div>`:''}
-      ${m.serie?`<div class="li"><span class="li-k">N° série</span><span class="li-v">${m.serie}</span></div>`:''}
+      ${m.serie?`<div class="li"><span class="li-k">N° parc</span><span class="li-v">${m.serie}</span></div>`:''}
       ${m.poids?`<div class="li"><span class="li-k">Poids</span><span class="li-v">${m.poids} kg</span></div>`:''}
     </div>
     <div class="carte"><div class="carte-ent"><div class="carte-tit">Heures moteur</div><button class="btn bp np" style="width:auto;padding:7px 14px;font-size:13px" onclick="openMH('${id}')">+ Saisir</button></div>
@@ -914,20 +918,19 @@ function pageMach(id){
     </div>
     <div class="carte"><div class="carte-ent"><div class="carte-tit">Usure des pièces</div></div>${puH}</div>
     <div class="carte">
-      <div class="carte-ent"><div class="carte-tit">Pièces compatibles</div></div>
+      <div class="carte-ent"><div class="carte-tit">Aussi compatibles</div></div>
       ${(()=>{
-        const compat = BD.pieces.filter(p=>(p.machinesCompatibles||[]).includes(id));
-        if(!compat.length) return '<p style="color:var(--tx3);font-size:13px;padding:6px 0">Aucune pièce référencée pour cet engin</p>';
-        return compat.map(p=>{
-          const pa=(m.piecesAssociees||[]).find(x=>x.pieceId===p.id);
-          const u=pa?usure(m,pa):null;
-          const stockBadge=p.stock>0
+        // Pièces marquées comme "aussi compatibles" sur cette machine
+        const altPieces = BD.pieces.filter(p=>(p.machinesAussiCompatibles||[]).includes(id));
+        if(!altPieces.length) return '<p style="color:var(--tx3);font-size:13px;padding:6px 0">Aucune pièce alternative renseignée</p>';
+        return altPieces.map(p=>{
+          const stockBadge = p.stock>0
             ?`<span class="bdg ok" style="font-size:11px">${p.stock} en stock</span>`
-            :`<span class="bdg da" style="font-size:11px">0 en stock</span>`;
+            :`<span class="bdg" style="font-size:11px;background:var(--sur2);color:var(--tx3)">0 en stock</span>`;
           return `<div class="li" style="align-items:flex-start;flex-direction:column;gap:4px;padding:10px 0;border-bottom:1px solid var(--brd)">
             <div style="display:flex;justify-content:space-between;width:100%;align-items:center">
-              <div><div style="font-weight:700;font-size:14px">${p.nom}</div><div style="font-size:12px;color:var(--tx3);font-family:monospace">${p.ref}</div></div>
-              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px">${stockBadge}${u?`<span class="bdg ${u.st}" style="font-size:11px">${Math.round(u.pct*100)}% usée</span>`:''}</div>
+              <div><div style="font-weight:600;font-size:13px">${p.nom}</div><div style="font-size:12px;color:var(--tx3);font-family:monospace">${p.ref}</div></div>
+              ${stockBadge}
             </div>
             <div style="font-size:11px;color:var(--tx3)">${p.dureeVal} ${p.dureeUnite}${p.notes?` · ${p.notes}`:''}</div>
           </div>`;
@@ -951,15 +954,11 @@ function pgEnt(){
 // ── Pièces ────────────────────────────────────────────────────────────
 // ── Calculs besoins pièces ──────────────────────────────────────────
 function calculerBesoinsPiece(pieceId) {
-  const p = BD.pieces.find(x=>x.id===pieceId);
-  // Machines compatibles définies directement sur la pièce
-  const ids = p?.machinesCompatibles || [];
-  // Fallback : anciennes données via piecesAssociees sur les machines
-  const enginsFallback = ids.length ? [] : BD.machines.filter(m=>(m.piecesAssociees||[]).some(pa=>pa.pieceId===pieceId));
-  const engins = ids.length
-    ? BD.machines.filter(m=>ids.includes(m.id))
-    : enginsFallback;
-  // Besoin = 1 pièce de rechange par machine compatible (avoir 1 en stock d'avance)
+  // Besoin = machines sur lesquelles cette pièce est MONTÉE et suivie (piecesAssociees)
+  // = 1 pièce de rechange par machine → avoir 1 en avance par machine
+  const engins = BD.machines.filter(m =>
+    (m.piecesAssociees||[]).some(pa => pa.pieceId === pieceId)
+  );
   return { besoin: engins.length, engins };
 }
 
@@ -1167,36 +1166,48 @@ function openMP(id){
     document.getElementById('p-st').value=p.stock||0;
     document.getElementById('p-no').value=p.notes||'';
   }
-  // Remplir la liste des machines compatibles
-  const sel = (p&&id) ? (p.machinesCompatibles||[]) : [];
-  const mc = document.getElementById('p-machs');
+  // Remplir la liste des machines principales (montées, usure suivie)
+  const sel    = (p&&id) ? (p.machinesCompatibles||[]) : [];
+  const selAlt = (p&&id) ? (p.machinesAussiCompatibles||[]) : [];
+  _fillMachList('p-machs',    sel,    'pmc',  'tglMC');
+  _fillMachList('p-machs-alt', selAlt, 'pmca', 'tglMCA');
+  om('mp');
+}
+function _fillMachList(containerId, selected, prefix, toggleFn){
+  const mc = document.getElementById(containerId);
   if(!BD.machines.length){
     mc.innerHTML='<div style="font-size:13px;color:var(--tx3);padding:4px">Aucune machine enregistrée</div>';
-  } else {
-    mc.innerHTML = BD.machines.map(m=>{
-      const chk = sel.includes(m.id);
-      return `<div class="lpc-item ${chk?'sel':''}" id="pmc-${m.id}" onclick="tglMC('${m.id}')">
-        <input type="checkbox" id="pmcb-${m.id}" ${chk?'checked':''} onclick="event.stopPropagation()"/>
-        <div class="lpc-info">
-          <div class="lpc-nom">${m.nom}</div>
-          <div class="lpc-det">${m.modele||''}${m.site?' · '+m.site:''}</div>
-        </div>
-      </div>`;
-    }).join('');
+    return;
   }
-  om('mp');
+  mc.innerHTML = BD.machines.map(m=>{
+    const chk = selected.includes(m.id);
+    return `<div class="lpc-item ${chk?'sel':''}" id="${prefix}-${m.id}" onclick="${toggleFn}('${m.id}')">
+      <input type="checkbox" id="${prefix}b-${m.id}" ${chk?'checked':''} onclick="event.stopPropagation()"/>
+      <div class="lpc-info">
+        <div class="lpc-nom">${m.nom}${m.serie?` <span style="font-size:11px;color:var(--tx3)">N°${m.serie}</span>`:''}</div>
+        <div class="lpc-det">${m.modele||''}${m.site?' · '+m.site:''}</div>
+      </div>
+    </div>`;
+  }).join('');
 }
 function tglMC(mid){
   const cb=document.getElementById('pmcb-'+mid),it=document.getElementById('pmc-'+mid);
   if(cb&&it){cb.checked=!cb.checked;it.classList.toggle('sel',cb.checked);}
 }
+function tglMCA(mid){
+  const cb=document.getElementById('pmcab-'+mid),it=document.getElementById('pmca-'+mid);
+  if(cb&&it){cb.checked=!cb.checked;it.classList.toggle('sel',cb.checked);}
+}
 function getSelMachines(){
   return BD.machines.filter(m=>{const cb=document.getElementById('pmcb-'+m.id);return cb&&cb.checked;}).map(m=>m.id);
+}
+function getSelMachinesAlt(){
+  return BD.machines.filter(m=>{const cb=document.getElementById('pmcab-'+m.id);return cb&&cb.checked;}).map(m=>m.id);
 }
 function openMPmod(id){openMP(id);}
 async function savPiece(){
   const nom=V('p-nom').trim(),ref=V('p-ref').trim();if(!nom||!ref){toast('Nom et référence obligatoires');return;}
-  const d={nom,ref,dureeVal:parseInt(V('p-dv'))||0,dureeUnite:V('p-du'),stock:parseInt(V('p-st'))||0,notes:V('p-no').trim()||null,machinesCompatibles:getSelMachines()};
+  const d={nom,ref,dureeVal:parseInt(V('p-dv'))||0,dureeUnite:V('p-du'),stock:parseInt(V('p-st'))||0,notes:V('p-no').trim()||null,machinesCompatibles:getSelMachines(),machinesAussiCompatibles:getSelMachinesAlt()};
   if(MOD_ID)Object.assign(BD.pieces.find(x=>x.id===MOD_ID),d);
   else BD.pieces.push({id:'P-'+Date.now(),...d});
   if(await save()){toast(MOD_ID?'Pièce mise à jour ✓':'Pièce ajoutée ✓');fm('mp');render();}
@@ -1220,11 +1231,16 @@ function updPcListFor(machId, selIds, autresPieces){
     return;
   }
   const m = BD.machines.find(x=>x.id===machId);
-  // Pièces compatibles définies sur la pièce (machinesCompatibles) OU via piecesAssociees legacy
+  // Pièces PRINCIPALES : montées sur la machine (piecesAssociees) OU définies via machinesCompatibles
   const piecesCompat = BD.pieces.filter(p=>{
     if((p.machinesCompatibles||[]).includes(machId)) return true;
     return (m?.piecesAssociees||[]).some(pa=>pa.pieceId===p.id);
   });
+  // Pièces AUSSI COMPATIBLES : alternatives déclarées via machinesAussiCompatibles
+  const piecesAlt = BD.pieces.filter(p=>
+    (p.machinesAussiCompatibles||[]).includes(machId) &&
+    !piecesCompat.find(pc=>pc.id===p.id)
+  );
 
   if(!piecesCompat.length){
     c.innerHTML='<div style="font-size:13px;color:var(--tx3);padding:4px">Aucune pièce associée à cet engin</div>';
@@ -1246,6 +1262,21 @@ function updPcListFor(machId, selIds, autresPieces){
         </div>
       </div>`;
     }).join('');
+  }
+  // Pièces aussi compatibles (stock disponible uniquement)
+  const altEnStock = piecesAlt.filter(p=>(p.stock||0)>0);
+  if(altEnStock.length){
+    const altHtml = altEnStock.map(p=>{
+      const isSel = selIds.includes(p.id);
+      return `<div class="lpc-item ${isSel?'sel':''}" id="lpi-${p.id}" onclick="tglPc('${p.id}')" style="opacity:.85">
+        <input type="checkbox" id="cb-${p.id}" ${isSel?'checked':''} onclick="event.stopPropagation()"/>
+        <div class="lpc-info">
+          <div class="lpc-nom">${p.nom} <span style="font-size:10px;color:var(--tx3)">(alternative)</span></div>
+          <div class="lpc-det">${p.ref} · ${p.stock} en stock</div>
+        </div>
+      </div>`;
+    }).join('');
+    c.innerHTML += `<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--tx3);padding:6px 4px 2px">Aussi compatibles (en stock)</div>`+altHtml;
   }
 
   // Section "Autre pièce" toujours visible quand machine sélectionnée
@@ -1465,7 +1496,7 @@ function dorintInt(iv,m){
   const w=window.open('','_blank');
   w.document.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Fiche — ${m.nom}</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;padding:24px;font-size:13px}.top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;padding-bottom:14px;border-bottom:3px solid #C0392B}.lb{display:flex;align-items:center;gap:12px}.lb img{height:44px;object-fit:contain}.bdg{display:inline-block;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:700}.ok{background:#dcfce7;color:#166534}.wa{background:#fef9c3;color:#854d0e}.da{background:#fee2e2;color:#991b1b}h2{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#C0392B;margin:16px 0 7px;padding-bottom:4px;border-bottom:1px solid #e5e7eb}table{width:100%;border-collapse:collapse}th{text-align:left;font-size:11px;font-weight:700;color:#666;text-transform:uppercase;padding:6px 8px;background:#f9fafb;border:1px solid #e5e7eb}td{padding:8px;border:1px solid #e5e7eb;vertical-align:middle}.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}.sbox{border:1px solid #d1d5db;border-radius:4px;height:34px;margin-top:5px}.sarea{border:1px solid #d1d5db;border-radius:4px;height:70px;margin-top:5px;display:flex;align-items:flex-end;padding:6px;font-size:10px;color:#ccc}.note{margin-top:20px;padding-top:12px;border-top:1px solid #e5e7eb;font-size:10px;color:#9ca3af}</style></head><body>
 <div class="top"><div class="lb"><img src="${LOGO}" alt="FGS"/><div><div style="font-size:18px;font-weight:700;color:#C0392B">Fiche d'entretien</div><div style="font-size:13px;color:#555">${m.nom} — ${m.modele||''}${m.site?' · '+m.site:''}</div></div></div><div style="text-align:right;font-size:12px;color:#555;line-height:1.8"><div><b>Créée le :</b> ${new Date().toLocaleDateString('fr-FR')}</div>${iv?.datePrevue?`<div><b>Date prévue :</b> ${fdt(iv.datePrevue)}</div>`:''}<div><b>Type :</b> ${iv?lblTy(iv.type):'Entretien'}</div><span class="bdg ${s}">${lblSt(s)}</span></div></div>
-<div class="g2"><div><h2>Machine</h2><table><tr><th>Champ</th><th>Valeur</th></tr><tr><td>Modèle</td><td style="font-weight:600">${m.modele||'—'}</td></tr><tr><td>N° série</td><td style="font-weight:600">${m.serie||'—'}</td></tr><tr><td>Site</td><td style="font-weight:600">${m.site||'—'}</td></tr></table></div>
+<div class="g2"><div><h2>Machine</h2><table><tr><th>Champ</th><th>Valeur</th></tr><tr><td>Modèle</td><td style="font-weight:600">${m.modele||'—'}</td></tr><tr><td>N° parc</td><td style="font-weight:600">${m.serie||'—'}</td></tr><tr><td>Site</td><td style="font-weight:600">${m.site||'—'}</td></tr></table></div>
 <div><h2>Heures</h2><table><tr><th>Champ</th><th>Valeur</th></tr><tr><td>Actuelles</td><td style="font-weight:600">${m.heures}h</td></tr><tr><td>Dernier entretien</td><td style="font-weight:600">${m.hEntretien}h</td></tr><tr><td>Écart</td><td style="font-weight:600;color:${s==='da'?'#dc2626':s==='wa'?'#d97706':'#16a34a'}">${d}h / ${seuil}h</td></tr></table></div></div>
 <h2>Travaux à effectuer</h2><table><tr><th>Tâche</th><th>Pièce</th><th>Référence</th><th>✓</th></tr>${tH}</table>
 ${iv?.notes?`<h2>Notes</h2><div style="padding:10px 12px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px">${iv.notes}</div>`:''}
@@ -1485,7 +1516,7 @@ function printMach(id){
   const w=window.open('','_blank');
   w.document.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Fiche machine — ${m.nom}</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;padding:24px;font-size:13px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:14px;border-bottom:3px solid #C0392B}.lb{display:flex;align-items:center;gap:12px}.lb img{height:44px;object-fit:contain}.bdg{display:inline-block;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:700}.ok{background:#dcfce7;color:#166534}.wa{background:#fef9c3;color:#854d0e}.da{background:#fee2e2;color:#991b1b}h2{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#C0392B;margin:16px 0 7px;padding-bottom:4px;border-bottom:1px solid #e5e7eb}table{width:100%;border-collapse:collapse}th{text-align:left;font-size:11px;font-weight:700;color:#666;text-transform:uppercase;padding:6px 8px;background:#f9fafb;border:1px solid #e5e7eb}td{padding:8px;border:1px solid #e5e7eb}.note{margin-top:20px;padding-top:12px;border-top:1px solid #e5e7eb;font-size:10px;color:#9ca3af}</style></head><body>
 <div class="top"><div class="lb"><img src="${LOGO}" alt="FGS"/><div><div style="font-size:18px;font-weight:700;color:#C0392B">${m.nom}</div><div style="font-size:13px;color:#555">${m.modele||''}${m.site?' · '+m.site:''}</div></div></div><span class="bdg ${s}">${lblSt(s)}</span></div>
-<h2>Informations</h2><table><tr><th>Champ</th><th>Valeur</th></tr><tr><td>Catégorie</td><td style="font-weight:600">${ncat(m.catId)}</td></tr><tr><td>Modèle</td><td style="font-weight:600">${m.modele||'—'}</td></tr><tr><td>Année</td><td style="font-weight:600">${m.annee||'—'}</td></tr><tr><td>N° série</td><td style="font-weight:600">${m.serie||'—'}</td></tr><tr><td>Site</td><td style="font-weight:600">${m.site||'—'}</td></tr><tr><td>Poids</td><td style="font-weight:600">${m.poids?m.poids+' kg':'—'}</td></tr></table>
+<h2>Informations</h2><table><tr><th>Champ</th><th>Valeur</th></tr><tr><td>Catégorie</td><td style="font-weight:600">${ncat(m.catId)}</td></tr><tr><td>Modèle</td><td style="font-weight:600">${m.modele||'—'}</td></tr><tr><td>Année</td><td style="font-weight:600">${m.annee||'—'}</td></tr><tr><td>N° parc</td><td style="font-weight:600">${m.serie||'—'}</td></tr><tr><td>Site</td><td style="font-weight:600">${m.site||'—'}</td></tr><tr><td>Poids</td><td style="font-weight:600">${m.poids?m.poids+' kg':'—'}</td></tr></table>
 <h2>Heures & Entretien</h2><table><tr><th>Champ</th><th>Valeur</th></tr><tr><td>Heures actuelles</td><td style="font-weight:600">${m.heures}h</td></tr><tr><td>Dernier entretien</td><td style="font-weight:600">${m.hEntretien}h</td></tr><tr><td>Depuis dernier entretien</td><td style="font-weight:600;color:${s==='da'?'#dc2626':s==='wa'?'#d97706':'#16a34a'}">${d}h / ${seuil}h (${Math.round(Math.min(d/seuil,1)*100)}%)</td></tr></table>
 <h2>Usure des pièces</h2>
 ${pas.length?`<table><tr><th>Pièce</th><th>Réf.</th><th>Installée à</th><th>Durée</th><th>Usure</th><th>Restant</th></tr>${pas.map(pa=>{const p=BD.pieces.find(x=>x.id===pa.pieceId);if(!p)return'';const u=usure(m,pa);if(!u)return'';return`<tr><td>${p.nom}</td><td>${p.ref}</td><td>${pa.heuresInstallation}h (${fdt(pa.dateInstallation)})</td><td>${p.dureeVal}h</td><td style="color:${u.st==='da'?'#dc2626':u.st==='wa'?'#d97706':'#16a34a'};font-weight:700">${Math.round(u.pct*100)}%</td><td style="font-weight:600">${u.rest}h</td></tr>`;}).join('')}</table>`:'<p style="color:#666;margin-top:6px">Aucune pièce associée</p>'}
@@ -2421,15 +2452,22 @@ async function savLivChantier() {
     unite:    document.getElementById('lc-unite').value,
     notes:    document.getElementById('lc-notes').value.trim(),
   };
+  let d;
   try {
     const r = await fetch('/api/livchantier', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify(payload),
     });
-    const d = await r.json();
-    if (d.ok) { toast(LC_EDIT_ID?'Livraison mise à jour ✓':'Livraison enregistrée ✓'); fm('mlc'); await chargerLC(); renderChantierContent(); }
-    else toast('Erreur : '+(d.erreur||'inconnue'));
-  } catch(e) { toast('Erreur réseau'); }
+    d = await r.json();
+  } catch(e) {
+    toast('Erreur réseau (connexion)');
+    return;
+  }
+  if (!d || !d.ok) { toast('Erreur : '+(d?.erreur||'inconnue')); return; }
+  toast(LC_EDIT_ID ? 'Livraison mise à jour ✓' : 'Livraison enregistrée ✓');
+  fm('mlc');
+  try { await chargerLC(); } catch(e) { console.warn('chargerLC:', e); }
+  renderChantierContent();
 }
 
 async function delLivChantier() {
