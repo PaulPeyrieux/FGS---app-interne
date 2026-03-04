@@ -878,7 +878,7 @@ function renderPcContent(){
   var cmdBtn = '';
   return rows + cmdBtn;
 }
-function rowMach(m){const s=stMach(m);return`<div class="emach" onclick="ouvrirDet('${m.id}')"><div class="ico-mach">${ico(m.catId)}</div><div class="info-mach"><div class="nom-mach">${m.nom}</div><div class="mod-mach">${m.modele||''}${m.site?' · '+m.site:''}</div><div class="meta-mach"><span class="bdg ${s}">${lblSt(s)}</span><span class="h-mach">${m.heures}h</span></div></div><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>`;}
+function rowMach(m){const s=stMach(m);return`<div class="emach" onclick="ouvrirDet('${m.id}')"><div class="ico-mach">${ico(m.catId)}</div><div class="info-mach"><div class="nom-mach">${m.nom}</div><div class="mod-mach">${m.modele||''}${m.site?' · '+m.site:''}${m.serie?` · <span style="font-weight:700;color:var(--acc)">N°${m.serie}</span>`:''}</div><div class="meta-mach"><span class="bdg ${s}">${lblSt(s)}</span><span class="h-mach">${m.heures}h</span></div></div><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>`;}
 function renderCat(el,cid){const cat=BD.categories.find(c=>c.id===cid),ms=BD.machines.filter(m=>m.catId===cid);el.innerHTML=`<div class="ent-det"><div class="btn-ret" onclick="DET=null;render()"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></div><div class="tit-det">${cat.icone} ${cat.nom}</div></div><div class="pg on">${ms.length?ms.map(m=>rowMach(m)).join(''):`<div class="vide"><h3>Aucune machine dans cette catégorie</h3></div>`}</div>`;}
 
 // ── Détail machine ────────────────────────────────────────────────────
@@ -2226,8 +2226,12 @@ function renderAdminChantierDetail(chantier) {
     agg[l.element].nb++;
   });
 
-  const totalMat0 = totalMat; // pour usage interne
-  const totalGen = totalMat; // dans livraisons : total = matériaux seuls
+  let totalMat = 0;
+  Object.values(agg).forEach(v => {
+    const p = getPrix(chantier, v.element);
+    if (p) totalMat += v.qte * p;
+  });
+  const totalGen = totalMat;
   const semLabel = LC_SEM_SEL ? ` · ${getSemLabel(LC_SEM_SEL)}` : '';
 
   // ── Matériaux rows ─────────────────────────────────────────────
