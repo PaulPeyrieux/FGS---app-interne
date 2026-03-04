@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -241,6 +242,7 @@ textarea{resize:vertical;min-height:72px}
 .cmd-nom{font-size:13px;font-weight:700}.cmd-ref{font-size:11px;color:var(--tx3);font-family:var(--mo);margin-top:2px}
 .cmd-qty{font-size:26px;font-weight:700;color:var(--da);font-family:var(--mo);line-height:1}
 .cmd-detail{font-size:11px;color:var(--tx2);display:flex;gap:12px;flex-wrap:wrap}
+.cmd-engins{font-size:11px;color:var(--tx3);margin-top:6px;padding-top:6px;border-top:1px solid var(--brd)}
 
 /* ── SEM CHIPS ── */
 .sem-chip{padding:5px 12px;border-radius:20px;border:1.5px solid var(--brd);background:var(--sur);font-size:11px;font-weight:600;cursor:pointer;color:var(--tx2);transition:all .15s;flex-shrink:0}
@@ -427,6 +429,7 @@ textarea{resize:vertical;min-height:72px}
   <div class="gch"><label>Site / Chantier</label><input id="f-site" placeholder="Lyon Nord"/></div>
   <div class="gch"><label>Numéro de série</label><input id="f-ser" placeholder="Optionnel"/></div>
   <div class="gch"><label>Poids (kg)</label><input id="f-po" type="number" placeholder="Optionnel"/></div>
+  <div class="gch"><label>🏷 Numéro de parc *</label><input id="f-parc" placeholder="Ex: EQ-001, 42, A7..."/></div>
   <div class="rbtn np"><button class="btn bs" onclick="fm('mm')">Annuler</button><button class="btn bp" onclick="savMach()">Enregistrer</button></div>
   <button class="btn bd np" id="del-mm" style="margin-top:12px;display:none" onclick="delMach()">Supprimer cette machine</button>
 </div></div>
@@ -744,7 +747,8 @@ function pgHome(){
     ${(USER&&(USER.role==='admin'||USER.role==='rh')&&ANOMALIES.filter(a=>a.statut!=='resolu').length>0)?`
     <div class="ts" style="margin-top:16px;color:var(--da)">⚠️ Fiches anomalie en attente (${ANOMALIES.filter(a=>a.statut!=='resolu').length})</div>
     ${ANOMALIES.filter(a=>a.statut!=='resolu').slice(0,5).map(a=>`<div class="carte" style="margin-bottom:8px;border-left:3px solid ${a.statut==='en_cours'?'var(--wa)':'var(--da)'}">
-      <div style="display:flex;justify-content:space-between"><b>${a.nom_machine}</b>${a.num_parc?'<span style="font-size:11px;color:var(--tx3)">N°'+a.num_parc+'</span>':''}</div>
+      <div style="display:flex;justify-content:space-between"><b>${a.nom_machine}</b>${a.num_parc?'<span style="font-size:11px;color:var(--tx3)">N° <b>'+a.num_parc+'</b></span>':''}</div>
+      ${a.heures?'<div style="font-size:11px;color:var(--tx3)">⏱ '+a.heures+'h</div>':''}
       <div style="font-size:12px;color:var(--tx);margin:4px 0">${a.description.length>80?a.description.slice(0,80)+'…':a.description}</div>
       <div style="font-size:11px;color:var(--tx3)">${a.auteur} · ${new Date(a.cree_le).toLocaleDateString('fr-FR')}</div>
     </div>`).join('')}
@@ -871,7 +875,7 @@ function renderPcContent(){
   var cmdBtn = '';
   return rows + cmdBtn;
 }
-function rowMach(m){const s=stMach(m);return`<div class="emach" onclick="ouvrirDet('${m.id}')"><div class="ico-mach">${ico(m.catId)}</div><div class="info-mach"><div class="nom-mach">${m.nom}</div><div class="mod-mach">${m.modele||''}${m.site?' · '+m.site:''}</div><div class="meta-mach"><span class="bdg ${s}">${lblSt(s)}</span><span class="h-mach">${m.heures}h</span></div></div><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>`;}
+function rowMach(m){const s=stMach(m);return`<div class="emach" onclick="ouvrirDet('${m.id}')"><div class="ico-mach">${ico(m.catId)}</div><div class="info-mach"><div class="nom-mach">${m.nom}</div><div class="mod-mach">${m.modele||''}${m.site?' · '+m.site:''}${m.numParc?' · <b style="color:var(--acc)">N°'+m.numParc+'</b>':''}</div><div class="meta-mach"><span class="bdg ${s}">${lblSt(s)}</span><span class="h-mach">${m.heures}h</span></div></div><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>`;}
 function renderCat(el,cid){const cat=BD.categories.find(c=>c.id===cid),ms=BD.machines.filter(m=>m.catId===cid);el.innerHTML=`<div class="ent-det"><div class="btn-ret" onclick="DET=null;render()"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></div><div class="tit-det">${cat.icone} ${cat.nom}</div></div><div class="pg on">${ms.length?ms.map(m=>rowMach(m)).join(''):`<div class="vide"><h3>Aucune machine dans cette catégorie</h3></div>`}</div>`;}
 
 // ── Détail machine ────────────────────────────────────────────────────
@@ -885,7 +889,7 @@ function pageMach(id){
   const puH=pas.length?pas.map(pa=>{const p=BD.pieces.find(x=>x.id===pa.pieceId);if(!p)return'';const u=usure(m,pa);if(!u)return'';return`<div class="pu"><div class="pu-ent"><div><div class="pu-nom">${p.nom}</div><div class="pu-ref">${p.ref}</div></div><span class="bdg ${u.st}">${u.rest}h restantes</span></div><div class="pu-det"><span>Installée à ${pa.heuresInstallation}h (${fdt(pa.dateInstallation)})</span><span style="font-weight:700;color:var(--${u.st})">${Math.round(u.pct*100)}%</span></div><div class="bar-bg"><div class="bar ${u.st}" style="width:${Math.min(u.pct*100,100)}%"></div></div></div>`;}).join(''):`<p style="color:var(--tx3);font-size:13px;padding:6px 0">Aucune pièce associée</p>`;
   return`<div class="ent-det">
     <div class="btn-ret" onclick="DET=null;nav('parcmat')"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></div>
-    <div style="flex:1;min-width:0"><div class="tit-det">${m.nom}</div><span class="bdg ${s}" style="margin-top:3px">${lblSt(s)}</span></div>
+    <div style="flex:1;min-width:0"><div class="tit-det">${m.nom}</div><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:3px">${m.numParc?`<span style="background:var(--acc);color:#fff;font-size:11px;font-weight:700;border-radius:6px;padding:2px 8px">N° ${m.numParc}</span>`:''}<span class="bdg ${s}">${lblSt(s)}</span></div></div>
     <div class="ico-btn np" onclick="openMM('${id}')"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
   </div>
   <div class="pg on">
@@ -893,6 +897,7 @@ function pageMach(id){
       <div class="li"><span class="li-k">Modèle</span><span class="li-v">${m.modele||'—'}</span></div>
       <div class="li"><span class="li-k">Année</span><span class="li-v">${m.annee||'—'}</span></div>
       ${m.site?`<div class="li"><span class="li-k">Site</span><span class="li-v">${m.site}</span></div>`:''}
+      ${m.numParc?`<div class="li"><span class="li-k">🏷 N° de parc</span><span class="li-v" style="color:var(--acc);font-size:16px;font-weight:800">${m.numParc}</span></div>`:''}
       ${m.serie?`<div class="li"><span class="li-k">N° série</span><span class="li-v">${m.serie}</span></div>`:''}
       ${m.poids?`<div class="li"><span class="li-k">Poids</span><span class="li-v">${m.poids} kg</span></div>`:''}
     </div>
@@ -911,22 +916,28 @@ function pageMach(id){
     </div>
     <div class="carte"><div class="carte-ent"><div class="carte-tit">Usure des pièces</div></div>${puH}</div>
     <div class="carte">
-      <div class="carte-ent"><div class="carte-tit">Pièces compatibles</div></div>
+      <div class="carte-ent"><div class="carte-tit">🔩 Pièces compatibles</div></div>
       ${(()=>{
         const compat = BD.pieces.filter(p=>(p.machinesCompatibles||[]).includes(id));
-        if(!compat.length) return '<p style="color:var(--tx3);font-size:13px;padding:6px 0">Aucune pièce référencée pour cet engin</p>';
+        if(!compat.length) return '<div style="color:var(--tx3);font-size:13px;padding:8px 0;text-align:center">Aucune pièce référencée — associez des pièces à cet engin via l\'onglet Pièces</div>';
         return compat.map(p=>{
           const pa=(m.piecesAssociees||[]).find(x=>x.pieceId===p.id);
           const u=pa?usure(m,pa):null;
-          const stockBadge=p.stock>0
-            ?`<span class="bdg ok" style="font-size:11px">${p.stock} en stock</span>`
-            :`<span class="bdg da" style="font-size:11px">0 en stock</span>`;
-          return `<div class="li" style="align-items:flex-start;flex-direction:column;gap:4px;padding:10px 0;border-bottom:1px solid var(--brd)">
-            <div style="display:flex;justify-content:space-between;width:100%;align-items:center">
-              <div><div style="font-weight:700;font-size:14px">${p.nom}</div><div style="font-size:12px;color:var(--tx3);font-family:monospace">${p.ref}</div></div>
-              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px">${stockBadge}${u?`<span class="bdg ${u.st}" style="font-size:11px">${Math.round(u.pct*100)}% usée</span>`:''}</div>
+          const stock=p.stock||0;
+          const stBadge=stock>0?`<span class="bdg ok">${stock} en stock</span>`:`<span class="bdg da">Rupture</span>`;
+          const uBadge=u?`<span class="bdg ${u.st}">${Math.round(u.pct*100)}% · ${u.rest}h rest.</span>`:'';
+          return `<div style="padding:10px 0;border-bottom:1px solid var(--brd)">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:700;font-size:14px">${p.nom}</div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">
+                  <span style="font-size:11px;background:var(--in-bg);color:var(--in);border:1px solid var(--in-b);border-radius:4px;padding:1px 7px;font-family:monospace;font-weight:700">Réf : ${p.ref}</span>
+                  <span style="font-size:11px;color:var(--tx3);background:var(--sur2);border:1px solid var(--brd);border-radius:4px;padding:1px 7px">⏳ ${p.dureeVal} ${p.dureeUnite}</span>
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0">${stBadge}${uBadge}</div>
             </div>
-            <div style="font-size:11px;color:var(--tx3)">${p.dureeVal} ${p.dureeUnite}${p.notes?` · ${p.notes}`:''}</div>
+            ${p.notes?`<div style="font-size:11px;color:var(--tx3);margin-top:4px;font-style:italic">📝 ${p.notes}</div>`:''}
           </div>`;
         }).join('');
       })()}
@@ -1072,14 +1083,14 @@ function openMM(id){
   document.getElementById('del-mm').style.display=id?'flex':'none';
   fillCats('f-cat');
   const m=id?BD.machines.find(x=>x.id===id):{};
-  ['f-cat','f-nom','f-mod','f-an','f-h','f-he','f-vgp','f-site','f-ser','f-po'].forEach(k=>document.getElementById(k).value='');
+  ['f-cat','f-nom','f-mod','f-an','f-h','f-he','f-vgp','f-site','f-ser','f-po','f-parc'].forEach(k=>document.getElementById(k).value='');
   document.getElementById('f-se').value='250';
-  if(m){fillCats('f-cat',m.catId);document.getElementById('f-nom').value=m.nom||'';document.getElementById('f-mod').value=m.modele||'';document.getElementById('f-an').value=m.annee||'';document.getElementById('f-h').value=m.heures||'';document.getElementById('f-he').value=m.hEntretien||'';document.getElementById('f-se').value=m.seuil||250;document.getElementById('f-vgp').value=m.vgp||'';document.getElementById('f-site').value=m.site||'';document.getElementById('f-ser').value=m.serie||'';document.getElementById('f-po').value=m.poids||'';}
+  if(m){fillCats('f-cat',m.catId);document.getElementById('f-nom').value=m.nom||'';document.getElementById('f-mod').value=m.modele||'';document.getElementById('f-an').value=m.annee||'';document.getElementById('f-h').value=m.heures||'';document.getElementById('f-he').value=m.hEntretien||'';document.getElementById('f-se').value=m.seuil||250;document.getElementById('f-vgp').value=m.vgp||'';document.getElementById('f-site').value=m.site||'';document.getElementById('f-ser').value=m.serie||'';document.getElementById('f-po').value=m.poids||'';document.getElementById('f-parc').value=m.numParc||'';}
   om('mm');
 }
 async function savMach(){
   const nom=V('f-nom').trim();if(!nom){toast('Le nom est obligatoire');return;}
-  const d={catId:V('f-cat'),nom,modele:V('f-mod').trim(),annee:parseInt(V('f-an'))||null,heures:parseInt(V('f-h'))||0,hEntretien:parseInt(V('f-he'))||0,seuil:parseInt(V('f-se'))||250,vgp:V('f-vgp')||null,site:V('f-site').trim()||null,serie:V('f-ser').trim()||null,poids:parseInt(V('f-po'))||null};
+  const d={catId:V('f-cat'),nom,modele:V('f-mod').trim(),annee:parseInt(V('f-an'))||null,heures:parseInt(V('f-h'))||0,hEntretien:parseInt(V('f-he'))||0,seuil:parseInt(V('f-se'))||250,vgp:V('f-vgp')||null,site:V('f-site').trim()||null,serie:V('f-ser').trim()||null,poids:parseInt(V('f-po'))||null,numParc:V('f-parc').trim()||null};
   if(MOD_ID)Object.assign(BD.machines.find(x=>x.id===MOD_ID),d);
   else BD.machines.push({id:'EQ-'+Date.now(),...d,piecesAssociees:[]});
   if(await save()){toast(MOD_ID?'Machine mise à jour ✓':'Machine ajoutée ✓');fm('mm');render();}
@@ -1363,8 +1374,8 @@ function printMach(id){
   const pas=m.piecesAssociees||[];
   const w=window.open('','_blank');
   w.document.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Fiche machine — ${m.nom}</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;padding:24px;font-size:13px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:14px;border-bottom:3px solid #C0392B}.lb{display:flex;align-items:center;gap:12px}.lb img{height:44px;object-fit:contain}.bdg{display:inline-block;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:700}.ok{background:#dcfce7;color:#166534}.wa{background:#fef9c3;color:#854d0e}.da{background:#fee2e2;color:#991b1b}h2{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#C0392B;margin:16px 0 7px;padding-bottom:4px;border-bottom:1px solid #e5e7eb}table{width:100%;border-collapse:collapse}th{text-align:left;font-size:11px;font-weight:700;color:#666;text-transform:uppercase;padding:6px 8px;background:#f9fafb;border:1px solid #e5e7eb}td{padding:8px;border:1px solid #e5e7eb}.note{margin-top:20px;padding-top:12px;border-top:1px solid #e5e7eb;font-size:10px;color:#9ca3af}</style></head><body>
-<div class="top"><div class="lb"><img src="${LOGO}" alt="FGS"/><div><div style="font-size:18px;font-weight:700;color:#C0392B">${m.nom}</div><div style="font-size:13px;color:#555">${m.modele||''}${m.site?' · '+m.site:''}</div></div></div><span class="bdg ${s}">${lblSt(s)}</span></div>
-<h2>Informations</h2><table><tr><th>Champ</th><th>Valeur</th></tr><tr><td>Catégorie</td><td style="font-weight:600">${ncat(m.catId)}</td></tr><tr><td>Modèle</td><td style="font-weight:600">${m.modele||'—'}</td></tr><tr><td>Année</td><td style="font-weight:600">${m.annee||'—'}</td></tr><tr><td>N° série</td><td style="font-weight:600">${m.serie||'—'}</td></tr><tr><td>Site</td><td style="font-weight:600">${m.site||'—'}</td></tr><tr><td>Poids</td><td style="font-weight:600">${m.poids?m.poids+' kg':'—'}</td></tr></table>
+<div class="top"><div class="lb"><img src="${LOGO}" alt="FGS"/><div><div style="font-size:18px;font-weight:700;color:#C0392B">${m.nom}${m.numParc?' <span style="font-size:13px;background:#fee2e2;color:#C0392B;padding:2px 8px;border-radius:6px">N° '+m.numParc+'</span>':''}</div><div style="font-size:13px;color:#555">${m.modele||''}${m.site?' · '+m.site:''}</div></div></div><span class="bdg ${s}">${lblSt(s)}</span></div>
+<h2>Informations</h2><table><tr><th>Champ</th><th>Valeur</th></tr><tr><td>Catégorie</td><td style="font-weight:600">${ncat(m.catId)}</td></tr><tr><td>Modèle</td><td style="font-weight:600">${m.modele||'—'}</td></tr><tr><td>Année</td><td style="font-weight:600">${m.annee||'—'}</td></tr><tr><td>N° parc</td><td style="font-weight:700;color:#C0392B;font-size:15px">${m.numParc||'—'}</td></tr><tr><td>N° série</td><td style="font-weight:600">${m.serie||'—'}</td></tr><tr><td>Site</td><td style="font-weight:600">${m.site||'—'}</td></tr><tr><td>Poids</td><td style="font-weight:600">${m.poids?m.poids+' kg':'—'}</td></tr></table>
 <h2>Heures & Entretien</h2><table><tr><th>Champ</th><th>Valeur</th></tr><tr><td>Heures actuelles</td><td style="font-weight:600">${m.heures}h</td></tr><tr><td>Dernier entretien</td><td style="font-weight:600">${m.hEntretien}h</td></tr><tr><td>Depuis dernier entretien</td><td style="font-weight:600;color:${s==='da'?'#dc2626':s==='wa'?'#d97706':'#16a34a'}">${d}h / ${seuil}h (${Math.round(Math.min(d/seuil,1)*100)}%)</td></tr></table>
 <h2>Usure des pièces</h2>
 ${pas.length?`<table><tr><th>Pièce</th><th>Réf.</th><th>Installée à</th><th>Durée</th><th>Usure</th><th>Restant</th></tr>${pas.map(pa=>{const p=BD.pieces.find(x=>x.id===pa.pieceId);if(!p)return'';const u=usure(m,pa);if(!u)return'';return`<tr><td>${p.nom}</td><td>${p.ref}</td><td>${pa.heuresInstallation}h (${fdt(pa.dateInstallation)})</td><td>${p.dureeVal}h</td><td style="color:${u.st==='da'?'#dc2626':u.st==='wa'?'#d97706':'#16a34a'};font-weight:700">${Math.round(u.pct*100)}%</td><td style="font-weight:600">${u.rest}h</td></tr>`;}).join('')}</table>`:'<p style="color:#666;margin-top:6px">Aucune pièce associée</p>'}
@@ -2386,7 +2397,10 @@ async function chargerAnomalies() {
 }
 
 function pgAnomalie(){
-  return '<div class="ent"><div><h1>Fiches d\'anomalie</h1></div></div>'
+  return '<div class="ent"><div><h1>Fiches d\'anomalie</h1></div><div class="ent-act" id="ano-act">'
+    +'<button class="btn bp np" style="width:auto;padding:8px 14px;font-size:13px;gap:5px;border-radius:var(--r2)" onclick="ouvrirNouvelleAnomalie()">'
+    +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>'
+    +'Nouvelle</button></div></div>'
     + '<div class="pg on"><div id="ano-liste"><div class="spin-c"><div class="spin"></div>Chargement...</div></div>'
     + '<div style="height:80px"></div></div>';
 }
@@ -2414,7 +2428,8 @@ function renderListeAnomalies(){
       html += '<div class="carte" style="margin-bottom:8px;border-left:3px solid '+statColor+'">'
         +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">'
         +'<div><div style="font-size:14px;font-weight:700">'+a.nom_machine+'</div>'
-        +(a.num_parc?'<div style="font-size:12px;color:var(--tx3)">N° parc : '+a.num_parc+'</div>':'')
+        +(a.num_parc?'<div style="font-size:12px;color:var(--tx3)">N° parc : <b>'+a.num_parc+'</b></div>':'')
+        +(a.heures?'<div style="font-size:12px;color:var(--tx3)">⏱ '+a.heures+'h</div>':'')
         +'</div>'
         +'<span class="bdg" style="background:'+statColor+';color:#fff;flex-shrink:0">'+statLabel+'</span>'
         +'</div>'
@@ -2438,26 +2453,72 @@ function ouvrirNouvelleAnomalie(){
   document.getElementById('ano-date').value = new Date().toISOString().split('T')[0];
   document.getElementById('ano-machine').value = '';
   document.getElementById('ano-numparc').value = '';
+  document.getElementById('ano-heures').value = '';
   document.getElementById('ano-desc').value = '';
+  // Remplir le sélecteur de machines
+  var sel = document.getElementById('ano-machine-sel');
+  if(sel && BD && BD.machines){
+    sel.innerHTML = '<option value="">— Choisir dans le parc —</option>'
+      + BD.machines.map(function(m){
+          return '<option value="'+m.id+'">'+(m.numParc?'['+m.numParc+'] ':'')+m.nom+(m.modele?' — '+m.modele:'')+'</option>';
+        }).join('');
+  }
   om('mano');
-  setTimeout(function(){ document.getElementById('ano-machine').focus(); }, 100);
+  setTimeout(function(){ document.getElementById('ano-machine-sel').focus(); }, 100);
+}
+
+function anoSelectMachine(machId){
+  if(!machId || !BD) return;
+  var m = BD.machines.find(function(x){ return x.id === machId; });
+  if(!m) return;
+  document.getElementById('ano-machine').value = m.nom;
+  document.getElementById('ano-numparc').value = m.numParc || '';
+  document.getElementById('ano-heures').value = m.heures || '';
 }
 
 async function savAnomalie(){
   var date_ano    = document.getElementById('ano-date').value;
   var nom_machine = document.getElementById('ano-machine').value.trim();
   var num_parc    = document.getElementById('ano-numparc').value.trim();
+  var heures_str  = document.getElementById('ano-heures').value.trim();
+  var heures_val  = parseInt(heures_str) || null;
   var description = document.getElementById('ano-desc').value.trim();
   if(!nom_machine){ toast('Indiquez le nom de la machine'); return; }
   if(!description){ toast("Décrivez l'anomalie"); return; }
   try {
-    var body = { date_ano, nom_machine, num_parc, description, auteur: USER?.nom||'', statut:'ouvert' };
+    var body = { date_ano, nom_machine, num_parc, heures: heures_val, description, auteur: USER?.nom||'', statut:'ouvert' };
     if(ANO_EDIT_ID) body.id = ANO_EDIT_ID;
     var r = await fetch('/api/anomalies', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
     var d = await r.json();
     if(d.ok){
+      // ── Ajouter automatiquement dans l'historique de la machine concernée ──
+      if(!ANO_EDIT_ID && BD && BD.machines){
+        // Chercher la machine par nom (ou n° parc)
+        var selId = document.getElementById('ano-machine-sel')?.value;
+        var mach = selId ? BD.machines.find(function(m){ return m.id === selId; })
+                         : BD.machines.find(function(m){
+                             return m.nom.toLowerCase() === nom_machine.toLowerCase()
+                               || (num_parc && m.numParc && m.numParc === num_parc);
+                           });
+        if(mach){
+          if(!BD.interventions) BD.interventions = [];
+          BD.interventions.push({
+            id: 'ANO-'+Date.now(),
+            machineId: mach.id,
+            date: date_ano,
+            datePrevue: '',
+            heures: heures_val || mach.heures,
+            type: 'reparation',
+            notes: '⚠️ Anomalie signalée par '+( USER?.nom||'?' )+' : '+description,
+            piecesChangees: [],
+            autresPieces: [],
+            _anomalie: true
+          });
+          await save(); // Sauvegarde la BD avec l'intervention ajoutée
+        }
+      }
       fm('mano');
-      toast('Anomalie enregistrée ✓');
+      toast('Anomalie enregistrée ✓ (historique mis à jour)');
       await chargerAnomalies();
     } else { toast('Erreur : '+(d.erreur||'?')); }
   } catch(e){ toast('Erreur réseau'); }
@@ -2512,7 +2573,8 @@ async function renderAdminAnomalies(el){
         return '<div class="carte" style="margin-bottom:8px;border-left:3px solid '+color+'">'
           +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">'
           +'<div><div style="font-size:14px;font-weight:700">'+a.nom_machine+'</div>'
-          +(a.num_parc?'<div style="font-size:12px;color:var(--tx3)">N° parc : '+a.num_parc+'</div>':'')
+          +(a.num_parc?'<div style="font-size:12px;color:var(--tx3)">N° parc : <b>'+a.num_parc+'</b></div>':'')
+          +(a.heures?'<div style="font-size:12px;color:var(--tx3)">⏱ '+a.heures+'h</div>':'')
           +'</div>'
           +'<span class="bdg" style="background:'+color+';color:#fff;flex-shrink:0">'+(a.statut==='resolu'?'Résolu':a.statut==='en_cours'?'En cours':'Ouvert')+'</span>'
           +'</div>'
@@ -2859,14 +2921,22 @@ function renderTotalBody() {
   <div class="poignee"></div>
   <div class="mod-tit" id="mano-tit">Nouvelle anomalie</div>
   <div class="gch"><label>Date</label><input id="ano-date" type="date"/></div>
-  <div class="gch"><label>Nom de la machine *</label>
-    <input id="ano-machine" placeholder="Ex: Minipelle, Chariot télescopique..." autocomplete="off"/>
+  <div class="gch"><label>Machine concernée *</label>
+    <select id="ano-machine-sel" onchange="anoSelectMachine(this.value)">
+      <option value="">— Choisir dans le parc —</option>
+    </select>
   </div>
-  <div class="gch"><label>N° parc (optionnel)</label>
+  <div class="gch"><label>Ou saisir manuellement</label>
+    <input id="ano-machine" placeholder="Nom de la machine..." autocomplete="off"/>
+  </div>
+  <div class="gch"><label>N° parc</label>
     <input id="ano-numparc" placeholder="Ex: EQ-001, 23..." autocomplete="off"/>
   </div>
-  <div class="gch"><label>Description de l'anomalie *</label>
-    <textarea id="ano-desc" placeholder="Décrivez le problème observé..." style="min-height:100px"></textarea>
+  <div class="gch"><label>Heures machine au moment de l'anomalie</label>
+    <input id="ano-heures" type="number" min="0" placeholder="Ex: 1520" autocomplete="off"/>
+  </div>
+  <div class="gch"><label>Description du problème *</label>
+    <textarea id="ano-desc" placeholder="Décrivez précisément le problème observé..." style="min-height:100px"></textarea>
   </div>
   <div class="rbtn np">
     <button class="btn bs" onclick="fm('mano')">Annuler</button>
