@@ -2105,7 +2105,7 @@ function renderChantierListe() {
   el.innerHTML = `
     <div class="ent">
       <div><h1>Chantiers</h1></div>
-      ${isAdmin ? `<div class="ent-act"><div class="ico-btn" onclick="ouvrirNouveauChantier()">
+      ${isAdmin ? `<div class="ent-act"></div>` : ''}
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" width="17" height="17"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </div></div>` : ''}
     </div>
@@ -2262,6 +2262,8 @@ function ouvrirModalChantier(c) {
   document.getElementById('mch-debut').value       = c ? (c.date_debut||'') : '';
   document.getElementById('mch-fin').value         = c ? (c.date_fin||'') : '';
   document.getElementById('del-mch').style.display = c ? 'flex' : 'none';
+  om('mch');
+}
   fm('mch');
 }
 
