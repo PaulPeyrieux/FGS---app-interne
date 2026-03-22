@@ -122,12 +122,46 @@ DONNEES_DEFAUT = {
     "livraisons": [],
 }
 
+SCHEMA_CHANTIERS = """
+CREATE TABLE IF NOT EXISTS chantiers (
+    id           SERIAL PRIMARY KEY,
+    nom          TEXT NOT NULL,
+    localisation TEXT NOT NULL DEFAULT '',
+    lat          DOUBLE PRECISION,
+    lng          DOUBLE PRECISION,
+    date_debut   DATE,
+    date_fin     DATE,
+    cree_par     TEXT NOT NULL DEFAULT '',
+    cree_le      TIMESTAMPTZ DEFAULT NOW(),
+    maj_le       TIMESTAMPTZ DEFAULT NOW()
+)
+"""
+
+SCHEMA_PERSONNEL = """
+CREATE TABLE IF NOT EXISTS personnel (
+    id            SERIAL PRIMARY KEY,
+    nom           TEXT NOT NULL,
+    prenom        TEXT NOT NULL DEFAULT '',
+    poste         TEXT NOT NULL DEFAULT '',
+    cout_horaire  NUMERIC(10,2),
+    adresse       TEXT DEFAULT '',
+    urgence_nom   TEXT DEFAULT '',
+    urgence_tel   TEXT DEFAULT '',
+    notes         TEXT DEFAULT '',
+    cree_par      TEXT DEFAULT '',
+    cree_le       TIMESTAMPTZ DEFAULT NOW(),
+    maj_le        TIMESTAMPTZ DEFAULT NOW()
+)
+"""
+
 def init_db():
     conn = get_conn()
     conn.run(SCHEMA_BD)
     conn.run(SCHEMA_POINTAGE)
     conn.run(SCHEMA_LIVCHANTIER)
     conn.run(SCHEMA_PRIX_REF)
+    conn.run(SCHEMA_CHANTIERS)
+    conn.run(SCHEMA_PERSONNEL)
     rows = conn.run("SELECT COUNT(*) FROM fgs_data WHERE cle = 'bd'")
     if rows[0][0] == 0:
         conn.run(
@@ -136,7 +170,7 @@ def init_db():
             valeur=json.dumps(DONNEES_DEFAUT, ensure_ascii=False)
         )
     conn.close()
-    print("Base PostgreSQL initialisee (fgs_data + pointages).")
+    print("Base PostgreSQL initialisee (fgs_data + pointages + chantiers + personnel).")
 
 # ── Lecture / écriture ────────────────────────────────────────────────────────
 
@@ -590,6 +624,178 @@ def sante():
         return jsonify({"ok": True, "derniere_maj": derniere_maj})
     except Exception as e:
         return jsonify({"ok": False, "erreur": str(e)}), 500
+
+
+# ── Chantiers ─────────────────────────────────────────────────────────────────
+
+@app.route("/api/chantiers", methods=["GET"])
+def get_chantiers():
+    try:
+        conn = get_conn()
+        rows = conn.run(
+            "SELECT id, nom, localisation, lat, lng, date_debut, date_fin, cree_par, cree_le "
+            "FROM chantiers ORDER BY cree_le DESC"
+        )
+        conn.close()
+        cols = ["id", "nom", "localisation", "lat", "lng", "date_debut", "date_fin", "cree_par", "cree_le"]
+        result = []
+        for row in rows:
+            d = dict(zip(cols, row))
+            d["date_debut"] = str(d["date_debut"]) if d["date_debut"] else None
+            d["date_fin"]   = str(d["date_fin"])   if d["date_fin"]   else None
+            d["cree_le"]    = str(d["cree_le"])
+            d["lat"]        = float(d["lat"])  if d["lat"]  is not None else None
+            d["lng"]        = float(d["lng"])  if d["lng"]  is not None else None
+            result.append(d)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"erreur": str(e)}), 500
+
+
+@app.route("/api/chantiers", methods=["POST"])
+def save_chantier():
+    try:
+        data         = request.get_json(force=True, silent=True)
+        if not data:
+            return jsonify({"erreur": "Données invalides"}), 400
+        cid          = data.get("id")
+        nom          = data.get("nom", "").strip()
+        localisation = data.get("localisation", "").strip()
+        lat          = data.get("lat")
+        lng          = data.get("lng")
+        date_debut   = data.get("date_debut") or None
+        date_fin     = data.get("date_fin")   or None
+        cree_par     = data.get("cree_par", "")
+        if not nom:
+            return jsonify({"erreur": "Nom obligatoire"}), 400
+        lat = float(lat) if lat is not None else None
+        lng = float(lng) if lng is not None else None
+        conn = get_conn()
+        if cid:
+            conn.run(
+                """UPDATE chantiers SET nom=:nom, localisation=:loc, lat=:lat, lng=:lng,
+                   date_debut=:dd, date_fin=:df, maj_le=NOW() WHERE id=:id""",
+                nom=nom, loc=localisation, lat=lat, lng=lng,
+                dd=date_debut, df=date_fin, id=cid
+            )
+            new_id = cid
+        else:
+            rows = conn.run(
+                """INSERT INTO chantiers (nom, localisation, lat, lng, date_debut, date_fin, cree_par)
+                   VALUES (:nom, :loc, :lat, :lng, :dd, :df, :cp) RETURNING id""",
+                nom=nom, loc=localisation, lat=lat, lng=lng,
+                dd=date_debut, df=date_fin, cp=cree_par
+            )
+            new_id = rows[0][0]
+        conn.close()
+        return jsonify({"ok": True, "id": new_id})
+    except Exception as e:
+        return jsonify({"erreur": str(e)}), 500
+
+
+@app.route("/api/chantiers/<int:cid>", methods=["DELETE"])
+def delete_chantier(cid):
+    try:
+        conn = get_conn()
+        conn.run("DELETE FROM chantiers WHERE id=:id", id=cid)
+        conn.close()
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"erreur": str(e)}), 500
+
+
+# ── Personnel ─────────────────────────────────────────────────────────────────
+
+@app.route("/api/personnel", methods=["GET"])
+def get_personnel():
+    try:
+        role = request.args.get("role", "chef")
+        conn = get_conn()
+        rows = conn.run(
+            "SELECT id, nom, prenom, poste, cout_horaire, adresse, urgence_nom, urgence_tel, notes, cree_par, cree_le "
+            "FROM personnel ORDER BY nom, prenom"
+        )
+        conn.close()
+        cols = ["id", "nom", "prenom", "poste", "cout_horaire", "adresse",
+                "urgence_nom", "urgence_tel", "notes", "cree_par", "cree_le"]
+        result = []
+        for row in rows:
+            d = dict(zip(cols, row))
+            d["cree_le"] = str(d["cree_le"])
+            if d["cout_horaire"] is not None:
+                if role in ("admin", "rh"):
+                    d["cout_horaire"] = float(d["cout_horaire"])
+                else:
+                    d["cout_horaire"] = None  # masqué aux non-admin
+            result.append(d)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"erreur": str(e)}), 500
+
+
+@app.route("/api/personnel", methods=["POST"])
+def save_personnel():
+    try:
+        data        = request.get_json(force=True, silent=True)
+        if not data:
+            return jsonify({"erreur": "Données invalides"}), 400
+        pid         = data.get("id")
+        nom         = data.get("nom", "").strip()
+        prenom      = data.get("prenom", "").strip()
+        poste       = data.get("poste", "").strip()
+        cout_h      = data.get("cout_horaire")
+        adresse     = data.get("adresse", "").strip()
+        urgence_nom = data.get("urgence_nom", "").strip()
+        urgence_tel = data.get("urgence_tel", "").strip()
+        notes       = data.get("notes", "").strip()
+        cree_par    = data.get("cree_par", "")
+        role        = data.get("role", "chef")
+        if not nom:
+            return jsonify({"erreur": "Nom obligatoire"}), 400
+        cout_h = float(cout_h) if (cout_h is not None and role in ("admin", "rh")) else None
+        conn = get_conn()
+        if pid:
+            if role in ("admin", "rh"):
+                conn.run(
+                    """UPDATE personnel SET nom=:nom, prenom=:prenom, poste=:poste, cout_horaire=:ch,
+                       adresse=:adr, urgence_nom=:un, urgence_tel=:ut, notes=:no, maj_le=NOW() WHERE id=:id""",
+                    nom=nom, prenom=prenom, poste=poste, ch=cout_h,
+                    adr=adresse, un=urgence_nom, ut=urgence_tel, no=notes, id=pid
+                )
+            else:
+                conn.run(
+                    """UPDATE personnel SET nom=:nom, prenom=:prenom, poste=:poste,
+                       adresse=:adr, urgence_nom=:un, urgence_tel=:ut, notes=:no, maj_le=NOW() WHERE id=:id""",
+                    nom=nom, prenom=prenom, poste=poste,
+                    adr=adresse, un=urgence_nom, ut=urgence_tel, no=notes, id=pid
+                )
+            new_id = pid
+        else:
+            rows = conn.run(
+                """INSERT INTO personnel (nom, prenom, poste, cout_horaire, adresse, urgence_nom, urgence_tel, notes, cree_par)
+                   VALUES (:nom, :prenom, :poste, :ch, :adr, :un, :ut, :no, :cp) RETURNING id""",
+                nom=nom, prenom=prenom, poste=poste, ch=cout_h,
+                adr=adresse, un=urgence_nom, ut=urgence_tel, no=notes, cp=cree_par
+            )
+            new_id = rows[0][0]
+        conn.close()
+        return jsonify({"ok": True, "id": new_id})
+    except Exception as e:
+        return jsonify({"erreur": str(e)}), 500
+
+
+@app.route("/api/personnel/<int:pid>", methods=["DELETE"])
+def delete_personnel_route(pid):
+    try:
+        role = request.args.get("role", "chef")
+        if role not in ("admin", "rh"):
+            return jsonify({"erreur": "Accès refusé"}), 403
+        conn = get_conn()
+        conn.run("DELETE FROM personnel WHERE id=:id", id=pid)
+        conn.close()
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"erreur": str(e)}), 500
 
 # ── Démarrage ─────────────────────────────────────────────────────────────────
 
