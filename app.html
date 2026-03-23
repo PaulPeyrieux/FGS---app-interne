@@ -959,9 +959,506 @@ input:focus, select:focus, textarea:focus {
   font-weight: 700;
 }
 
+
+/* ═══════════════════════════════════════════════════════════════════
+   HOME PAGE — Premium dashboard
+   ═══════════════════════════════════════════════════════════════════ */
+.home-user-pill {
+  font-size:11px;font-weight:700;
+  background:var(--sur);border:1px solid var(--brd);
+  border-radius:20px;padding:5px 12px;color:var(--tx2);
+  letter-spacing:.2px;
+}
+.home-kpi-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+  gap:10px;
+  margin-bottom:16px;
+}
+.home-kpi-card {
+  background:var(--sur);border:1px solid var(--brd);
+  border-radius:18px;padding:18px 16px;
+  box-shadow:var(--sh2);cursor:pointer;
+  transition:all .2s cubic-bezier(.34,1.4,.64,1);
+  position:relative;overflow:hidden;
+}
+.home-kpi-card:hover { transform:translateY(-3px);box-shadow:var(--sh); }
+.home-kpi-card:active { transform:scale(.97); }
+.home-kpi-card.danger { border-color:var(--da-b);background:var(--da-bg); }
+.home-kpi-icon {
+  width:42px;height:42px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:12px;
+}
+.home-kpi-icon.da { background:#FEE2E2;color:var(--da); }
+.home-kpi-icon.ok { background:var(--ok-bg);color:var(--ok); }
+.home-kpi-icon.accent { background:var(--acc-l);color:var(--acc); }
+.home-kpi-icon.blue { background:var(--bl-bg);color:var(--bl); }
+.home-kpi-icon svg { stroke:currentColor; }
+.home-kpi-num {
+  font-size:36px;font-weight:800;font-family:var(--mo);
+  line-height:1;letter-spacing:-2px;color:var(--tx);
+  margin-bottom:4px;
+}
+.home-kpi-num.da { color:var(--da); }
+.home-kpi-label { font-size:12px;font-weight:700;color:var(--tx2);margin-bottom:5px; }
+.home-kpi-sub { font-size:11px;color:var(--tx3);line-height:1.5; }
+.home-kpi-sub.ok-text { color:var(--ok);font-weight:600; }
+.home-ch-pill {
+  display:inline-block;background:var(--acc-l);color:var(--acc);
+  border:1px solid var(--da-b);border-radius:8px;padding:2px 7px;
+  font-size:10px;font-weight:700;margin:1px 2px 1px 0;
+}
+.home-section-title {
+  font-size:11px;font-weight:700;text-transform:uppercase;
+  letter-spacing:1px;color:var(--tx3);
+  padding:6px 0 8px;margin-top:4px;
+}
+.home-map-card {
+  background:var(--sur);border:1px solid var(--brd);
+  border-radius:18px;overflow:hidden;box-shadow:var(--sh2);
+  margin-bottom:14px;
+}
+.home-map-list { padding:8px 0; }
+.home-map-row {
+  display:flex;align-items:center;gap:10px;
+  padding:10px 16px;cursor:pointer;transition:background .15s;
+  border-bottom:1px solid var(--brd);
+}
+.home-map-row:last-child { border-bottom:none; }
+.home-map-row:hover { background:var(--sur2); }
+.home-map-dot {
+  width:8px;height:8px;border-radius:50%;
+  background:var(--ok);flex-shrink:0;
+  box-shadow:0 0 0 3px var(--ok-bg);
+}
+.home-map-info { flex:1;min-width:0; }
+.home-map-nom { font-size:13px;font-weight:700;color:var(--tx); }
+.home-map-loc { font-size:11px;color:var(--tx3);margin-top:1px; }
+.home-alerts-list {
+  background:var(--sur);border:1px solid var(--brd);
+  border-radius:18px;overflow:hidden;box-shadow:var(--sh2);
+  margin-bottom:14px;
+}
+.home-alert-row {
+  display:flex;align-items:center;gap:10px;
+  padding:12px 16px;cursor:pointer;transition:background .15s;
+  border-bottom:1px solid var(--brd);
+}
+.home-alert-row:last-child { border-bottom:none; }
+.home-alert-row:hover { background:var(--sur2); }
+.home-alert-dot {
+  width:8px;height:8px;border-radius:50%;flex-shrink:0;
+}
+.home-alert-dot.da { background:var(--da); }
+.home-alert-dot.wa { background:var(--wa); }
+.home-alert-info { flex:1;min-width:0; }
+.home-alert-nom { font-size:13px;font-weight:700;color:var(--tx); }
+.home-alert-det { font-size:11px;color:var(--tx3);margin-top:1px; }
+.home-ok-banner {
+  display:flex;align-items:center;gap:10px;
+  background:var(--ok-bg);border:1px solid var(--ok-b);
+  border-radius:14px;padding:14px 16px;
+  font-size:13px;font-weight:700;color:var(--ok);
+  margin-bottom:10px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   BIBLIOTHÈQUE DE PRIX
+   ═══════════════════════════════════════════════════════════════════ */
+.biblio-card {
+  background:var(--sur);border:1px solid var(--brd);
+  border-radius:14px;padding:16px;margin-bottom:8px;
+  box-shadow:var(--sh2);cursor:pointer;
+  transition:all .18s;position:relative;overflow:hidden;
+}
+.biblio-card:hover { transform:translateX(3px);box-shadow:var(--sh);border-color:var(--brd2); }
+.biblio-card.best { border-color:var(--ok-b);background:var(--ok-bg); }
+.biblio-best-badge {
+  position:absolute;top:10px;right:10px;
+  background:var(--ok);color:#fff;
+  font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;
+  border-radius:20px;padding:3px 9px;
+}
+.biblio-fourniture { font-size:15px;font-weight:800;color:var(--tx);margin-bottom:6px;letter-spacing:-.3px; }
+.biblio-meta { display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px; }
+.biblio-fournisseur { font-size:12px;font-weight:600;color:var(--tx2); }
+.biblio-loc { font-size:11px;color:var(--tx3); }
+.biblio-unite { font-size:11px;color:var(--in);background:var(--in-bg);border:1px solid var(--in-b);border-radius:8px;padding:1px 8px;font-weight:700; }
+.biblio-footer { display:flex;justify-content:space-between;align-items:flex-end; }
+.biblio-prix { font-size:20px;font-weight:800;font-family:var(--mo);color:var(--tx);letter-spacing:-.5px; }
+.biblio-prix.best { color:var(--ok); }
+.biblio-notes { font-size:11px;color:var(--tx3);font-style:italic;text-align:right;max-width:55%; }
+
+@media (min-width:768px) {
+  .home-kpi-grid { grid-template-columns:repeat(3,1fr); }
+}
+
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+// ══════════════════════════════════════════════════════════════════
+// BIBLIOTHÈQUE DE PRIX
+// ══════════════════════════════════════════════════════════════════
+let BIBLIO_DATA = [];
+let BIBLIO_EDIT_ID = null;
+let BIBLIO_SEARCH = '';
+let BIBLIO_SORT = 'fourniture'; // fourniture | prix | fournisseur | localisation
+
+function pgBiblio() {
+  return `<div class="ent"><div><h1>Bibliothèque de prix</h1></div>
+    <div class="ent-act">
+      <div class="ico-btn" onclick="exportXlsBiblio()" title="Exporter Excel">${XLS_ICO}</div>
+    </div>
+  </div>
+  <div class="pg on">
+    <div class="search-bar">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="biblio-search" placeholder="Rechercher une fourniture, un fournisseur…" oninput="BIBLIO_SEARCH=this.value;renderBiblio()"/>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
+      <span style="font-size:11px;color:var(--tx3);align-self:center;font-weight:600">Trier par :</span>
+      <button class="per-tab ${BIBLIO_SORT==='fourniture'?'on':''}" onclick="BIBLIO_SORT='fourniture';this.parentElement.querySelectorAll('.per-tab').forEach(b=>b.classList.remove('on'));this.classList.add('on');renderBiblio()">Fourniture</button>
+      <button class="per-tab ${BIBLIO_SORT==='prix'?'on':''}" onclick="BIBLIO_SORT='prix';this.parentElement.querySelectorAll('.per-tab').forEach(b=>b.classList.remove('on'));this.classList.add('on');renderBiblio()">Prix ↑</button>
+      <button class="per-tab ${BIBLIO_SORT==='fournisseur'?'on':''}" onclick="BIBLIO_SORT='fournisseur';this.parentElement.querySelectorAll('.per-tab').forEach(b=>b.classList.remove('on'));this.classList.add('on');renderBiblio()">Fournisseur</button>
+    </div>
+    <div id="biblio-liste"></div>
+    <div style="height:80px"></div>
+  </div>`;
+}
+
+async function initBiblio() {
+  document.getElementById('fab').style.display = 'flex';
+  await chargerBiblio();
+}
+
+async function chargerBiblio() {
+  try {
+    const r = await fetch('/api/biblio');
+    BIBLIO_DATA = await r.json();
+    if (BIBLIO_DATA.erreur) BIBLIO_DATA = [];
+  } catch(e) { BIBLIO_DATA = []; }
+  renderBiblio();
+}
+
+function renderBiblio() {
+  const el = document.getElementById('biblio-liste');
+  if (!el) return;
+  const q = BIBLIO_SEARCH.toLowerCase();
+  let data = q ? BIBLIO_DATA.filter(b =>
+    (b.fourniture||'').toLowerCase().includes(q) ||
+    (b.fournisseur||'').toLowerCase().includes(q) ||
+    (b.localisation||'').toLowerCase().includes(q)
+  ) : [...BIBLIO_DATA];
+
+  // Sort
+  if (BIBLIO_SORT === 'prix')         data.sort((a,b) => (a.prix||0) - (b.prix||0));
+  else if (BIBLIO_SORT === 'fournisseur') data.sort((a,b) => (a.fournisseur||'').localeCompare(b.fournisseur||''));
+  else data.sort((a,b) => (a.fourniture||'').localeCompare(b.fourniture||''));
+
+  if (!data.length) {
+    el.innerHTML = `<div class="vide">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+      <h3>Aucune entrée</h3><p>Appuyez sur + pour ajouter un prix.</p>
+    </div>`;
+    return;
+  }
+
+  // Group by fourniture to highlight best prices
+  const byFourniture = {};
+  data.forEach(b => {
+    const k = (b.fourniture||'').toLowerCase();
+    if (!byFourniture[k]) byFourniture[k] = [];
+    byFourniture[k].push(b);
+  });
+
+  el.innerHTML = data.map(b => {
+    const k = (b.fourniture||'').toLowerCase();
+    const grp = byFourniture[k];
+    const minPrix = Math.min(...grp.map(x => x.prix||Infinity));
+    const isBest = grp.length > 1 && b.prix === minPrix;
+    return `<div class="biblio-card ${isBest?'best':''}" onclick="ouvrirEditionBiblio(${b.id})">
+      ${isBest ? '<div class="biblio-best-badge">Meilleur prix</div>' : ''}
+      <div class="biblio-fourniture">${b.fourniture}</div>
+      <div class="biblio-meta">
+        <span class="biblio-fournisseur">${b.fournisseur||'—'}</span>
+        ${b.localisation ? `<span class="biblio-loc">📍 ${b.localisation}</span>` : ''}
+        ${b.unite ? `<span class="biblio-unite">${b.unite}</span>` : ''}
+      </div>
+      <div class="biblio-footer">
+        <div class="biblio-prix ${isBest?'best':''}">${b.prix!=null?b.prix.toLocaleString('fr-FR',{style:'currency',currency:'EUR'}):'—'}</div>
+        ${b.notes ? `<div class="biblio-notes">${b.notes}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function ouvrirNouvelleEntreeBiblio() { ouvrirModalBiblio(null); }
+function ouvrirEditionBiblio(id) {
+  const b = BIBLIO_DATA.find(x=>x.id===id); if(!b) return;
+  ouvrirModalBiblio(b);
+}
+
+function ouvrirModalBiblio(b) {
+  BIBLIO_EDIT_ID = b ? b.id : null;
+  document.getElementById('mbib-tit').textContent = b ? 'Modifier le prix' : 'Nouveau prix';
+  document.getElementById('mbib-fourniture').value = b ? (b.fourniture||'') : '';
+  document.getElementById('mbib-fournisseur').value = b ? (b.fournisseur||'') : '';
+  document.getElementById('mbib-localisation').value = b ? (b.localisation||'') : '';
+  document.getElementById('mbib-prix').value = b ? (b.prix!=null?b.prix:'') : '';
+  document.getElementById('mbib-unite').value = b ? (b.unite||'') : '';
+  document.getElementById('mbib-notes').value = b ? (b.notes||'') : '';
+  document.getElementById('del-mbib').style.display = b ? 'flex' : 'none';
+  om('mbib');
+}
+
+async function savBiblio() {
+  const fourniture = document.getElementById('mbib-fourniture').value.trim();
+  if (!fourniture) { toast('Nom de la fourniture obligatoire'); return; }
+  const payload = {
+    id: BIBLIO_EDIT_ID || null,
+    fourniture,
+    fournisseur:  document.getElementById('mbib-fournisseur').value.trim(),
+    localisation: document.getElementById('mbib-localisation').value.trim(),
+    prix:         parseFloat(document.getElementById('mbib-prix').value) || null,
+    unite:        document.getElementById('mbib-unite').value.trim(),
+    notes:        document.getElementById('mbib-notes').value.trim(),
+    cree_par:     USER?.nom || ''
+  };
+  try {
+    const r = await fetch('/api/biblio', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+    const d = await r.json();
+    if (d.ok) { toast(BIBLIO_EDIT_ID?'Prix mis à jour ✓':'Prix ajouté ✓'); fm('mbib'); await chargerBiblio(); }
+    else toast('Erreur : '+(d.erreur||'?'));
+  } catch(e) { toast('Erreur réseau'); }
+}
+
+async function delBiblio() {
+  if (!BIBLIO_EDIT_ID || !confirm('Supprimer cette entrée ?')) return;
+  await fetch(`/api/biblio/${BIBLIO_EDIT_ID}`, {method:'DELETE'});
+  toast('Entrée supprimée'); fm('mbib'); await chargerBiblio();
+}
+
+async function exportXlsBiblio() {
+  if(!BIBLIO_DATA.length){toast('Aucune donnée à exporter');return;}
+  await _exportServeur('biblio', {data: BIBLIO_DATA});
+}
+
+// fab routing
+const _origFab = fab;
+function fab() {
+  if (PAGE==='biblio') { ouvrirNouvelleEntreeBiblio(); return; }
+  _origFab();
+}
+
+
+// ══════════════════════════════════════════════════════════════════
+// NOTIFICATIONS PUSH (VGP + Entretiens)
+// ══════════════════════════════════════════════════════════════════
+let NOTIF_GRANTED = false;
+
+async function demanderNotifications() {
+  if (!('Notification' in window)) { toast('Notifications non supportées'); return false; }
+  if (Notification.permission === 'granted') { NOTIF_GRANTED = true; return true; }
+  if (Notification.permission === 'denied') { toast('Notifications bloquées dans votre navigateur'); return false; }
+  const perm = await Notification.requestPermission();
+  NOTIF_GRANTED = perm === 'granted';
+  if (NOTIF_GRANTED) { toast('Notifications activées ✓'); envoyerNotificationsUrgentes(); }
+  return NOTIF_GRANTED;
+}
+
+function envoyerNotificationsUrgentes() {
+  if (!NOTIF_GRANTED || !BD) return;
+  const now = new Date();
+  BD.machines.forEach(m => {
+    // VGP expirée
+    if (m.vgp) {
+      const d = Math.round((new Date(m.vgp) - now) / 864e5);
+      if (d < 0) {
+        notifEnvoyer(`⚠️ VGP expirée — ${m.nom}`, `VGP expirée depuis ${Math.abs(d)} jour${Math.abs(d)>1?'s':''}`);
+      } else if (d <= 7) {
+        notifEnvoyer(`🔔 VGP bientôt — ${m.nom}`, `VGP dans ${d} jour${d>1?'s':''} (${fdt(m.vgp)})`);
+      }
+    }
+    // Entretien dépassé
+    const st = stMach(m);
+    if (st === 'da') {
+      notifEnvoyer(`🔧 Entretien urgent — ${m.nom}`, `${m.heures - m.hEntretien}h depuis dernier entretien`);
+    }
+  });
+}
+
+function notifEnvoyer(titre, corps) {
+  if (!NOTIF_GRANTED) return;
+  try {
+    new Notification(titre, {
+      body: corps,
+      icon: '/favicon.ico',
+      badge: '/favicon.ico',
+      tag: titre,
+    });
+  } catch(e) {}
+}
+
+// Vérifier les notifications au démarrage si déjà accordé
+setTimeout(() => {
+  if (Notification.permission === 'granted' && BD) {
+    NOTIF_GRANTED = true;
+    envoyerNotificationsUrgentes();
+  }
+}, 3000);
+
+
+// ══════════════════════════════════════════════════════════════════
+// EXPORT PDF + EXCEL BILAN CHANTIER
+// ══════════════════════════════════════════════════════════════════
+async function exportBilanPDF() {
+  if (!TOTAL_CHANTIER_SEL) { toast('Sélectionnez un chantier'); return; }
+  const chantier = TOTAL_CHANTIER_SEL;
+  const ptgC = POINTAGES.filter(p => p.chantier === chantier);
+  const livC = LC_DATA.filter(l => l.chantier === chantier);
+  const mo = calcMO(ptgC);
+  const matTotal = {};
+  livC.forEach(l => {
+    if(!matTotal[l.element]) matTotal[l.element]={qte:0,unite:l.unite};
+    matTotal[l.element].qte += l.quantite;
+  });
+  let totalMat = 0;
+  Object.entries(matTotal).forEach(([el,v]) => { const p=getPrix(chantier,el); if(p) totalMat+=v.qte*p; });
+  const totalGen = mo.coutTotal + totalMat;
+  const date = new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'});
+
+  const moRows = Object.entries(mo.detail).map(([nom,d]) =>
+    `<tr><td>${nom}</td><td style="text-align:center">${d.heures.toLocaleString('fr-FR',{maximumFractionDigits:1})} h</td>
+    <td style="text-align:center">${d.rate!=null?d.rate.toFixed(2)+' €/h':'—'}</td>
+    <td style="text-align:right;font-weight:700">${d.cout>0?d.cout.toLocaleString('fr-FR',{style:'currency',currency:'EUR'}):'—'}</td></tr>`
+  ).join('');
+
+  const matRows = Object.entries(matTotal).map(([el,v]) => {
+    const prix = getPrix(chantier, el);
+    const tot = prix ? v.qte*prix : null;
+    return `<tr><td>${el}</td><td style="text-align:center">${v.qte.toLocaleString('fr-FR',{maximumFractionDigits:2})} ${v.unite}</td>
+    <td style="text-align:center">${prix?prix.toLocaleString('fr-FR',{style:'currency',currency:'EUR'}):'—'}</td>
+    <td style="text-align:right;font-weight:700">${tot?tot.toLocaleString('fr-FR',{style:'currency',currency:'EUR'}):'—'}</td></tr>`;
+  }).join('');
+
+  const w = window.open('','_blank','width=900,height=700');
+  w.document.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"/>
+  <title>Bilan — ${chantier}</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:Arial,sans-serif;font-size:11pt;color:#111;padding:28px}
+    @page{size:A4;margin:2cm}
+    @media print{.no-print{display:none}}
+    .header{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:16px;border-bottom:3px solid #C1321D;margin-bottom:20px}
+    .logo-fgs{font-size:28pt;font-weight:900;color:#C1321D;letter-spacing:-1px}
+    .doc-info{text-align:right;font-size:9pt;color:#555;line-height:1.7}
+    .grand-total{background:#C1321D;color:#fff;border-radius:10px;padding:16px 20px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center}
+    .grand-total-label{font-size:12pt;font-weight:700;opacity:.85}
+    .grand-total-val{font-size:24pt;font-weight:900;letter-spacing:-1px}
+    h2{font-size:10pt;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#C1321D;margin:18px 0 8px;padding-bottom:4px;border-bottom:2px solid #fee2e2}
+    table{width:100%;border-collapse:collapse;font-size:10pt}
+    th{background:#f4f3f0;padding:7px 10px;text-align:left;font-size:9pt;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#666;border-bottom:2px solid #e4e2dc}
+    td{padding:8px 10px;border-bottom:1px solid #e4e2dc}
+    tr:last-child td{border-bottom:none}
+    .subtotal{background:#fef2f0;font-weight:700}
+    .subtotal td{border-top:2px solid #C1321D}
+    .note{margin-top:24px;font-size:8pt;color:#999;padding-top:10px;border-top:1px solid #e4e2dc}
+    .print-btn{position:fixed;bottom:20px;right:20px;background:#C1321D;color:#fff;border:none;border-radius:40px;padding:12px 20px;font-size:13px;font-weight:700;cursor:pointer}
+  </style></head><body>
+  <div class="header">
+    <div>
+      <div class="logo-fgs">FGS</div>
+      <div style="font-size:10pt;color:#555;margin-top:3px">FGS Travaux Spéciaux</div>
+    </div>
+    <div class="doc-info">
+      <div><b>Bilan chantier</b></div>
+      <div style="font-size:13pt;font-weight:700;color:#111">${chantier}</div>
+      <div>Édité le ${date}</div>
+      <div>Par <b>${USER?.nom||'—'}</b></div>
+    </div>
+  </div>
+
+  <div class="grand-total">
+    <div class="grand-total-label">Total général</div>
+    <div class="grand-total-val">${totalGen>0?totalGen.toLocaleString('fr-FR',{style:'currency',currency:'EUR'}):'—'}</div>
+  </div>
+
+  <h2>⏱ Main d'œuvre — ${mo.totalH.toLocaleString('fr-FR',{maximumFractionDigits:1})} heures</h2>
+  <table>
+    <thead><tr><th>Employé</th><th style="text-align:center">Heures</th><th style="text-align:center">Taux</th><th style="text-align:right">Coût</th></tr></thead>
+    <tbody>${moRows}
+    <tr class="subtotal"><td colspan="3">Sous-total main d'œuvre</td><td style="text-align:right">${mo.coutTotal>0?mo.coutTotal.toLocaleString('fr-FR',{style:'currency',currency:'EUR'}):'—'}</td></tr>
+    </tbody>
+  </table>
+
+  <h2>📦 Matériaux</h2>
+  <table>
+    <thead><tr><th>Élément</th><th style="text-align:center">Quantité</th><th style="text-align:center">Prix unit.</th><th style="text-align:right">Total</th></tr></thead>
+    <tbody>${matRows}
+    <tr class="subtotal"><td colspan="3">Sous-total matériaux</td><td style="text-align:right">${totalMat>0?totalMat.toLocaleString('fr-FR',{style:'currency',currency:'EUR'}):'—'}</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note">Document généré le ${date} — FGS App, usage interne</div>
+  <button class="print-btn no-print" onclick="window.print()">🖨 Imprimer / PDF</button>
+  
+<!-- MODAL BIBLIOTHÈQUE DE PRIX -->
+<div class="fmod" id="mbib" onclick="if(event.target===this)fm('mbib')"><div class="mod">
+  <div class="poignee"></div>
+  <div class="mod-tit" id="mbib-tit">Nouveau prix</div>
+  <div class="gch"><label>Fourniture *</label><input id="mbib-fourniture" placeholder="Béton C25/30, Treillis ST25…"/></div>
+  <div class="gch"><label>Fournisseur</label><input id="mbib-fournisseur" placeholder="Lafarge, Point P…"/></div>
+  <div class="gch"><label>Localisation</label><input id="mbib-localisation" placeholder="Lyon, Paris…"/></div>
+  <div style="display:flex;gap:8px">
+    <div class="gch" style="flex:2"><label>Prix *</label><input id="mbib-prix" type="number" step="0.01" min="0" placeholder="0.00"/></div>
+    <div class="gch" style="flex:1"><label>Unité</label><input id="mbib-unite" placeholder="m³, t, m²…"/></div>
+  </div>
+  <div class="gch"><label>Notes</label><textarea id="mbib-notes" placeholder="Conditions, validité…"></textarea></div>
+  <div class="rbtn np">
+    <button class="btn bd" id="del-mbib" onclick="delBiblio()" style="display:none">🗑</button>
+    <button class="btn bs" onclick="fm('mbib')">Annuler</button>
+    <button class="btn bp" onclick="savBiblio()">Enregistrer</button>
+  </div>
+</div></div>
+
+</body></html>`);
+  w.document.close();
+}
+
+async function exportBilanExcel() {
+  if (!TOTAL_CHANTIER_SEL) { toast('Sélectionnez un chantier'); return; }
+  const chantier = TOTAL_CHANTIER_SEL;
+  const ptgC = POINTAGES.filter(p => p.chantier === chantier);
+  const livC = LC_DATA.filter(l => l.chantier === chantier);
+  const mo = calcMO(ptgC);
+  const matTotal = {};
+  livC.forEach(l => {
+    if(!matTotal[l.element]) matTotal[l.element]={qte:0,unite:l.unite};
+    matTotal[l.element].qte += l.quantite;
+  });
+  let totalMat = 0;
+  const prixRef = {};
+  Object.entries(matTotal).forEach(([el,v]) => {
+    const p = getPrix(chantier, el);
+    if(p){ prixRef[el]=p; totalMat+=v.qte*p; }
+  });
+  await _exportServeur('bilan_chantier', {
+    data: {
+      chantier,
+      mo_detail: Object.entries(mo.detail).map(([nom,d])=>({nom,heures:d.heures,taux:d.rate,cout:d.cout})),
+      mo_total:  mo.coutTotal,
+      mo_heures: mo.totalH,
+      mat_total: Object.entries(matTotal).map(([el,v])=>({element:el,qte:v.qte,unite:v.unite,prix:prixRef[el]||null,total:(prixRef[el]||0)*v.qte})),
+      totalMat,
+      totalGen: mo.coutTotal + totalMat,
+      pointages: ptgC,
+      livraisons: livC
+    }
+  });
+}
+
+</script>
 </head>
 <body>
 
@@ -1187,15 +1684,16 @@ async function init(){
   await load();
   buildNav();
   if(BD){ render(); }
-  // Charger les anomalies en arrière-plan pour les afficher sur l'accueil (admin)
+  // Charger chantiers et anomalies en arrière-plan
+  try { await chargerChantiers(); } catch(e){}
   var isAdmin = USER && (USER.role==='admin' || USER.role==='rh');
   if(isAdmin){
     try {
       var r = await fetch('/api/anomalies?role=admin');
       ANOMALIES = await r.json();
-      if(PAGE==='accueil') render(); // Refresh accueil avec anomalies
     } catch(e){}
   }
+  if(PAGE==='accueil') render();
 }
 
 // ── Nav ───────────────────────────────────────────────────────────────
@@ -1256,7 +1754,7 @@ function render(){
     return;
   }
 
-  if(PAGE==='accueil')m.innerHTML=pgHome();
+  if(PAGE==='accueil'){m.innerHTML=pgHome();setTimeout(initHomeMap,100);}
   else if(PAGE==='parcmat'){m.innerHTML=pgParcMat();renderParcMatContent();}
   else if(PAGE==='livraisons')m.innerHTML=pgLiv();
   else if(PAGE==='chantier'){m.innerHTML=pgChantier();initChantierTab();}
@@ -5487,10 +5985,18 @@ function renderTotalBody() {
   }).join('');
 
   el.innerHTML = `
-    <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap">
-      <div class="per-tab ${TOTAL_PERIODE==='jour'?'on':''}" data-p="jour" onclick="selTotalPeriode('jour')">Par jour</div>
-      <div class="per-tab ${TOTAL_PERIODE==='semaine'?'on':''}" data-p="semaine" onclick="selTotalPeriode('semaine')">Par semaine</div>
-      <div class="per-tab ${TOTAL_PERIODE==='mois'?'on':''}" data-p="mois" onclick="selTotalPeriode('mois')">Par mois</div>
+    <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;align-items:center;justify-content:space-between">
+      <div style="display:flex;gap:6px">
+        <div class="per-tab ${TOTAL_PERIODE==='jour'?'on':''}" data-p="jour" onclick="selTotalPeriode('jour')">Par jour</div>
+        <div class="per-tab ${TOTAL_PERIODE==='semaine'?'on':''}" data-p="semaine" onclick="selTotalPeriode('semaine')">Par semaine</div>
+        <div class="per-tab ${TOTAL_PERIODE==='mois'?'on':''}" data-p="mois" onclick="selTotalPeriode('mois')">Par mois</div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <div class="ico-btn" onclick="exportBilanPDF()" title="Exporter PDF" style="background:var(--da-bg);border-color:var(--da-b)">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" width="16" height="16"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="var(--da)"/><polyline points="14 2 14 8 20 8" stroke="var(--da)"/></svg>
+        </div>
+        <div class="ico-btn" onclick="exportBilanExcel()" title="Exporter Excel">${XLS_ICO}</div>
+      </div>
     </div>
 
     <!-- RÉSUMÉ GÉNÉRAL -->
