@@ -2454,6 +2454,14 @@ function renderChantierLivraisons() {
 
 // ── VUE ADMIN : choisir chantier → tableau matériaux + prix ──────
 function renderAdminLivraisons(container) {
+  // Si on est dans le détail d'un chantier, on affiche directement ce chantier
+  if (CHANTIER_DETAIL) {
+    LC_CHANTIER_SEL = CHANTIER_DETAIL.nom;
+    container.innerHTML = `<div id="adm-chantier-detail"></div>`;
+    renderAdminChantierDetail(CHANTIER_DETAIL.nom);
+    return;
+  }
+
   const chantiers = [...new Set(LC_DATA.map(l => l.chantier))].sort();
   if (!LC_CHANTIER_SEL && chantiers.length) LC_CHANTIER_SEL = chantiers[0];
 
@@ -2634,11 +2642,15 @@ function selSemaine(k) {
 
 // ── VUE CHEF : liste de ses livraisons ───────────────────────────
 function renderChefLivraisons(container) {
-  const data = LC_DATA;
+  // Si on est dans le détail d'un chantier, filtrer par ce chantier
+  const data = CHANTIER_DETAIL
+    ? LC_DATA.filter(l => l.chantier === CHANTIER_DETAIL.nom)
+    : LC_DATA;
+
   if (!data.length) {
     container.innerHTML = `<div style="text-align:center;padding:40px 20px">
       <div style="font-size:48px;margin-bottom:16px">🚛</div>
-      <div style="font-size:16px;font-weight:700;color:var(--tx2);margin-bottom:8px">Aucune livraison enregistrée</div>
+      <div style="font-size:16px;font-weight:700;color:var(--tx2);margin-bottom:8px">Aucune livraison${CHANTIER_DETAIL?' sur ce chantier':''}</div>
       <div style="font-size:13px;color:var(--tx3);line-height:1.6">Appuyez sur <b style="color:var(--acc)">+</b> pour saisir votre première livraison.</div>
     </div>`;
     return;
@@ -3064,6 +3076,14 @@ function renderChantierTotal() {
   if (!isAdmin) return;
   const el = document.getElementById('chantier-content');
   if (!el) return;
+
+  // Si on est dans le détail d'un chantier, on affiche directement ce chantier sans sélecteur
+  if (CHANTIER_DETAIL) {
+    TOTAL_CHANTIER_SEL = CHANTIER_DETAIL.nom;
+    el.innerHTML = `<div id="total-body"></div>`;
+    renderTotalBody();
+    return;
+  }
 
   // Tous les chantiers connus (pointages + livraisons)
   const chantiers = [...new Set([
