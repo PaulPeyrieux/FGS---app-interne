@@ -1253,6 +1253,51 @@ function fab() {
 
 
 // ══════════════════════════════════════════════════════════════════
+// HOME MAP
+// ══════════════════════════════════════════════════════════════════
+function initHomeMap() {
+  const chantiersEnCours = CHANTIERS_LIST.filter(c => getStatutChantier(c) === 'en_cours');
+  if (!chantiersEnCours.length) return;
+  const mapEl = document.getElementById('home-map');
+  if (!mapEl || typeof L === 'undefined') return;
+  try {
+    const map = L.map('home-map', {zoomControl:true, attributionControl:false, scrollWheelZoom:false});
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19}).addTo(map);
+    const markers = [];
+    const withCoords = chantiersEnCours.filter(c => c.lat && c.lng);
+    withCoords.forEach(c => {
+      const m = L.marker([c.lat, c.lng]).addTo(map).bindPopup(`<b>${c.nom}</b><br>${c.localisation||''}`);
+      markers.push(m);
+    });
+    // Géocoder ceux sans coords
+    chantiersEnCours.filter(c => !c.lat && c.localisation).forEach(c => {
+      fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(c.localisation)}&format=json&limit=1`)
+        .then(r=>r.json()).then(data => {
+          if (data?.[0] && map) {
+            const m = L.marker([parseFloat(data[0].lat), parseFloat(data[0].lon)]).addTo(map)
+              .bindPopup(`<b>${c.nom}</b><br>${c.localisation}`);
+            markers.push(m);
+            if (markers.length > 1) {
+              const g = new L.featureGroup(markers);
+              map.fitBounds(g.getBounds().pad(0.25));
+            } else {
+              map.setView(m.getLatLng(), 13);
+            }
+          }
+        }).catch(()=>{});
+    });
+    if (markers.length === 1) {
+      map.setView(markers[0].getLatLng(), 13);
+    } else if (markers.length > 1) {
+      const group = new L.featureGroup(markers);
+      map.fitBounds(group.getBounds().pad(0.25));
+    } else if (!chantiersEnCours.some(c => c.localisation)) {
+      map.setView([46.6, 1.9], 5);
+    }
+  } catch(e) { console.warn('Home map error:', e); }
+}
+
+// ══════════════════════════════════════════════════════════════════
 // NOTIFICATIONS PUSH (VGP + Entretiens)
 // ══════════════════════════════════════════════════════════════════
 let NOTIF_GRANTED = false;
@@ -1796,52 +1841,105 @@ function toast(msg,dur=2800){
 
 // ── Accueil ──────────────────────────────────────────────────────────
 function pgHome(){
-  const tot=BD.machines.length,ret=BD.machines.filter(m=>stMach(m)==='da').length,prev=BD.machines.filter(m=>stMach(m)==='wa').length;
-  const now=new Date();
-  const v30=BD.machines.filter(m=>{if(!m.vgp)return false;const d=(new Date(m.vgp)-now)/864e5;return d>=0&&d<=30;});
-  const vexp=BD.machines.filter(m=>m.vgp&&new Date(m.vgp)<now);
-  const als=[
-    ...vexp.map(m=>({s:'da',t:`VGP expirée — ${m.nom}`,ss:fdt(m.vgp),id:m.id})),
-    ...v30.map(m=>({s:'wa',t:`VGP à venir — ${m.nom}`,ss:infoVgp(m).lbl,id:m.id})),
-    ...BD.machines.filter(m=>stMach(m)==='da'&&!vexp.find(x=>x.id===m.id)).map(m=>({s:'da',t:`Entretien en retard — ${m.nom}`,ss:`${m.heures-m.hEntretien}h depuis dernier entretien`,id:m.id})),
-    ...BD.machines.filter(m=>stMach(m)==='wa'&&!v30.find(x=>x.id===m.id)).map(m=>({s:'wa',t:`Entretien à prévoir — ${m.nom}`,ss:`${m.heures-m.hEntretien}h depuis dernier entretien`,id:m.id})),
-  ];
-  BD.machines.forEach(m=>(m.piecesAssociees||[]).forEach(pa=>{const u=usure(m,pa),p=BD.pieces.find(x=>x.id===pa.pieceId);if(!u||!p)return;if(u.st==='da')als.push({s:'da',t:`${p.nom} à remplacer — ${m.nom}`,ss:`${u.rest}h restantes`,id:m.id});else if(u.st==='wa')als.push({s:'wa',t:`${p.nom} bientôt à changer — ${m.nom}`,ss:`${u.rest}h restantes`,id:m.id});}));
-  const alsH=als.length?als.map(a=>`<div class="eal ${a.s}" onclick="ouvrirDet('${a.id}')">
-    ${a.s==='da'?`<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`:`<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`}
-    <div class="eal-c"><div class="eal-t">${a.t}</div><div class="eal-s">${a.ss}</div></div>
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>`).join('')
-    :`<div style="padding:12px 14px;background:var(--ok-bg);border:1px solid var(--ok-b);border-radius:var(--r2);font-size:13px;color:var(--ok);font-weight:600">✓ Aucune alerte — tout le parc est à jour</div>`;
-  const mn=new Date(),m6=[];
-  for(let i=5;i>=0;i--){const d=new Date(mn.getFullYear(),mn.getMonth()-i,1);const nm=d.toLocaleDateString('fr-FR',{month:'short'});const n=BD.interventions.filter(iv=>{const di=new Date(iv.date);return di.getMonth()===d.getMonth()&&di.getFullYear()===d.getFullYear();}).length;m6.push({nm,n});}
-  const mx=Math.max(...m6.map(x=>x.n),1);
-  const gH=m6.map(m=>{const h=Math.max((m.n/mx)*64,m.n>0?8:4);return`<div class="gcol"><div class="gval">${m.n||''}</div><div class="gbar" style="height:${h}px;background:${m.n>0?'var(--acc)':'var(--sur3)'}"></div><div class="getiq">${m.nm}</div></div>`;}).join('');
-  return`<div class="ent">
-    <div class="ent-logo"><img src="${LOGO}" alt="FGS" style="height:36px;object-fit:contain"/><div class="ent-logo-txt">Gestion<br>Matériel</div></div>
-    <div class="ent-act">
-      <div class="ico-btn deco np" onclick="decon()" title="Déconnexion (${USER?.nom})"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div>
-    </div></div>
-  <div class="pg on">
-    <div style="font-size:12px;color:var(--tx3)">Connecté : <b style="color:var(--tx2)">${USER?.nom}</b>
-    <span style="font-size:11px;color:var(--tx3);margin-left:6px;background:var(--sur);border:1px solid var(--brd);border-radius:10px;padding:2px 8px;font-weight:600">
-      ${USER?.role==='admin'||USER?.role==='rh' ? '&#x1F4CB; Encadrement' : '&#x1F477; Chef de chantier'}
-    </span></div>
-    <div class="gkpi">
-      <div class="kpi"><div class="kpi-l">Machines</div><div class="kpi-v">${tot}</div><div class="kpi-s">${tot-ret-prev} à jour · ${prev} à prévoir</div></div>
-      <div class="kpi ${ret>0?'al':v30.length>0?'at':''}"><div class="kpi-l">En retard</div><div class="kpi-v">${ret}</div><div class="kpi-s">Entretien dépassé</div></div>
-      <div class="kpi ${v30.length>0?'at':''}"><div class="kpi-l">VGP à venir</div><div class="kpi-v">${v30.length}</div><div class="kpi-s">Dans les 30 jours</div></div>
-      <div class="kpi"><div class="kpi-l">Interventions</div><div class="kpi-v">${BD.interventions.length}</div><div class="kpi-s">Total historique</div></div>
+  const now = new Date();
+
+  // 1. Réparations à prévoir
+  const machinesAlert = BD.machines.filter(m => stMach(m) === 'da' || stMach(m) === 'wa');
+  const nbRep = machinesAlert.length;
+  const nbUrgent = BD.machines.filter(m => stMach(m) === 'da').length;
+
+  // 2. Chantiers en cours
+  const chantiersEnCours = CHANTIERS_LIST.filter(c => getStatutChantier(c) === 'en_cours');
+  const nbChantiers = chantiersEnCours.length;
+
+  // 3. Réceptions de la semaine
+  const lundi = new Date(now);
+  lundi.setDate(now.getDate() - ((now.getDay()+6)%7));
+  lundi.setHours(0,0,0,0);
+  const recepSem = (BD.livraisons||[]).filter(l => new Date(l.date) >= lundi);
+  const nbRecep = recepSem.length;
+
+  return `
+  <div class="ent">
+    <div class="ent-logo">
+      <img src="${LOGO}" alt="FGS" style="height:34px;object-fit:contain"/>
+      <div class="ent-logo-txt">FGS<br>Travaux</div>
     </div>
-    <div class="carte"><div class="carte-ent"><div class="carte-tit">Interventions — 6 mois</div></div><div class="gbars">${gH}</div></div>
-    <div class="ts">🔔 Alertes prioritaires</div>${alsH}
-    ${(USER&&(USER.role==='admin'||USER.role==='rh')&&ANOMALIES.filter(a=>a.statut!=='resolu').length>0)?`
-    <div class="ts" style="margin-top:16px;color:var(--da)">⚠️ Fiches anomalie en attente (${ANOMALIES.filter(a=>a.statut!=='resolu').length})</div>
-    ${ANOMALIES.filter(a=>a.statut!=='resolu').slice(0,5).map(a=>`<div class="carte" style="margin-bottom:8px;border-left:3px solid ${a.statut==='en_cours'?'var(--wa)':'var(--da)'}">
-      <div style="display:flex;justify-content:space-between"><b>${a.nom_machine}</b>${a.num_parc?'<span style="font-size:11px;color:var(--tx3)">N°'+a.num_parc+'</span>':''}</div>
-      <div style="font-size:12px;color:var(--tx);margin:4px 0">${a.description.length>80?a.description.slice(0,80)+'…':a.description}</div>
-      <div style="font-size:11px;color:var(--tx3)">${a.auteur} · ${new Date(a.cree_le).toLocaleDateString('fr-FR')}</div>
-    </div>`).join('')}
-    `:''}
+    <div class="ent-act">
+      <div class="ico-btn" onclick="demanderNotifications()" title="Notifications">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" width="17" height="17"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+      </div>
+      <div class="ico-btn deco np" onclick="decon()" title="Déconnexion">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="pg on" style="gap:14px">
+
+    <!-- ── 3 KPIs ── -->
+    <div class="home-kpi-grid">
+
+      <div class="home-kpi-card ${nbUrgent>0?'danger':''}" onclick="nav('parcmat')">
+        <div class="home-kpi-icon ${nbUrgent>0?'da':'ok'}">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" width="22" height="22">
+            <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/>
+          </svg>
+        </div>
+        <div class="home-kpi-num ${nbUrgent>0?'da':''}">${nbRep}</div>
+        <div class="home-kpi-label">Réparations à prévoir</div>
+        <div class="home-kpi-sub">${nbUrgent>0?`<span style="color:var(--da);font-weight:700">${nbUrgent} urgente${nbUrgent>1?'s':''}</span>${nbRep-nbUrgent>0?` · ${nbRep-nbUrgent} à planifier`:''}` : nbRep===0?'<span style="color:var(--ok)">Parc en bon état ✓</span>':'À planifier'}</div>
+      </div>
+
+      <div class="home-kpi-card" onclick="nav('chantier')">
+        <div class="home-kpi-icon accent">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" width="22" height="22">
+            <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><path d="M9 22V12h6v10"/>
+          </svg>
+        </div>
+        <div class="home-kpi-num">${nbChantiers}</div>
+        <div class="home-kpi-label">Chantiers en cours</div>
+        <div class="home-kpi-sub" style="display:flex;flex-wrap:wrap;gap:3px;margin-top:4px">
+          ${chantiersEnCours.length
+            ? chantiersEnCours.map(c=>`<span class="home-ch-pill">${c.nom}</span>`).join('')
+            : '<span style="color:var(--tx3)">Aucun actif</span>'}
+        </div>
+      </div>
+
+      <div class="home-kpi-card" onclick="nav('livraisons')">
+        <div class="home-kpi-icon blue">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" width="22" height="22">
+            <path d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+          </svg>
+        </div>
+        <div class="home-kpi-num">${nbRecep}</div>
+        <div class="home-kpi-label">Réceptions cette semaine</div>
+        <div class="home-kpi-sub">${nbRecep===0?'Aucune réception':recepSem.slice(0,2).map(l=>l.nom).join(', ')+(nbRecep>2?` +${nbRecep-2}`:'')}</div>
+      </div>
+    </div>
+
+    <!-- ── CARTE CHANTIERS EN COURS ── -->
+    ${chantiersEnCours.length > 0 ? `
+    <div class="home-map-card">
+      <div id="home-map" style="width:100%;height:260px;background:var(--sur2)"></div>
+      <div class="home-map-list">
+        ${chantiersEnCours.map(c => `
+          <div class="home-map-row" onclick="ouvrirChantierDetail(${c.id})">
+            <div class="home-map-dot"></div>
+            <div class="home-map-info">
+              <div class="home-map-nom">${c.nom}</div>
+              <div class="home-map-loc">${c.localisation||'Localisation non renseignée'}</div>
+            </div>
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>`).join('')}
+      </div>
+    </div>` : `
+    <div style="background:var(--sur);border:1px solid var(--brd);border-radius:18px;padding:32px;text-align:center;color:var(--tx3)">
+      <div style="font-size:32px;margin-bottom:8px">🏗️</div>
+      <div style="font-size:13px;font-weight:600">Aucun chantier en cours</div>
+    </div>`}
+
+    <div style="height:60px"></div>
   </div>`;
 }
 
