@@ -677,6 +677,288 @@ input::placeholder, textarea::placeholder { color: var(--tx3); opacity: .6; }
 .role-chef  { background:#F0FDF4; color:#16803C; border:1px solid #86EFAC; }
 
 
+
+/* ═══════════════════════════════════════════════════════════════════
+   TOTAL CHANTIER — Premium cards
+   ═══════════════════════════════════════════════════════════════════ */
+.total-summary-card {
+  background: var(--sur);
+  border: 1px solid var(--brd);
+  border-radius: 18px;
+  padding: 20px;
+  box-shadow: var(--sh);
+  margin-bottom: 16px;
+  overflow: hidden;
+  position: relative;
+}
+.total-summary-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--acc), #E85D47);
+  border-radius: 18px 18px 0 0;
+}
+.total-summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  padding-top: 4px;
+}
+.total-summary-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--tx2);
+  text-transform: uppercase;
+  letter-spacing: .8px;
+}
+.total-summary-grand {
+  font-size: 24px;
+  font-weight: 800;
+  font-family: var(--mo);
+  color: var(--acc);
+  letter-spacing: -1px;
+  line-height: 1;
+}
+.total-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0 4px;
+}
+.total-section-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--tx);
+}
+.total-section-value {
+  font-size: 15px;
+  font-weight: 700;
+  font-family: var(--mo);
+  color: var(--tx3);
+}
+.total-section-value.ok { color: var(--ok); }
+.total-period-card {
+  background: var(--sur);
+  border: 1px solid var(--brd);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 8px;
+  box-shadow: var(--sh2);
+  transition: all .18s;
+}
+.total-period-card:hover { box-shadow: var(--sh); border-color: var(--brd2); }
+.total-period-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.total-period-label { font-size: 13px; font-weight: 700; color: var(--tx); }
+.total-period-val {
+  font-size: 14px;
+  font-weight: 700;
+  font-family: var(--mo);
+  color: var(--tx3);
+}
+.total-period-val.has-val { color: var(--acc); }
+.total-period-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  padding: 3px 0 4px;
+  border-bottom: 1px solid var(--brd);
+  margin-bottom: 4px;
+  color: var(--tx2);
+}
+.prix-inline-clean {
+  border: none;
+  background: transparent;
+  font-size: 12px;
+  font-family: var(--mo);
+  color: var(--tx);
+  font-weight: 600;
+  width: 52px;
+  text-align: right;
+  outline: none;
+  padding: 0;
+}
+.prix-inline-clean::placeholder { color: var(--tx3); opacity: .5; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   APPLE-LEVEL SIDEBAR UPGRADE
+   ═══════════════════════════════════════════════════════════════════ */
+@media (min-width: 768px) {
+  .nav {
+    background: rgba(251,251,249,.95);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    padding: 0 8px 24px;
+    border-right: 1px solid rgba(0,0,0,.07);
+    box-shadow: 1px 0 0 rgba(0,0,0,.04);
+  }
+  .nav::before {
+    padding: 20px 10px 16px;
+    font-size: 17px;
+    font-weight: 900;
+    letter-spacing: -1px;
+    background: linear-gradient(135deg, var(--acc), #E85D47);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    display: block;
+    border-bottom: 1px solid rgba(0,0,0,.06);
+    margin-bottom: 8px;
+    margin-left: 0; margin-right: 0;
+    border-radius: 0;
+  }
+  .ni {
+    padding: 9px 12px;
+    border-radius: 10px;
+    gap: 11px;
+    transition: all .15s;
+  }
+  .ni svg { width: 17px; height: 17px; stroke-width: 1.75; }
+  .ni span { font-size: 13px; font-weight: 500; letter-spacing: -.1px; }
+  .ni.on { background: rgba(193,50,29,.08); }
+  .ni.on svg { stroke: var(--acc); }
+  .ni.on span { color: var(--acc); font-weight: 700; }
+  .ni:hover:not(.on) { background: rgba(0,0,0,.04); }
+  
+  /* Sidebar divider label */
+  .nav-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--tx3);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 12px 12px 4px;
+    display: block;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   APPLE ANIMATIONS & INTERACTIONS
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Smooth card appear */
+.carte, .emach, .epc, .eint, .lc-card, .perso-card, .chantier-list-card {
+  animation: cardIn .22s ease both;
+}
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Stagger children */
+.carte:nth-child(1) { animation-delay: .03s; }
+.carte:nth-child(2) { animation-delay: .06s; }
+.carte:nth-child(3) { animation-delay: .09s; }
+.carte:nth-child(4) { animation-delay: .12s; }
+
+/* Active press feel */
+.btn:active { transform: scale(.97); opacity: .9; }
+.ico-btn:active { transform: scale(.92); }
+.chantier-list-card:active, .emach:active, .perso-card:active, .epc:active { opacity: .85; }
+
+/* Better hover transition */
+*, *::before, *::after {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Apple-like selection */
+::selection { background: rgba(193,50,29,.15); color: var(--acc); }
+
+/* Nav item active indicator (desktop) */
+@media (min-width: 768px) {
+  .ni.on::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 16px;
+    background: var(--acc);
+    border-radius: 0 3px 3px 0;
+  }
+  .ni { position: relative; }
+}
+
+/* Premium gradient headers for modals */
+.mod-tit {
+  background: linear-gradient(135deg, var(--tx) 0%, var(--tx2) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Liquid glass effect on sidebar header */
+@supports (backdrop-filter: blur(1px)) {
+  @media (min-width: 768px) {
+    .ent {
+      background: rgba(244,243,240,.85);
+    }
+  }
+}
+
+/* KPI hover lift */
+.kpi {
+  transition: all .2s cubic-bezier(.34,1.4,.64,1);
+  cursor: default;
+}
+.kpi:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--sh);
+}
+.kpi.al:hover { border-color: var(--da); }
+.kpi.at:hover { border-color: var(--wa); }
+
+/* Premium input focus ring */
+input:focus, select:focus, textarea:focus {
+  transform: translateY(0);
+  transition: all .15s;
+}
+
+/* Animated spinner */
+@keyframes sp { to { transform: rotate(360deg); } }
+
+/* Chart bars animate in */
+.gbar {
+  animation: barGrow .4s cubic-bezier(.34,1.4,.64,1) both;
+  transform-origin: bottom;
+}
+@keyframes barGrow {
+  from { transform: scaleY(0); opacity: 0; }
+  to   { transform: scaleY(1); opacity: 1; }
+}
+
+/* Better detail view back button */
+.btn-ret {
+  background: var(--sur2);
+  border: 1px solid var(--brd);
+  transition: all .15s;
+}
+.btn-ret:hover { background: var(--brd); transform: scale(1.05); }
+
+/* Chantier status badges */
+.bdg.ok { background: var(--ok-bg); border-color: var(--ok-b); box-shadow: 0 0 0 1px var(--ok-bg); }
+.bdg.da { background: var(--da-bg); border-color: var(--da-b); box-shadow: 0 0 0 1px var(--da-bg); }
+.bdg.wa { background: var(--wa-bg); border-color: var(--wa-b); box-shadow: 0 0 0 1px var(--wa-bg); }
+
+/* Sub-nav pills */
+.sub-ni.on {
+  background: var(--acc);
+  box-shadow: 0 2px 8px rgba(193,50,29,.3), inset 0 1px 0 rgba(255,255,255,.15);
+}
+
+/* LC badges */
+.lc-badge {
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-weight: 700;
+}
+
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -2073,6 +2355,288 @@ input::placeholder, textarea::placeholder { color: var(--tx3); opacity: .6; }
 .role-chef  { background:#F0FDF4; color:#16803C; border:1px solid #86EFAC; }
 
 
+
+/* ═══════════════════════════════════════════════════════════════════
+   TOTAL CHANTIER — Premium cards
+   ═══════════════════════════════════════════════════════════════════ */
+.total-summary-card {
+  background: var(--sur);
+  border: 1px solid var(--brd);
+  border-radius: 18px;
+  padding: 20px;
+  box-shadow: var(--sh);
+  margin-bottom: 16px;
+  overflow: hidden;
+  position: relative;
+}
+.total-summary-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--acc), #E85D47);
+  border-radius: 18px 18px 0 0;
+}
+.total-summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  padding-top: 4px;
+}
+.total-summary-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--tx2);
+  text-transform: uppercase;
+  letter-spacing: .8px;
+}
+.total-summary-grand {
+  font-size: 24px;
+  font-weight: 800;
+  font-family: var(--mo);
+  color: var(--acc);
+  letter-spacing: -1px;
+  line-height: 1;
+}
+.total-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0 4px;
+}
+.total-section-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--tx);
+}
+.total-section-value {
+  font-size: 15px;
+  font-weight: 700;
+  font-family: var(--mo);
+  color: var(--tx3);
+}
+.total-section-value.ok { color: var(--ok); }
+.total-period-card {
+  background: var(--sur);
+  border: 1px solid var(--brd);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 8px;
+  box-shadow: var(--sh2);
+  transition: all .18s;
+}
+.total-period-card:hover { box-shadow: var(--sh); border-color: var(--brd2); }
+.total-period-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.total-period-label { font-size: 13px; font-weight: 700; color: var(--tx); }
+.total-period-val {
+  font-size: 14px;
+  font-weight: 700;
+  font-family: var(--mo);
+  color: var(--tx3);
+}
+.total-period-val.has-val { color: var(--acc); }
+.total-period-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  padding: 3px 0 4px;
+  border-bottom: 1px solid var(--brd);
+  margin-bottom: 4px;
+  color: var(--tx2);
+}
+.prix-inline-clean {
+  border: none;
+  background: transparent;
+  font-size: 12px;
+  font-family: var(--mo);
+  color: var(--tx);
+  font-weight: 600;
+  width: 52px;
+  text-align: right;
+  outline: none;
+  padding: 0;
+}
+.prix-inline-clean::placeholder { color: var(--tx3); opacity: .5; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   APPLE-LEVEL SIDEBAR UPGRADE
+   ═══════════════════════════════════════════════════════════════════ */
+@media (min-width: 768px) {
+  .nav {
+    background: rgba(251,251,249,.95);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    padding: 0 8px 24px;
+    border-right: 1px solid rgba(0,0,0,.07);
+    box-shadow: 1px 0 0 rgba(0,0,0,.04);
+  }
+  .nav::before {
+    padding: 20px 10px 16px;
+    font-size: 17px;
+    font-weight: 900;
+    letter-spacing: -1px;
+    background: linear-gradient(135deg, var(--acc), #E85D47);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    display: block;
+    border-bottom: 1px solid rgba(0,0,0,.06);
+    margin-bottom: 8px;
+    margin-left: 0; margin-right: 0;
+    border-radius: 0;
+  }
+  .ni {
+    padding: 9px 12px;
+    border-radius: 10px;
+    gap: 11px;
+    transition: all .15s;
+  }
+  .ni svg { width: 17px; height: 17px; stroke-width: 1.75; }
+  .ni span { font-size: 13px; font-weight: 500; letter-spacing: -.1px; }
+  .ni.on { background: rgba(193,50,29,.08); }
+  .ni.on svg { stroke: var(--acc); }
+  .ni.on span { color: var(--acc); font-weight: 700; }
+  .ni:hover:not(.on) { background: rgba(0,0,0,.04); }
+  
+  /* Sidebar divider label */
+  .nav-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--tx3);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 12px 12px 4px;
+    display: block;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   APPLE ANIMATIONS & INTERACTIONS
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Smooth card appear */
+.carte, .emach, .epc, .eint, .lc-card, .perso-card, .chantier-list-card {
+  animation: cardIn .22s ease both;
+}
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Stagger children */
+.carte:nth-child(1) { animation-delay: .03s; }
+.carte:nth-child(2) { animation-delay: .06s; }
+.carte:nth-child(3) { animation-delay: .09s; }
+.carte:nth-child(4) { animation-delay: .12s; }
+
+/* Active press feel */
+.btn:active { transform: scale(.97); opacity: .9; }
+.ico-btn:active { transform: scale(.92); }
+.chantier-list-card:active, .emach:active, .perso-card:active, .epc:active { opacity: .85; }
+
+/* Better hover transition */
+*, *::before, *::after {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Apple-like selection */
+::selection { background: rgba(193,50,29,.15); color: var(--acc); }
+
+/* Nav item active indicator (desktop) */
+@media (min-width: 768px) {
+  .ni.on::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 16px;
+    background: var(--acc);
+    border-radius: 0 3px 3px 0;
+  }
+  .ni { position: relative; }
+}
+
+/* Premium gradient headers for modals */
+.mod-tit {
+  background: linear-gradient(135deg, var(--tx) 0%, var(--tx2) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Liquid glass effect on sidebar header */
+@supports (backdrop-filter: blur(1px)) {
+  @media (min-width: 768px) {
+    .ent {
+      background: rgba(244,243,240,.85);
+    }
+  }
+}
+
+/* KPI hover lift */
+.kpi {
+  transition: all .2s cubic-bezier(.34,1.4,.64,1);
+  cursor: default;
+}
+.kpi:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--sh);
+}
+.kpi.al:hover { border-color: var(--da); }
+.kpi.at:hover { border-color: var(--wa); }
+
+/* Premium input focus ring */
+input:focus, select:focus, textarea:focus {
+  transform: translateY(0);
+  transition: all .15s;
+}
+
+/* Animated spinner */
+@keyframes sp { to { transform: rotate(360deg); } }
+
+/* Chart bars animate in */
+.gbar {
+  animation: barGrow .4s cubic-bezier(.34,1.4,.64,1) both;
+  transform-origin: bottom;
+}
+@keyframes barGrow {
+  from { transform: scaleY(0); opacity: 0; }
+  to   { transform: scaleY(1); opacity: 1; }
+}
+
+/* Better detail view back button */
+.btn-ret {
+  background: var(--sur2);
+  border: 1px solid var(--brd);
+  transition: all .15s;
+}
+.btn-ret:hover { background: var(--brd); transform: scale(1.05); }
+
+/* Chantier status badges */
+.bdg.ok { background: var(--ok-bg); border-color: var(--ok-b); box-shadow: 0 0 0 1px var(--ok-bg); }
+.bdg.da { background: var(--da-bg); border-color: var(--da-b); box-shadow: 0 0 0 1px var(--da-bg); }
+.bdg.wa { background: var(--wa-bg); border-color: var(--wa-b); box-shadow: 0 0 0 1px var(--wa-bg); }
+
+/* Sub-nav pills */
+.sub-ni.on {
+  background: var(--acc);
+  box-shadow: 0 2px 8px rgba(193,50,29,.3), inset 0 1px 0 rgba(255,255,255,.15);
+}
+
+/* LC badges */
+.lc-badge {
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-weight: 700;
+}
+
 </style></head><body>
 <div class="top"><div class="lb"><img src="${LOGO}" alt="FGS"/><div><div style="font-size:18px;font-weight:700;color:#C0392B">Fiche d'entretien</div><div style="font-size:13px;color:#555">${m.nom} — ${m.modele||''}${m.site?' · '+m.site:''}</div></div></div><div style="text-align:right;font-size:12px;color:#555;line-height:1.8"><div><b>Créée le :</b> ${new Date().toLocaleDateString('fr-FR')}</div>${iv?.datePrevue?`<div><b>Date prévue :</b> ${fdt(iv.datePrevue)}</div>`:''}<div><b>Type :</b> ${iv?lblTy(iv.type):'Entretien'}</div><span class="bdg ${s}">${lblSt(s)}</span></div></div>
 <div class="g2"><div><h2>Machine</h2><table><tr><th>Champ</th><th>Valeur</th></tr><tr><td>Modèle</td><td style="font-weight:600">${m.modele||'—'}</td></tr><tr><td>N° parc</td><td style="font-weight:600">${m.serie||'—'}</td></tr><tr><td>Site</td><td style="font-weight:600">${m.site||'—'}</td></tr></table></div>
@@ -2339,6 +2903,288 @@ input::placeholder, textarea::placeholder { color: var(--tx3); opacity: .6; }
 .role-rh    { background:#F0F9FF; color:#0369A1; border:1px solid #7DD3FC; }
 .role-chef  { background:#F0FDF4; color:#16803C; border:1px solid #86EFAC; }
 
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   TOTAL CHANTIER — Premium cards
+   ═══════════════════════════════════════════════════════════════════ */
+.total-summary-card {
+  background: var(--sur);
+  border: 1px solid var(--brd);
+  border-radius: 18px;
+  padding: 20px;
+  box-shadow: var(--sh);
+  margin-bottom: 16px;
+  overflow: hidden;
+  position: relative;
+}
+.total-summary-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--acc), #E85D47);
+  border-radius: 18px 18px 0 0;
+}
+.total-summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  padding-top: 4px;
+}
+.total-summary-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--tx2);
+  text-transform: uppercase;
+  letter-spacing: .8px;
+}
+.total-summary-grand {
+  font-size: 24px;
+  font-weight: 800;
+  font-family: var(--mo);
+  color: var(--acc);
+  letter-spacing: -1px;
+  line-height: 1;
+}
+.total-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0 4px;
+}
+.total-section-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--tx);
+}
+.total-section-value {
+  font-size: 15px;
+  font-weight: 700;
+  font-family: var(--mo);
+  color: var(--tx3);
+}
+.total-section-value.ok { color: var(--ok); }
+.total-period-card {
+  background: var(--sur);
+  border: 1px solid var(--brd);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 8px;
+  box-shadow: var(--sh2);
+  transition: all .18s;
+}
+.total-period-card:hover { box-shadow: var(--sh); border-color: var(--brd2); }
+.total-period-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.total-period-label { font-size: 13px; font-weight: 700; color: var(--tx); }
+.total-period-val {
+  font-size: 14px;
+  font-weight: 700;
+  font-family: var(--mo);
+  color: var(--tx3);
+}
+.total-period-val.has-val { color: var(--acc); }
+.total-period-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  padding: 3px 0 4px;
+  border-bottom: 1px solid var(--brd);
+  margin-bottom: 4px;
+  color: var(--tx2);
+}
+.prix-inline-clean {
+  border: none;
+  background: transparent;
+  font-size: 12px;
+  font-family: var(--mo);
+  color: var(--tx);
+  font-weight: 600;
+  width: 52px;
+  text-align: right;
+  outline: none;
+  padding: 0;
+}
+.prix-inline-clean::placeholder { color: var(--tx3); opacity: .5; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   APPLE-LEVEL SIDEBAR UPGRADE
+   ═══════════════════════════════════════════════════════════════════ */
+@media (min-width: 768px) {
+  .nav {
+    background: rgba(251,251,249,.95);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    padding: 0 8px 24px;
+    border-right: 1px solid rgba(0,0,0,.07);
+    box-shadow: 1px 0 0 rgba(0,0,0,.04);
+  }
+  .nav::before {
+    padding: 20px 10px 16px;
+    font-size: 17px;
+    font-weight: 900;
+    letter-spacing: -1px;
+    background: linear-gradient(135deg, var(--acc), #E85D47);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    display: block;
+    border-bottom: 1px solid rgba(0,0,0,.06);
+    margin-bottom: 8px;
+    margin-left: 0; margin-right: 0;
+    border-radius: 0;
+  }
+  .ni {
+    padding: 9px 12px;
+    border-radius: 10px;
+    gap: 11px;
+    transition: all .15s;
+  }
+  .ni svg { width: 17px; height: 17px; stroke-width: 1.75; }
+  .ni span { font-size: 13px; font-weight: 500; letter-spacing: -.1px; }
+  .ni.on { background: rgba(193,50,29,.08); }
+  .ni.on svg { stroke: var(--acc); }
+  .ni.on span { color: var(--acc); font-weight: 700; }
+  .ni:hover:not(.on) { background: rgba(0,0,0,.04); }
+  
+  /* Sidebar divider label */
+  .nav-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--tx3);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 12px 12px 4px;
+    display: block;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   APPLE ANIMATIONS & INTERACTIONS
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Smooth card appear */
+.carte, .emach, .epc, .eint, .lc-card, .perso-card, .chantier-list-card {
+  animation: cardIn .22s ease both;
+}
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Stagger children */
+.carte:nth-child(1) { animation-delay: .03s; }
+.carte:nth-child(2) { animation-delay: .06s; }
+.carte:nth-child(3) { animation-delay: .09s; }
+.carte:nth-child(4) { animation-delay: .12s; }
+
+/* Active press feel */
+.btn:active { transform: scale(.97); opacity: .9; }
+.ico-btn:active { transform: scale(.92); }
+.chantier-list-card:active, .emach:active, .perso-card:active, .epc:active { opacity: .85; }
+
+/* Better hover transition */
+*, *::before, *::after {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Apple-like selection */
+::selection { background: rgba(193,50,29,.15); color: var(--acc); }
+
+/* Nav item active indicator (desktop) */
+@media (min-width: 768px) {
+  .ni.on::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 16px;
+    background: var(--acc);
+    border-radius: 0 3px 3px 0;
+  }
+  .ni { position: relative; }
+}
+
+/* Premium gradient headers for modals */
+.mod-tit {
+  background: linear-gradient(135deg, var(--tx) 0%, var(--tx2) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Liquid glass effect on sidebar header */
+@supports (backdrop-filter: blur(1px)) {
+  @media (min-width: 768px) {
+    .ent {
+      background: rgba(244,243,240,.85);
+    }
+  }
+}
+
+/* KPI hover lift */
+.kpi {
+  transition: all .2s cubic-bezier(.34,1.4,.64,1);
+  cursor: default;
+}
+.kpi:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--sh);
+}
+.kpi.al:hover { border-color: var(--da); }
+.kpi.at:hover { border-color: var(--wa); }
+
+/* Premium input focus ring */
+input:focus, select:focus, textarea:focus {
+  transform: translateY(0);
+  transition: all .15s;
+}
+
+/* Animated spinner */
+@keyframes sp { to { transform: rotate(360deg); } }
+
+/* Chart bars animate in */
+.gbar {
+  animation: barGrow .4s cubic-bezier(.34,1.4,.64,1) both;
+  transform-origin: bottom;
+}
+@keyframes barGrow {
+  from { transform: scaleY(0); opacity: 0; }
+  to   { transform: scaleY(1); opacity: 1; }
+}
+
+/* Better detail view back button */
+.btn-ret {
+  background: var(--sur2);
+  border: 1px solid var(--brd);
+  transition: all .15s;
+}
+.btn-ret:hover { background: var(--brd); transform: scale(1.05); }
+
+/* Chantier status badges */
+.bdg.ok { background: var(--ok-bg); border-color: var(--ok-b); box-shadow: 0 0 0 1px var(--ok-bg); }
+.bdg.da { background: var(--da-bg); border-color: var(--da-b); box-shadow: 0 0 0 1px var(--da-bg); }
+.bdg.wa { background: var(--wa-bg); border-color: var(--wa-b); box-shadow: 0 0 0 1px var(--wa-bg); }
+
+/* Sub-nav pills */
+.sub-ni.on {
+  background: var(--acc);
+  box-shadow: 0 2px 8px rgba(193,50,29,.3), inset 0 1px 0 rgba(255,255,255,.15);
+}
+
+/* LC badges */
+.lc-badge {
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-weight: 700;
+}
 
 </style></head><body>
 <div class="top"><div class="lb"><img src="${LOGO}" alt="FGS"/><div><div style="font-size:18px;font-weight:700;color:#C0392B">${m.nom}</div><div style="font-size:13px;color:#555">${m.modele||''}${m.site?' · '+m.site:''}</div></div></div><span class="bdg ${s}">${lblSt(s)}</span></div>
@@ -2787,6 +3633,288 @@ input::placeholder, textarea::placeholder { color: var(--tx3); opacity: .6; }
 .role-rh    { background:#F0F9FF; color:#0369A1; border:1px solid #7DD3FC; }
 .role-chef  { background:#F0FDF4; color:#16803C; border:1px solid #86EFAC; }
 
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   TOTAL CHANTIER — Premium cards
+   ═══════════════════════════════════════════════════════════════════ */
+.total-summary-card {
+  background: var(--sur);
+  border: 1px solid var(--brd);
+  border-radius: 18px;
+  padding: 20px;
+  box-shadow: var(--sh);
+  margin-bottom: 16px;
+  overflow: hidden;
+  position: relative;
+}
+.total-summary-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--acc), #E85D47);
+  border-radius: 18px 18px 0 0;
+}
+.total-summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  padding-top: 4px;
+}
+.total-summary-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--tx2);
+  text-transform: uppercase;
+  letter-spacing: .8px;
+}
+.total-summary-grand {
+  font-size: 24px;
+  font-weight: 800;
+  font-family: var(--mo);
+  color: var(--acc);
+  letter-spacing: -1px;
+  line-height: 1;
+}
+.total-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0 4px;
+}
+.total-section-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--tx);
+}
+.total-section-value {
+  font-size: 15px;
+  font-weight: 700;
+  font-family: var(--mo);
+  color: var(--tx3);
+}
+.total-section-value.ok { color: var(--ok); }
+.total-period-card {
+  background: var(--sur);
+  border: 1px solid var(--brd);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 8px;
+  box-shadow: var(--sh2);
+  transition: all .18s;
+}
+.total-period-card:hover { box-shadow: var(--sh); border-color: var(--brd2); }
+.total-period-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.total-period-label { font-size: 13px; font-weight: 700; color: var(--tx); }
+.total-period-val {
+  font-size: 14px;
+  font-weight: 700;
+  font-family: var(--mo);
+  color: var(--tx3);
+}
+.total-period-val.has-val { color: var(--acc); }
+.total-period-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  padding: 3px 0 4px;
+  border-bottom: 1px solid var(--brd);
+  margin-bottom: 4px;
+  color: var(--tx2);
+}
+.prix-inline-clean {
+  border: none;
+  background: transparent;
+  font-size: 12px;
+  font-family: var(--mo);
+  color: var(--tx);
+  font-weight: 600;
+  width: 52px;
+  text-align: right;
+  outline: none;
+  padding: 0;
+}
+.prix-inline-clean::placeholder { color: var(--tx3); opacity: .5; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   APPLE-LEVEL SIDEBAR UPGRADE
+   ═══════════════════════════════════════════════════════════════════ */
+@media (min-width: 768px) {
+  .nav {
+    background: rgba(251,251,249,.95);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    padding: 0 8px 24px;
+    border-right: 1px solid rgba(0,0,0,.07);
+    box-shadow: 1px 0 0 rgba(0,0,0,.04);
+  }
+  .nav::before {
+    padding: 20px 10px 16px;
+    font-size: 17px;
+    font-weight: 900;
+    letter-spacing: -1px;
+    background: linear-gradient(135deg, var(--acc), #E85D47);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    display: block;
+    border-bottom: 1px solid rgba(0,0,0,.06);
+    margin-bottom: 8px;
+    margin-left: 0; margin-right: 0;
+    border-radius: 0;
+  }
+  .ni {
+    padding: 9px 12px;
+    border-radius: 10px;
+    gap: 11px;
+    transition: all .15s;
+  }
+  .ni svg { width: 17px; height: 17px; stroke-width: 1.75; }
+  .ni span { font-size: 13px; font-weight: 500; letter-spacing: -.1px; }
+  .ni.on { background: rgba(193,50,29,.08); }
+  .ni.on svg { stroke: var(--acc); }
+  .ni.on span { color: var(--acc); font-weight: 700; }
+  .ni:hover:not(.on) { background: rgba(0,0,0,.04); }
+  
+  /* Sidebar divider label */
+  .nav-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--tx3);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 12px 12px 4px;
+    display: block;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   APPLE ANIMATIONS & INTERACTIONS
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Smooth card appear */
+.carte, .emach, .epc, .eint, .lc-card, .perso-card, .chantier-list-card {
+  animation: cardIn .22s ease both;
+}
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Stagger children */
+.carte:nth-child(1) { animation-delay: .03s; }
+.carte:nth-child(2) { animation-delay: .06s; }
+.carte:nth-child(3) { animation-delay: .09s; }
+.carte:nth-child(4) { animation-delay: .12s; }
+
+/* Active press feel */
+.btn:active { transform: scale(.97); opacity: .9; }
+.ico-btn:active { transform: scale(.92); }
+.chantier-list-card:active, .emach:active, .perso-card:active, .epc:active { opacity: .85; }
+
+/* Better hover transition */
+*, *::before, *::after {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Apple-like selection */
+::selection { background: rgba(193,50,29,.15); color: var(--acc); }
+
+/* Nav item active indicator (desktop) */
+@media (min-width: 768px) {
+  .ni.on::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 16px;
+    background: var(--acc);
+    border-radius: 0 3px 3px 0;
+  }
+  .ni { position: relative; }
+}
+
+/* Premium gradient headers for modals */
+.mod-tit {
+  background: linear-gradient(135deg, var(--tx) 0%, var(--tx2) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Liquid glass effect on sidebar header */
+@supports (backdrop-filter: blur(1px)) {
+  @media (min-width: 768px) {
+    .ent {
+      background: rgba(244,243,240,.85);
+    }
+  }
+}
+
+/* KPI hover lift */
+.kpi {
+  transition: all .2s cubic-bezier(.34,1.4,.64,1);
+  cursor: default;
+}
+.kpi:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--sh);
+}
+.kpi.al:hover { border-color: var(--da); }
+.kpi.at:hover { border-color: var(--wa); }
+
+/* Premium input focus ring */
+input:focus, select:focus, textarea:focus {
+  transform: translateY(0);
+  transition: all .15s;
+}
+
+/* Animated spinner */
+@keyframes sp { to { transform: rotate(360deg); } }
+
+/* Chart bars animate in */
+.gbar {
+  animation: barGrow .4s cubic-bezier(.34,1.4,.64,1) both;
+  transform-origin: bottom;
+}
+@keyframes barGrow {
+  from { transform: scaleY(0); opacity: 0; }
+  to   { transform: scaleY(1); opacity: 1; }
+}
+
+/* Better detail view back button */
+.btn-ret {
+  background: var(--sur2);
+  border: 1px solid var(--brd);
+  transition: all .15s;
+}
+.btn-ret:hover { background: var(--brd); transform: scale(1.05); }
+
+/* Chantier status badges */
+.bdg.ok { background: var(--ok-bg); border-color: var(--ok-b); box-shadow: 0 0 0 1px var(--ok-bg); }
+.bdg.da { background: var(--da-bg); border-color: var(--da-b); box-shadow: 0 0 0 1px var(--da-bg); }
+.bdg.wa { background: var(--wa-bg); border-color: var(--wa-b); box-shadow: 0 0 0 1px var(--wa-bg); }
+
+/* Sub-nav pills */
+.sub-ni.on {
+  background: var(--acc);
+  box-shadow: 0 2px 8px rgba(193,50,29,.3), inset 0 1px 0 rgba(255,255,255,.15);
+}
+
+/* LC badges */
+.lc-badge {
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-weight: 700;
+}
 
 </style></head><body>
 
@@ -4248,6 +5376,37 @@ function selTotalPeriode(p) {
   renderTotalBody();
 }
 
+function calcMO(ptgList) {
+  // Calcule le coût MO réel en matchant chaque employé dans PERSONNEL_DATA
+  let coutTotal = 0;
+  let totalH    = 0;
+  let sansRate  = [];
+  let detail    = {}; // nom → {heures, cout, rate}
+
+  ptgList.forEach(ptg => {
+    (ptg.lignes||[]).forEach(l => {
+      const h = parseFloat(l.heures)||0;
+      totalH += h;
+      // Chercher dans PERSONNEL_DATA (correspondance sur nom complet)
+      const nomFull = l.nom.toLowerCase().trim();
+      const perso = PERSONNEL_DATA.find(p =>
+        (`${p.prenom||''} ${p.nom}`).toLowerCase().trim() === nomFull ||
+        p.nom.toLowerCase().trim() === nomFull
+      );
+      const rate = perso?.cout_horaire ? parseFloat(perso.cout_horaire) : null;
+      if (!detail[l.nom]) detail[l.nom] = {heures:0, cout:0, rate};
+      detail[l.nom].heures += h;
+      if (rate) {
+        detail[l.nom].cout += h * rate;
+        coutTotal += h * rate;
+      } else {
+        if (!sansRate.includes(l.nom)) sansRate.push(l.nom);
+      }
+    });
+  });
+  return {coutTotal, totalH, detail, sansRate};
+}
+
 function renderTotalBody() {
   const el = document.getElementById('total-body');
   if (!el || !TOTAL_CHANTIER_SEL) return;
@@ -4256,26 +5415,22 @@ function renderTotalBody() {
   const ptgC = POINTAGES.filter(p => p.chantier === chantier);
   const livC = LC_DATA.filter(l => l.chantier === chantier);
 
-  // ── Calcul des périodes ───────────────────────────────────────
   const getPeriodeKey = (dateStr) => {
     const d = new Date(dateStr + 'T12:00:00');
     if (TOTAL_PERIODE === 'jour') return dateStr;
-    if (TOTAL_PERIODE === 'mois') return dateStr.slice(0,7); // YYYY-MM
-    // semaine : lundi de la semaine
+    if (TOTAL_PERIODE === 'mois') return dateStr.slice(0,7);
     const day = (d.getDay() + 6) % 7;
     const lun = new Date(d); lun.setDate(d.getDate() - day);
     return lun.toISOString().split('T')[0];
   };
 
   const labelPeriode = (key) => {
-    if (TOTAL_PERIODE === 'jour') {
+    if (TOTAL_PERIODE === 'jour')
       return new Date(key+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'2-digit',month:'short'});
-    }
     if (TOTAL_PERIODE === 'mois') {
       const [y,m] = key.split('-');
-      return new Date(parseInt(y), parseInt(m)-1).toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+      return new Date(parseInt(y),parseInt(m)-1).toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
     }
-    // semaine
     const lun = new Date(key+'T12:00:00');
     const dim = new Date(lun); dim.setDate(lun.getDate()+6);
     return `${lun.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})} → ${dim.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})}`;
@@ -4284,27 +5439,10 @@ function renderTotalBody() {
   // Agréger par période
   const periodes = {};
   const addPeriode = (key) => {
-    if (!periodes[key]) periodes[key] = { heures:0, presences:0, gd:0, paniers:0, materiaux:{} };
+    if (!periodes[key]) periodes[key] = { ptgs:[], livs:[] };
   };
-
-  ptgC.forEach(p => {
-    const key = getPeriodeKey(p.date_jour);
-    addPeriode(key);
-    (p.lignes||[]).forEach(l => {
-      periodes[key].heures     += parseFloat(l.heures)||0;
-      periodes[key].presences  += 1;
-      if (l.gd)     periodes[key].gd++;
-      if (l.panier) periodes[key].paniers++;
-    });
-  });
-
-  livC.forEach(l => {
-    const key = getPeriodeKey(l.date_liv);
-    addPeriode(key);
-    const el = l.element;
-    if (!periodes[key].materiaux[el]) periodes[key].materiaux[el] = { qte:0, unite:l.unite };
-    periodes[key].materiaux[el].qte += l.quantite;
-  });
+  ptgC.forEach(p => { const k=getPeriodeKey(p.date_jour); addPeriode(k); periodes[k].ptgs.push(p); });
+  livC.forEach(l => { const k=getPeriodeKey(l.date_liv);  addPeriode(k); periodes[k].livs.push(l); });
 
   const keys = Object.keys(periodes).sort().reverse();
   if (!keys.length) {
@@ -4312,12 +5450,14 @@ function renderTotalBody() {
     return;
   }
 
-  // ── Totaux globaux ────────────────────────────────────────────
-  const totalH = ptgC.reduce((s,p) => s+(p.lignes||[]).reduce((ss,l)=>ss+(parseFloat(l.heures)||0),0),0);
-  const coutH  = getPrix(chantier, '__heures__');
-  const coutMO = coutH ? totalH * coutH : null;
+  // ── Totaux globaux MO ─────────────────────────────────────────
+  const mo = calcMO(ptgC);
+  const totalH  = mo.totalH;
+  const coutMO  = mo.coutTotal;
+  const sansRate = mo.sansRate;
+  const detailMO = mo.detail;
 
-  // Matériaux totaux
+  // ── Totaux matériaux ─────────────────────────────────────────
   const matTotal = {};
   livC.forEach(l => {
     if (!matTotal[l.element]) matTotal[l.element] = {qte:0, unite:l.unite};
@@ -4328,105 +5468,118 @@ function renderTotalBody() {
     const prix = getPrix(chantier, el);
     if (prix) totalMat += v.qte * prix;
   });
-  const totalGen = (coutMO||0) + totalMat;
+  const totalGen = coutMO + totalMat;
 
-  // ── Rendu ─────────────────────────────────────────────────────
+  // ── Détail par employé ───────────────────────────────────────
+  const empRows = Object.entries(detailMO).map(([nom,d]) => {
+    const rateStr = d.rate != null ? `${d.rate.toFixed(2)} €/h` : `<span style="color:var(--wa);font-size:10px">⚠ pas de taux</span>`;
+    const coutStr = d.cout > 0 ? d.cout.toLocaleString('fr-FR',{style:'currency',currency:'EUR'}) : `<span style="color:var(--tx3)">—</span>`;
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--brd);font-size:12px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="width:28px;height:28px;border-radius:50%;background:var(--acc-l);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--acc)">${nom[0]?.toUpperCase()||'?'}</div>
+        <div>
+          <div style="font-weight:600;color:var(--tx)">${nom}</div>
+          <div style="color:var(--tx3);font-size:11px">${d.heures.toLocaleString('fr-FR',{maximumFractionDigits:1})} h · ${rateStr}</div>
+        </div>
+      </div>
+      <div style="font-weight:700;font-family:var(--mo);color:${d.cout>0?'var(--tx)':'var(--tx3)'};text-align:right">${coutStr}</div>
+    </div>`;
+  }).join('');
+
   el.innerHTML = `
-    <!-- Sélecteur période -->
-    <div style="display:flex;gap:6px;margin-bottom:14px">
+    <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap">
       <div class="per-tab ${TOTAL_PERIODE==='jour'?'on':''}" data-p="jour" onclick="selTotalPeriode('jour')">Par jour</div>
       <div class="per-tab ${TOTAL_PERIODE==='semaine'?'on':''}" data-p="semaine" onclick="selTotalPeriode('semaine')">Par semaine</div>
       <div class="per-tab ${TOTAL_PERIODE==='mois'?'on':''}" data-p="mois" onclick="selTotalPeriode('mois')">Par mois</div>
     </div>
 
-    <!-- Total général depuis le début -->
-    <div class="carte" style="margin-bottom:12px;border-left:3px solid var(--acc)">
-      <div class="carte-tit" style="margin-bottom:12px">💰 Depuis le début — ${chantier}</div>
-
-      <!-- Heures -->
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--brd)">
-        <div>
-          <div style="font-size:13px;font-weight:600">⏱ Main d'œuvre</div>
-          <div style="font-size:12px;color:var(--tx3);margin-top:1px">${totalH.toLocaleString('fr-FR',{maximumFractionDigits:1})} h</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:6px">
-          <input class="mat-prix-inp" type="number" step="0.01" min="0"
-            value="${coutH||''}" placeholder="€/h"
-            onchange="savePrixRef('${chantier.replace(/'/g,"\\'")}','__heures__',this.value)"/>
-          <span style="font-size:11px;color:var(--tx3)">€/h</span>
-          <div style="font-weight:700;min-width:80px;text-align:right;font-family:var(--mo);color:${coutMO?'var(--ok)':'var(--tx3)'}">${coutMO?coutMO.toLocaleString('fr-FR',{style:'currency',currency:'EUR'}):'—'}</div>
-        </div>
+    <!-- RÉSUMÉ GÉNÉRAL -->
+    <div class="total-summary-card">
+      <div class="total-summary-header">
+        <div class="total-summary-title">Bilan — ${chantier}</div>
+        <div class="total-summary-grand" id="total-grand-display">${totalGen>0?totalGen.toLocaleString('fr-FR',{style:'currency',currency:'EUR'}):'—'}</div>
       </div>
 
-      <!-- Séparateur Livraisons -->
-      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--tx3);padding:8px 0 4px;margin-top:4px">📦 Livraisons</div>
+      <!-- MO section -->
+      <div class="total-section">
+        <div class="total-section-label">⏱ Main d'œuvre</div>
+        <div class="total-section-value ${coutMO>0?'ok':''}">
+          ${coutMO>0?coutMO.toLocaleString('fr-FR',{style:'currency',currency:'EUR'}):'—'}
+        </div>
+      </div>
+      <div style="padding:6px 0 8px">
+        <div style="font-size:11px;color:var(--tx3);margin-bottom:6px">${totalH.toLocaleString('fr-FR',{maximumFractionDigits:1})} h total · ${Object.keys(detailMO).length} employé${Object.keys(detailMO).length>1?'s':''}</div>
+        ${empRows}
+        ${sansRate.length?`<div style="margin-top:8px;padding:8px 10px;background:var(--wa-bg);border:1px solid var(--wa-b);border-radius:var(--r2);font-size:11px;color:var(--wa);font-weight:600">
+          ⚠ Taux horaire manquant pour : ${sansRate.join(', ')} — Renseignez-le dans la fiche Personnel.
+        </div>`:''}
+      </div>
 
-      <!-- Matériaux -->
-      ${Object.entries(matTotal).map(([el,v]) => {
-        const prix  = getPrix(chantier, el);
+      <!-- Matériaux section -->
+      <div class="total-section" style="border-top:1px solid var(--brd);padding-top:12px;margin-top:4px">
+        <div class="total-section-label">📦 Matériaux</div>
+        <div class="total-section-value ${totalMat>0?'ok':''}">
+          ${totalMat>0?totalMat.toLocaleString('fr-FR',{style:'currency',currency:'EUR'}):'—'}
+        </div>
+      </div>
+      ${Object.entries(matTotal).map(([elmt,v]) => {
+        const prix  = getPrix(chantier, elmt);
         const total = prix ? v.qte * prix : null;
-        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--brd)">
+        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--brd)">
           <div>
-            <div style="font-size:13px;font-weight:600">${lcBadge(el)}</div>
-            <div style="font-size:12px;color:var(--tx3);margin-top:1px">${v.qte.toLocaleString('fr-FR',{maximumFractionDigits:2})} ${v.unite}</div>
+            ${lcBadge(elmt)}
+            <div style="font-size:11px;color:var(--tx3);margin-top:3px">${v.qte.toLocaleString('fr-FR',{maximumFractionDigits:2})} ${v.unite}</div>
           </div>
-          <div style="display:flex;align-items:center;gap:6px">
-            <input class="mat-prix-inp" type="number" step="0.01" min="0"
-              value="${prix||''}" placeholder="€/${v.unite}"
-              onchange="savePrixRef('${chantier.replace(/'/g,"\\'")}','${el}',this.value)"/>
-            <span style="font-size:11px;color:var(--tx3)">€/${v.unite}</span>
-            <div style="font-weight:700;min-width:80px;text-align:right;font-family:var(--mo);color:${total?'var(--ok)':'var(--tx3)'}">${total?total.toLocaleString('fr-FR',{style:'currency',currency:'EUR'}):'—'}</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="display:flex;align-items:center;gap:4px;background:var(--sur2);border:1px solid var(--brd);border-radius:var(--r2);padding:5px 10px">
+              <input class="prix-inline-clean" type="number" step="0.01" min="0"
+                value="${prix||''}" placeholder="prix"
+                onchange="savePrixRef('${chantier.replace(/'/g,"\'")}','${elmt}',this.value)"/>
+              <span style="font-size:11px;color:var(--tx3);white-space:nowrap">€/${v.unite}</span>
+            </div>
+            <div style="font-weight:700;font-family:var(--mo);min-width:72px;text-align:right;color:${total?'var(--ok)':'var(--tx3)'};font-size:13px">${total?total.toLocaleString('fr-FR',{style:'currency',currency:'EUR'}):'—'}</div>
           </div>
         </div>`;
       }).join('')}
-
-      <!-- Sous-total livraisons -->
-      ${totalMat>0?`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--brd)">
-        <div style="font-size:12px;color:var(--tx3)">Sous-total livraisons</div>
-        <div style="font-weight:600;font-family:var(--mo);color:var(--ok)">${totalMat.toLocaleString('fr-FR',{style:'currency',currency:'EUR'})}</div>
-      </div>`:''}
-
-      <!-- Total général -->
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0 2px">
-        <div style="font-size:14px;font-weight:700;color:var(--acc)">Total général</div>
-        <div style="font-size:20px;font-weight:700;font-family:var(--mo);color:var(--acc)">${totalGen>0?totalGen.toLocaleString('fr-FR',{style:'currency',currency:'EUR'}):'—'}</div>
-      </div>
     </div>
 
-    <!-- Détail par période -->
-    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--tx3);margin-bottom:8px">
-      Détail ${TOTAL_PERIODE==='jour'?'par jour':TOTAL_PERIODE==='semaine'?'par semaine':'par mois'}
-    </div>
+    <!-- DÉTAIL PAR PÉRIODE -->
+    <div class="ts" style="margin-top:20px;margin-bottom:10px">Détail ${TOTAL_PERIODE==='jour'?'par jour':TOTAL_PERIODE==='semaine'?'par semaine':'par mois'}</div>
     ${keys.map(key => {
-      const p = periodes[key];
-      const cH  = coutH ? p.heures * coutH : null;
-      let cMat  = 0;
-      const matRows = Object.entries(p.materiaux).map(([el,v]) => {
-        const prix = getPrix(chantier, el);
-        if (prix) cMat += v.qte * prix;
-        return `<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;color:var(--tx2)">
-          <span>${lcBadge(el)} ${v.qte.toLocaleString('fr-FR',{maximumFractionDigits:2})} ${v.unite}</span>
+      const per = periodes[key];
+      const moP = calcMO(per.ptgs);
+      const hP  = moP.totalH;
+      const cMO = moP.coutTotal;
+      const presP = per.ptgs.reduce((s,p)=>s+(p.lignes||[]).length,0);
+      const gdP   = per.ptgs.reduce((s,p)=>s+(p.lignes||[]).filter(l=>l.gd).length,0);
+      const panP  = per.ptgs.reduce((s,p)=>s+(p.lignes||[]).filter(l=>l.panier).length,0);
+      let cMatP = 0;
+      const matRowsP = per.livs.reduce((acc,l)=>{
+        if(!acc[l.element]) acc[l.element]={qte:0,unite:l.unite};
+        acc[l.element].qte+=l.quantite; return acc;
+      }, {});
+      const matHtmlP = Object.entries(matRowsP).map(([elmt,v]) => {
+        const prix=getPrix(chantier,elmt);
+        if(prix) cMatP+=v.qte*prix;
+        return `<div style="display:flex;justify-content:space-between;font-size:12px;padding:2px 0;color:var(--tx2)">
+          <span>${lcBadge(elmt)} ${v.qte.toLocaleString('fr-FR',{maximumFractionDigits:2})} ${v.unite}</span>
           <span style="font-family:var(--mo);color:${prix?'var(--tx)':'var(--tx3)'}">${prix?(v.qte*prix).toLocaleString('fr-FR',{style:'currency',currency:'EUR'}):'—'}</span>
         </div>`;
       }).join('');
-      const cTot = (cH||0) + cMat;
-      return `<div class="carte" style="margin-bottom:8px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <div style="font-size:13px;font-weight:700">${labelPeriode(key)}</div>
-          <div style="font-size:14px;font-weight:700;font-family:var(--mo);color:${cTot>0?'var(--acc)':'var(--tx3)'}">
-            ${cTot>0?cTot.toLocaleString('fr-FR',{style:'currency',currency:'EUR'}):'—'}
-          </div>
+      const cTot = cMO + cMatP;
+      return `<div class="total-period-card">
+        <div class="total-period-header">
+          <div class="total-period-label">${labelPeriode(key)}</div>
+          <div class="total-period-val ${cTot>0?'has-val':''}">${cTot>0?cTot.toLocaleString('fr-FR',{style:'currency',currency:'EUR'}):'—'}</div>
         </div>
-        ${p.heures>0?`<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid var(--brd);margin-bottom:4px">
-          <span style="color:var(--tx2)">⏱ ${p.heures.toLocaleString('fr-FR',{maximumFractionDigits:1})} h · ${p.presences} présence${p.presences>1?'s':''}${p.gd>0?' · '+p.gd+' GD':''}${p.paniers>0?' · '+p.paniers+' 🍽':''}</span>
-          <span style="font-family:var(--mo);color:${cH?'var(--tx)':'var(--tx3)'}">${cH?cH.toLocaleString('fr-FR',{style:'currency',currency:'EUR'}):'—'}</span>
+        ${hP>0?`<div class="total-period-row">
+          <span>⏱ ${hP.toLocaleString('fr-FR',{maximumFractionDigits:1})} h · ${presP} pres.${gdP>0?' · '+gdP+' GD':''}${panP>0?' · '+panP+' 🍽':''}</span>
+          <span style="font-family:var(--mo);font-weight:600;color:${cMO>0?'var(--tx)':'var(--tx3)'}">${cMO>0?cMO.toLocaleString('fr-FR',{style:'currency',currency:'EUR'}):'—'}</span>
         </div>`:''}
-        ${matRows}
+        ${matHtmlP}
       </div>`;
     }).join('')}`;
 }
-
-
 
 // ══════════════════════════════════════════════════════════════════
 // MODULE PERSONNEL
