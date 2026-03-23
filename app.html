@@ -397,6 +397,22 @@ textarea{resize:vertical;min-height:72px}
 .map-placeholder{width:100%;height:180px;background:var(--sur2);display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--brd);overflow:hidden}
 .map-placeholder iframe{width:100%;height:100%;border:none}
 .waze-btn{display:inline-flex;align-items:center;gap:7px;background:#09B0FF;color:#fff;border:none;border-radius:var(--r2);padding:9px 14px;font-size:13px;font-weight:700;cursor:pointer;text-decoration:none;margin-top:10px}
+.gmaps-btn{display:inline-flex;align-items:center;gap:7px;background:#4285F4;color:#fff;border:none;border-radius:var(--r2);padding:9px 14px;font-size:13px;font-weight:700;cursor:pointer;text-decoration:none;margin-top:10px;margin-left:8px}
+.nav-btns-wrap{display:flex;flex-wrap:wrap;gap:0;margin-top:0}
+/* ── PERSONNEL PICKER ── */
+.perso-picker-wrap{position:relative;margin-bottom:0}
+.perso-picker-input{width:100%;background:var(--sur2);border:1.5px solid var(--brd);color:var(--tx);font-family:var(--fn);font-size:14px;padding:10px 12px;border-radius:var(--r2);outline:none;transition:border-color .15s}
+.perso-picker-input:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(184,48,37,.1)}
+.perso-picker-dropdown{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--sur);border:1.5px solid var(--brd);border-radius:var(--r2);max-height:200px;overflow-y:auto;z-index:300;box-shadow:var(--sh)}
+.perso-picker-item{padding:9px 12px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--brd)}
+.perso-picker-item:last-child{border-bottom:none}
+.perso-picker-item:hover{background:var(--acc-l)}
+.perso-picker-item .pi-avatar{width:26px;height:26px;border-radius:50%;background:var(--acc-l);border:1px solid var(--da-b);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--acc);flex-shrink:0}
+.perso-picker-item .pi-info{flex:1;min-width:0}
+.perso-picker-item .pi-nom{font-weight:600;font-size:13px}
+.perso-picker-item .pi-poste{font-size:11px;color:var(--tx3)}
+.perso-picker-add{padding:9px 12px;cursor:pointer;font-size:13px;color:var(--acc);font-weight:600;display:flex;align-items:center;gap:6px;border-top:1px solid var(--brd)}
+.perso-picker-add:hover{background:var(--acc-l)}
 
 /* ── PERSONNEL ── */
 .perso-card{background:var(--sur);border:1px solid var(--brd);border-radius:var(--r);padding:14px;box-shadow:var(--sh2);cursor:pointer;transition:all .15s}
@@ -1116,9 +1132,17 @@ function _updateStockPreview(){
   if(el) el.textContent = `Après ajustement : ${actuel} → ${Math.max(0, actuel + delta)} en stock`;
 }
 
+document.addEventListener('click', e => {
+  const wrap = document.getElementById('pt-picker-wrap');
+  if (wrap && !wrap.contains(e.target)) {
+    document.querySelectorAll('.perso-picker-dropdown').forEach(d => d.remove());
+  }
+});
+
 document.addEventListener('input', e=>{
   if(e.target.id==='stock-delta') _updateStockPreview();
 });
+
 
 async function savStockAdj(){
   const p = BD.pieces.find(x=>x.id===STOCK_ID);
@@ -1956,6 +1980,9 @@ function nouveauPointage() {
   document.getElementById('pt-date').value = new Date().toISOString().split('T')[0];
   document.getElementById('pt-notes').value = '';
 
+  // Charger le personnel si pas encore chargé
+  if (!PERSONNEL_DATA.length) chargerPersonnel();
+
   // Autocomplete chantiers (from DB list + past pointages)
   const chantiersPasses = [...new Set([
     ...CHANTIERS_LIST.map(c=>c.nom),
@@ -2015,13 +2042,88 @@ function renderPtLignes() {
     </div>`).join('');
 }
 
-function ajouterEmp() {
-  const inp = document.getElementById('pt-new-emp');
-  const nom = inp?.value.trim();
-  if (!nom) { toast('Saisissez un prénom'); return; }
+function ajouterEmpDepuisPersonnel(id, nom, poste) {
+  // Fermer le dropdown
+  document.querySelectorAll('.perso-picker-dropdown').forEach(d => d.remove());
+  document.querySelectorAll('.perso-picker-input').forEach(i => { i.value = ''; i.dataset.open = ''; });
   PT_LIGNES.push({nom, heures:8, gd:false, panier:false});
-  if (inp) inp.value = '';
   renderPtLignes();
+}
+
+function ouvrirPickerPersonnel() {
+  // Ferme tout dropdown existant
+  document.querySelectorAll('.perso-picker-dropdown').forEach(d => d.remove());
+  const wrap = document.getElementById('pt-picker-wrap');
+  const inp  = document.getElementById('pt-picker-inp');
+  if (!wrap || !inp) return;
+  inp.dataset.open = '1';
+  _renderPickerDropdown('');
+  inp.focus();
+}
+
+function _renderPickerDropdown(q) {
+  const wrap = document.getElementById('pt-picker-wrap');
+  if (!wrap) return;
+  // Supprimer dropdown existant
+  let dd = document.getElementById('pt-picker-dd');
+  if (!dd) {
+    dd = document.createElement('div');
+    dd.id = 'pt-picker-dd';
+    dd.className = 'perso-picker-dropdown';
+    wrap.appendChild(dd);
+  }
+  const lower = q.toLowerCase();
+  const dejaAjoutes = new Set(PT_LIGNES.map(l => l.nom));
+  let liste = PERSONNEL_DATA.filter(p => {
+    const full = `${p.prenom||''} ${p.nom} ${p.poste||''}`.toLowerCase();
+    return full.includes(lower);
+  });
+  let html = liste.map(p => {
+    const full = `${p.prenom||''} ${p.nom}`.trim();
+    const initiale = ((p.prenom||'')[0]||(p.nom||'')[0]||'?').toUpperCase();
+    const deja = dejaAjoutes.has(full);
+    return `<div class="perso-picker-item ${deja?'':''}${deja?'opacity:.5':''}" 
+      onclick="${deja?'toast(\'Déjà ajouté\')':'ajouterEmpDepuisPersonnel('+p.id+',\''+full.replace(/'/g,"\\'")+'\')'}"
+      style="${deja?'opacity:.45;cursor:not-allowed':''}">
+      <div class="pi-avatar">${initiale}</div>
+      <div class="pi-info">
+        <div class="pi-nom">${full}${deja?' ✓':''}</div>
+        <div class="pi-poste">${p.poste||''}${p.type_contrat?' · '+p.type_contrat:''}</div>
+      </div>
+    </div>`;
+  }).join('');
+  // Bouton "Ajouter directement" si pas trouvé ou recherche non vide
+  const nomSaisi = q.trim();
+  if (nomSaisi) {
+    html += `<div class="perso-picker-add" onclick="ajouterEmpLibre('${nomSaisi.replace(/'/g,"\\'")}')">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Ajouter "${nomSaisi}" directement
+    </div>`;
+  }
+  if (!html) {
+    html = `<div style="padding:10px 12px;font-size:13px;color:var(--tx3)">Aucun employé trouvé</div>`;
+    if (nomSaisi) html += `<div class="perso-picker-add" onclick="ajouterEmpLibre('${nomSaisi.replace(/'/g,"\\'")}')">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Ajouter "${nomSaisi}"
+    </div>`;
+  }
+  dd.innerHTML = html;
+}
+
+function ajouterEmpLibre(nom) {
+  document.querySelectorAll('.perso-picker-dropdown').forEach(d => d.remove());
+  const inp = document.getElementById('pt-picker-inp');
+  if (inp) inp.value = '';
+  PT_LIGNES.push({nom, heures:8, gd:false, panier:false});
+  renderPtLignes();
+}
+
+function ajouterEmp() {
+  // Compatibilité ancienne méthode si besoin
+  const inp = document.getElementById('pt-picker-inp');
+  const nom = inp?.value.trim();
+  if (!nom) { toast('Saisissez un nom'); return; }
+  ajouterEmpLibre(nom);
 }
 
 async function savPointage() {
@@ -2176,6 +2278,10 @@ function renderChantierDetail(chantier) {
     ? `https://waze.com/ul?q=${encodeURIComponent(chantier.localisation)}&navigate=yes`
     : (hasCoords ? `https://waze.com/ul?ll=${chantier.lat},${chantier.lng}&navigate=yes` : null);
 
+  const gmapsUrl = chantier.localisation
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(chantier.localisation)}`
+    : (hasCoords ? `https://www.google.com/maps?q=${chantier.lat},${chantier.lng}` : null);
+
   const totOn  = isAdmin ? (CHANTIER_TAB==='total' ? ' on' : '') : '';
   const ptOn   = CHANTIER_TAB==='pointage'   ? ' on' : '';
   const livOn  = CHANTIER_TAB==='livraisons' ? ' on' : '';
@@ -2208,7 +2314,11 @@ function renderChantierDetail(chantier) {
           <div class="li"><span class="li-k">👤 Créé par</span><span class="li-v">${chantier.cree_par||'—'}</span></div>
           ${wazeUrl ? `<a class="waze-btn" href="${wazeUrl}" target="_blank" rel="noopener">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
-            Ouvrir dans Waze
+            Waze
+          </a>` : ''}
+          ${gmapsUrl ? `<a class="gmaps-btn" href="${gmapsUrl}" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" width="16" height="16"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            Google Maps
           </a>` : ''}
           ${isAdmin ? `<button class="btn bs" style="margin-top:8px;font-size:12px" onclick="ouvrirEditionChantier(${chantier.id})">✏️ Modifier ce chantier</button>` : ''}
         </div>
@@ -2235,14 +2345,30 @@ function initLeafletMap(mapId, chantier) {
   const container = document.getElementById(mapId);
   if (!container) return;
   const hasCoords = chantier.lat && chantier.lng;
-  const lat = hasCoords ? chantier.lat : 46.603354;
-  const lng = hasCoords ? chantier.lng : 1.888334;
-  const zoom = hasCoords ? 15 : 5;
+
   try {
-    CHANTIER_MAP = L.map(mapId, {zoomControl:false, attributionControl:false}).setView([lat, lng], zoom);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19}).addTo(CHANTIER_MAP);
     if (hasCoords) {
-      L.marker([lat, lng]).addTo(CHANTIER_MAP).bindPopup(chantier.nom).openPopup();
+      CHANTIER_MAP = L.map(mapId, {zoomControl:true, attributionControl:false}).setView([chantier.lat, chantier.lng], 15);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19}).addTo(CHANTIER_MAP);
+      L.marker([chantier.lat, chantier.lng]).addTo(CHANTIER_MAP).bindPopup(chantier.nom).openPopup();
+    } else if (chantier.localisation) {
+      // Pas de coords → on crée la carte centrée sur la France d'abord
+      CHANTIER_MAP = L.map(mapId, {zoomControl:true, attributionControl:false}).setView([46.6, 1.9], 5);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19}).addTo(CHANTIER_MAP);
+      // Puis on géocode pour zoomer
+      fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(chantier.localisation)}&format=json&limit=1`)
+        .then(r => r.json())
+        .then(data => {
+          if (data?.[0] && CHANTIER_MAP) {
+            const lat = parseFloat(data[0].lat);
+            const lng = parseFloat(data[0].lon);
+            CHANTIER_MAP.setView([lat, lng], 15);
+            L.marker([lat, lng]).addTo(CHANTIER_MAP).bindPopup(chantier.nom).openPopup();
+          }
+        }).catch(() => {});
+    } else {
+      CHANTIER_MAP = L.map(mapId, {zoomControl:true, attributionControl:false}).setView([46.6, 1.9], 5);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19}).addTo(CHANTIER_MAP);
     }
   } catch(e) { console.warn('Leaflet error:', e); }
 }
@@ -3365,7 +3491,7 @@ function renderPersonnel(liste) {
         <div class="perso-avatar">${initiale}</div>
         <div>
           <div class="perso-nom">${p.prenom||''} ${p.nom}</div>
-          <div class="perso-poste">${p.poste||'Poste non défini'}</div>
+          <div class="perso-poste">${p.poste||'Poste non défini'}${p.type_contrat ? ` <span style="font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;background:${p.type_contrat==='CDI'?'var(--ok-bg)':p.type_contrat==='CDD'?'var(--wa-bg)':'var(--in-bg)'};color:${p.type_contrat==='CDI'?'var(--ok)':p.type_contrat==='CDD'?'var(--wa)':'var(--in)'}">${p.type_contrat}</span>` : ''}</div>
         </div>
       </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">
@@ -3391,6 +3517,7 @@ function ouvrirModalPersonnel(p) {
   document.getElementById('mperso-nom').value         = p ? p.nom    : '';
   document.getElementById('mperso-prenom').value      = p ? (p.prenom||'') : '';
   document.getElementById('mperso-poste').value       = p ? (p.poste||'')  : '';
+  document.getElementById('mperso-contrat').value     = p ? (p.type_contrat||'CDI') : 'CDI';
   document.getElementById('mperso-adresse').value     = p ? (p.adresse||'')     : '';
   document.getElementById('mperso-urgnom').value      = p ? (p.urgence_nom||'') : '';
   document.getElementById('mperso-urgtel').value      = p ? (p.urgence_tel||'') : '';
@@ -3410,6 +3537,7 @@ async function savPersonnel() {
     id: PERSO_EDIT_ID || null,
     nom, prenom: document.getElementById('mperso-prenom').value.trim(),
     poste:       document.getElementById('mperso-poste').value.trim(),
+    type_contrat: document.getElementById('mperso-contrat').value || 'CDI',
     adresse:     document.getElementById('mperso-adresse').value.trim(),
     urgence_nom: document.getElementById('mperso-urgnom').value.trim(),
     urgence_tel: document.getElementById('mperso-urgtel').value.trim(),
@@ -3483,9 +3611,12 @@ async function delPersonnel() {
   <div class="carte" style="margin-top:4px">
     <div class="carte-ent"><div class="carte-tit">Employés</div></div>
     <div id="pt-lignes"></div>
-    <div class="pt-add">
-      <input id="pt-new-emp" placeholder="Nom de l'employé..." onkeydown="if(event.key==='Enter')ajouterEmp()"/>
-      <button class="btn bp np" style="width:auto;padding:10px 14px" onclick="ajouterEmp()">+</button>
+    <div id="pt-picker-wrap" class="perso-picker-wrap" style="margin-top:10px">
+      <input id="pt-picker-inp" class="perso-picker-input" placeholder="Rechercher un employé..."
+        oninput="_renderPickerDropdown(this.value)"
+        onfocus="ouvrirPickerPersonnel()"
+        onkeydown="if(event.key==='Enter'&&this.value.trim())ajouterEmpLibre(this.value.trim())"
+      />
     </div>
   </div>
   <div class="gch"><label>Notes générales</label><textarea id="pt-notes" placeholder="Observations..."></textarea></div>
@@ -3607,6 +3738,13 @@ async function delPersonnel() {
     <div class="gch" style="flex:1"><label>Prénom</label><input id="mperso-prenom" placeholder="Jean"/></div>
   </div>
   <div class="gch"><label>Poste</label><input id="mperso-poste" placeholder="Chef de chantier"/></div>
+  <div class="gch"><label>Type de contrat</label>
+    <select id="mperso-contrat">
+      <option value="CDI">CDI</option>
+      <option value="CDD">CDD</option>
+      <option value="Intérimaire">Intérimaire</option>
+    </select>
+  </div>
   <div class="gch" id="mperso-cout-wrap" style="display:none"><label>Coût horaire (€/h) — admin uniquement</label><input id="mperso-cout" type="number" step="0.01" placeholder="18.50"/></div>
   <div class="gch"><label>Adresse</label><input id="mperso-adresse" placeholder="12 rue des Acacias, Lyon"/></div>
   <div class="gch"><label>Contact urgence — Nom</label><input id="mperso-urgnom" placeholder="Marie Martin (épouse)"/></div>
