@@ -379,7 +379,7 @@ textarea{resize:vertical;min-height:72px}
 .per-tab{padding:6px 14px;border-radius:20px;border:1.5px solid var(--brd);background:var(--sur);font-size:11px;font-weight:600;cursor:pointer;color:var(--tx2);transition:all .15s}
 .per-tab.on{background:var(--acc);color:#fff;border-color:var(--acc)}
 
-@media print{.nav,.fab,.np,.fmod{display:none!important}body{background:#fff}#app{max-width:100%}}
+@media print{.nav,.fab,.np,.fmod{display:none!important}body{background:#fff}#app{max-width:100%}#app{max-width:100%}}
 
 /* ── CHANTIERS LIST ── */
 .chantier-list-card{background:var(--sur);border:1px solid var(--brd);border-radius:var(--r);padding:15px 14px;box-shadow:var(--sh2);cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:12px}
@@ -389,8 +389,14 @@ textarea{resize:vertical;min-height:72px}
 .chantier-list-nom{font-size:14px;font-weight:700;letter-spacing:-.2px;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .chantier-list-loc{font-size:12px;color:var(--tx2);display:flex;align-items:center;gap:4px;margin-bottom:2px}
 .chantier-list-dates{font-size:11px;color:var(--tx3);font-family:var(--mo)}
-.waze-btn{display:inline-flex;align-items:center;gap:7px;background:#09B0FF;color:#fff;border:none;border-radius:var(--r2);padding:9px 14px;font-size:13px;font-weight:700;cursor:pointer;text-decoration:none;margin-top:10px}
+.chantier-detail-header{background:var(--acc);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:12px;border-radius:var(--r) var(--r) 0 0}
+.chantier-detail-title{font-size:17px;font-weight:700;flex:1;letter-spacing:-.3px}
+.btn-ret-inv{width:36px;height:36px;border-radius:var(--r2);background:rgba(255,255,255,.18);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+.btn-ret-inv svg{width:17px;height:17px;stroke:#fff}
 .info-chantier-block{background:var(--sur);border:1px solid var(--brd);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh2);margin-bottom:12px}
+.map-placeholder{width:100%;height:180px;background:var(--sur2);display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--brd);overflow:hidden}
+.map-placeholder iframe{width:100%;height:100%;border:none}
+.waze-btn{display:inline-flex;align-items:center;gap:7px;background:#09B0FF;color:#fff;border:none;border-radius:var(--r2);padding:9px 14px;font-size:13px;font-weight:700;cursor:pointer;text-decoration:none;margin-top:10px}
 
 /* ── PERSONNEL ── */
 .perso-card{background:var(--sur);border:1px solid var(--brd);border-radius:var(--r);padding:14px;box-shadow:var(--sh2);cursor:pointer;transition:all .15s}
@@ -399,6 +405,9 @@ textarea{resize:vertical;min-height:72px}
 .perso-avatar{width:42px;height:42px;border-radius:50%;background:var(--acc-l);border:1.5px solid var(--da-b);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:var(--acc);flex-shrink:0;text-transform:uppercase}
 .perso-nom{font-size:14px;font-weight:700;letter-spacing:-.2px}
 .perso-poste{font-size:12px;color:var(--tx2);margin-top:1px}
+.perso-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.perso-tag{font-size:10px;padding:3px 8px;border-radius:12px;font-weight:600;border:1px solid var(--brd);background:var(--sur2);color:var(--tx2)}
+.perso-tag.secret{background:#FFF3E0;color:#8C3D10;border-color:#E8AC80}
 .search-bar{display:flex;align-items:center;gap:8px;background:var(--sur);border:1.5px solid var(--brd);border-radius:var(--r2);padding:9px 12px;box-shadow:var(--sh2);margin-bottom:12px}
 .search-bar svg{width:16px;height:16px;stroke:var(--tx3);flex-shrink:0}
 .search-bar input{flex:1;border:none;background:transparent;font-size:14px;color:var(--tx);outline:none;font-family:var(--fn)}
@@ -654,18 +663,20 @@ function buildNav(){
   var svgParc     = '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>';
   var svgAno      = '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
   var svgLiv      = '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>';
-var svgChantier  = '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><path d="M9 22V12h6v10"/><line x1="12" y1="2" x2="12" y2="6"/></svg>';
-  var svgPersonnel = '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>';
+  var svgChantier = '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><path d="M9 22V12h6v10"/><line x1="12" y1="2" x2="12" y2="6"/></svg>';
+  var svgPersonnel= '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>';
   var items = isAdmin ? [
-    {p:'accueil',   label:'Accueil',   svg:svgAccueil},
-    {p:'parcmat',   label:'Parc mat.', svg:svgParc},
-    {p:'chantier',  label:'Chantier',  svg:svgChantier},
-    {p:'personnel', label:'Personnel', svg:svgPersonnel},
+    {p:'accueil',    label:'Accueil',    svg:svgAccueil},
+    {p:'parcmat',    label:'Parc mat.',  svg:svgParc},
+    {p:'chantier',   label:'Chantier',   svg:svgChantier},
+    {p:'livraisons', label:'Réceptions', svg:svgLiv},
+    {p:'personnel',  label:'Personnel',  svg:svgPersonnel},
   ] : [
-    {p:'accueil',   label:'Accueil',   svg:svgAccueil},
-    {p:'anomalie',  label:'Anomalie',  svg:svgAno},
-    {p:'chantier',  label:'Chantier',  svg:svgChantier},
-    {p:'personnel', label:'Personnel', svg:svgPersonnel},
+    {p:'accueil',    label:'Accueil',    svg:svgAccueil},
+    {p:'anomalie',   label:'Anomalie',   svg:svgAno},
+    {p:'chantier',   label:'Chantier',   svg:svgChantier},
+    {p:'livraisons', label:'Réceptions', svg:svgLiv},
+    {p:'personnel',  label:'Personnel',  svg:svgPersonnel},
   ];
   navEl.innerHTML = items.map(function(it){
     var cls = 'ni' + (PAGE===it.p ? ' on' : '');
@@ -1885,7 +1896,12 @@ function renderListePointages() {
   if (!el) return;
   const isAdmin = USER?.role === 'admin' || USER?.role === 'rh';
 
-  if (!POINTAGES.length) {
+  // Filter by selected chantier if in detail view
+  const listeFiltre = CHANTIER_DETAIL
+    ? POINTAGES.filter(p => p.chantier === CHANTIER_DETAIL.nom)
+    : POINTAGES;
+
+  if (!listeFiltre.length) {
     el.innerHTML = `<div class="vide">
       <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M9 16l2 2 4-4"/></svg>
       <h3>Aucun pointage</h3><p>Appuyez sur + pour créer un pointage.</p>
@@ -1895,7 +1911,7 @@ function renderListePointages() {
 
   // Group by date
   const parDate = {};
-  POINTAGES.forEach(p => {
+  listeFiltre.forEach(p => {
     const d = p.date_jour;
     if (!parDate[d]) parDate[d] = [];
     parDate[d].push(p);
@@ -1940,22 +1956,29 @@ function nouveauPointage() {
   document.getElementById('pt-date').value = new Date().toISOString().split('T')[0];
   document.getElementById('pt-notes').value = '';
 
-  // Autocomplete chantiers
+  // Autocomplete chantiers (from DB list + past pointages)
   const chantiersPasses = [...new Set([
+    ...CHANTIERS_LIST.map(c=>c.nom),
     ...POINTAGES.map(p=>p.chantier),
     ...LC_DATA.map(l=>l.chantier),
   ].filter(Boolean))];
   const dl = document.getElementById('pt-chantier-list');
   if (dl) dl.innerHTML = chantiersPasses.map(c=>`<option value="${c}"/>`).join('');
 
+  // Pre-fill chantier if viewing detail
+  if (CHANTIER_DETAIL) {
+    document.getElementById('pt-chantier').value = CHANTIER_DETAIL.nom;
+  } else {
+    const dernier = POINTAGES.find(p => p.auteur === USER?.nom);
+    document.getElementById('pt-chantier').value = dernier?.chantier || '';
+  }
+
   // Préremplir employés du dernier pointage de cet auteur
   const dernier = POINTAGES.find(p => p.auteur === USER?.nom);
   if (dernier?.lignes?.length) {
     PT_LIGNES = dernier.lignes.map(l => ({nom:l.nom, heures:8, gd:false, panier:false}));
-    document.getElementById('pt-chantier').value = dernier.chantier || '';
   } else {
     PT_LIGNES = [];
-    document.getElementById('pt-chantier').value = '';
   }
   renderPtLignes();
   om('mpt');
@@ -2045,19 +2068,23 @@ async function delPointage() {
 // ONGLET CHANTIER — liste + détail
 // ══════════════════════════════════════════════════════════════════
 
-let CHANTIER_TAB    = 'pointage';
-let CHANTIERS_LIST  = [];
-let CHANTIER_DETAIL = null;
-let CHANTIER_MAP    = null;
+let CHANTIER_TAB      = 'pointage'; // sous-onglet dans le détail
+let CHANTIERS_LIST    = [];          // liste des chantiers chargés
+let CHANTIER_DETAIL   = null;        // chantier sélectionné {id, nom, ...}
+let CHANTIER_MAP      = null;        // instance Leaflet
 
+// ── PAGE principale chantier ──────────────────────────────────────
 function pgChantier() {
   return `<div id="chantier-main"></div>`;
 }
 
 async function initChantierTab() {
   await chargerChantiers();
-  if (CHANTIER_DETAIL) renderChantierDetail(CHANTIER_DETAIL);
-  else renderChantierListe();
+  if (CHANTIER_DETAIL) {
+    renderChantierDetail(CHANTIER_DETAIL);
+  } else {
+    renderChantierListe();
+  }
 }
 
 async function chargerChantiers() {
@@ -2068,27 +2095,23 @@ async function chargerChantiers() {
   } catch(e) { CHANTIERS_LIST = []; }
 }
 
-function getStatutChantier(c) {
-  const now = new Date().toISOString().split('T')[0];
-  if (!c.date_debut || c.date_debut > now) return 'a_venir';
-  if (c.date_fin && c.date_fin < now) return 'termine';
-  return 'en_cours';
-}
-
+// ── LISTE des chantiers ───────────────────────────────────────────
 function renderChantierListe() {
   CHANTIER_DETAIL = null;
   const isAdmin = USER?.role === 'admin' || USER?.role === 'rh';
   const el = document.getElementById('chantier-main');
   if (!el) return;
   document.getElementById('fab').style.display = isAdmin ? 'flex' : 'none';
-  const badges = {
-    en_cours: '<span class="bdg ok">En cours</span>',
-    termine:  '<span class="bdg in">Terminé</span>',
-    a_venir:  '<span class="bdg wa">À venir</span>'
-  };
+
   const cards = CHANTIERS_LIST.map(c => {
-    const dd = c.date_debut ? new Date(c.date_debut+'T12:00:00').toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'}) : '—';
-    const df = c.date_fin   ? new Date(c.date_fin  +'T12:00:00').toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'}) : '—';
+    const dateD = c.date_debut ? new Date(c.date_debut+'T12:00:00').toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'}) : '—';
+    const dateF = c.date_fin   ? new Date(c.date_fin  +'T12:00:00').toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'}) : '—';
+    const statut = getStatutChantier(c);
+    const statutHtml = statut==='en_cours'
+      ? '<span class="bdg ok">En cours</span>'
+      : statut==='termine'
+      ? '<span class="bdg in">Terminé</span>'
+      : '<span class="bdg wa">À venir</span>';
     return `<div class="chantier-list-card" onclick="ouvrirChantierDetail(${c.id})">
       <div class="chantier-list-ico">🏗️</div>
       <div class="chantier-list-info">
@@ -2097,16 +2120,17 @@ function renderChantierListe() {
           <svg viewBox="0 0 24 24" fill="none" stroke-width="2" width="12" height="12"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
           ${c.localisation || 'Localisation non définie'}
         </div>
-        <div class="chantier-list-dates">${dd} → ${df}</div>
+        <div class="chantier-list-dates">${dateD} → ${dateF}</div>
       </div>
-      <div style="flex-shrink:0">${badges[getStatutChantier(c)]}</div>
+      <div style="flex-shrink:0">${statutHtml}</div>
     </div>`;
   }).join('');
+
   el.innerHTML = `
     <div class="ent">
       <div><h1>Chantiers</h1></div>
-      ${isAdmin ? `<div class="ent-act"></div>` : ''}
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" width="17" height="17"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      ${isAdmin ? `<div class="ent-act"><div class="ico-btn" onclick="ouvrirNouveauChantier()" title="Nouveau chantier">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" width="17" height="17"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </div></div>` : ''}
     </div>
     <div class="pg on" style="gap:8px">
@@ -2114,12 +2138,21 @@ function renderChantierListe() {
         ? `<div class="vide">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
             <h3>Aucun chantier</h3>
-            <p>${isAdmin ? 'Appuyez sur + pour créer le premier chantier.' : 'Aucun chantier disponible.'}</p>
+            <p>${isAdmin ? 'Appuyez sur + pour créer le premier chantier.' : 'Aucun chantier disponible pour le moment.'}</p>
           </div>`
         : cards}
     </div>`;
 }
 
+function getStatutChantier(c) {
+  const now = new Date().toISOString().split('T')[0];
+  if (!c.date_debut) return 'a_venir';
+  if (c.date_debut > now) return 'a_venir';
+  if (c.date_fin && c.date_fin < now) return 'termine';
+  return 'en_cours';
+}
+
+// ── DÉTAIL d'un chantier ──────────────────────────────────────────
 async function ouvrirChantierDetail(id) {
   await Promise.all([chargerChantiers(), chargerPointages(), chargerLC()]);
   CHANTIER_DETAIL = CHANTIERS_LIST.find(c => c.id === id);
@@ -2133,15 +2166,23 @@ function renderChantierDetail(chantier) {
   const el = document.getElementById('chantier-main');
   if (!el) return;
   document.getElementById('fab').style.display = 'flex';
-  const fmt = d => d ? new Date(d+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'}) : '—';
+
+  const dateD = chantier.date_debut ? new Date(chantier.date_debut+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'}) : '—';
+  const dateF = chantier.date_fin   ? new Date(chantier.date_fin  +'T12:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'}) : '—';
   const hasCoords = chantier.lat && chantier.lng;
   const mapId = 'leaflet-map-' + chantier.id;
+
   const wazeUrl = chantier.localisation
     ? `https://waze.com/ul?q=${encodeURIComponent(chantier.localisation)}&navigate=yes`
     : (hasCoords ? `https://waze.com/ul?ll=${chantier.lat},${chantier.lng}&navigate=yes` : null);
-  const ptOn  = CHANTIER_TAB==='pointage'   ? ' on' : '';
-  const livOn = CHANTIER_TAB==='livraisons' ? ' on' : '';
-  const totOn = CHANTIER_TAB==='total'      ? ' on' : '';
+
+  const totOn  = isAdmin ? (CHANTIER_TAB==='total' ? ' on' : '') : '';
+  const ptOn   = CHANTIER_TAB==='pointage'   ? ' on' : '';
+  const livOn  = CHANTIER_TAB==='livraisons' ? ' on' : '';
+  const totalTabHtml = isAdmin
+    ? `<div class="sub-ni${totOn}" data-tab="total" onclick="switchChantierTab('total')">💰 Total</div>`
+    : '';
+
   el.innerHTML = `
     <div class="ent">
       <div style="display:flex;align-items:center;gap:10px">
@@ -2155,38 +2196,55 @@ function renderChantierDetail(chantier) {
       </div>
       <div class="ent-act" id="chantier-act"></div>
     </div>
+
     <div class="pg on" style="padding-top:8px">
+      <!-- INFOS CHANTIER -->
       <div class="info-chantier-block">
         <div id="${mapId}" style="width:100%;height:180px;background:var(--sur2)"></div>
         <div style="padding:12px 14px">
-          <div class="li"><span class="li-k">📅 Début</span><span class="li-v">${fmt(chantier.date_debut)}</span></div>
-          <div class="li"><span class="li-k">📅 Fin prévue</span><span class="li-v">${fmt(chantier.date_fin)}</span></div>
-          <div class="li"><span class="li-k">📍 Localisation</span><span class="li-v">${chantier.localisation||'—'}</span></div>
+          <div class="li"><span class="li-k">📅 Début</span><span class="li-v">${dateD}</span></div>
+          <div class="li"><span class="li-k">📅 Fin prévue</span><span class="li-v">${dateF}</span></div>
+          <div class="li"><span class="li-k">📍 Localisation</span><span class="li-v" style="text-align:right">${chantier.localisation||'—'}</span></div>
           <div class="li"><span class="li-k">👤 Créé par</span><span class="li-v">${chantier.cree_par||'—'}</span></div>
-          ${wazeUrl ? `<a class="waze-btn" href="${wazeUrl}" target="_blank" rel="noopener">🗺️ Ouvrir dans Waze</a>` : ''}
+          ${wazeUrl ? `<a class="waze-btn" href="${wazeUrl}" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+            Ouvrir dans Waze
+          </a>` : ''}
           ${isAdmin ? `<button class="btn bs" style="margin-top:8px;font-size:12px" onclick="ouvrirEditionChantier(${chantier.id})">✏️ Modifier ce chantier</button>` : ''}
         </div>
       </div>
+
+      <!-- SOUS-ONGLETS -->
       <div class="sub-nav">
         <div class="sub-ni${ptOn}"  data-tab="pointage"   onclick="switchChantierTab('pointage')">📋 Pointage</div>
         <div class="sub-ni${livOn}" data-tab="livraisons" onclick="switchChantierTab('livraisons')">🚚 Livraisons</div>
-        ${isAdmin ? `<div class="sub-ni${totOn}" data-tab="total" onclick="switchChantierTab('total')">💰 Total</div>` : ''}
+        ${totalTabHtml}
       </div>
       <div id="chantier-content"></div>
       <div style="height:80px"></div>
     </div>`;
-  setTimeout(() => {
-    if (CHANTIER_MAP) { try { CHANTIER_MAP.remove(); } catch(e){} CHANTIER_MAP = null; }
-    const lat = hasCoords ? chantier.lat : 46.6;
-    const lng = hasCoords ? chantier.lng : 1.9;
-    try {
-      CHANTIER_MAP = L.map(mapId, {zoomControl:true, attributionControl:false}).setView([lat,lng], hasCoords?15:5);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19}).addTo(CHANTIER_MAP);
-      if (hasCoords) L.marker([lat,lng]).addTo(CHANTIER_MAP).bindPopup(chantier.nom).openPopup();
-    } catch(e) {}
-  }, 150);
+
+  // Init Leaflet map
+  setTimeout(() => initLeafletMap(mapId, chantier), 100);
   renderChantierContent();
   updateChantierActions();
+}
+
+function initLeafletMap(mapId, chantier) {
+  if (CHANTIER_MAP) { try { CHANTIER_MAP.remove(); } catch(e){} CHANTIER_MAP = null; }
+  const container = document.getElementById(mapId);
+  if (!container) return;
+  const hasCoords = chantier.lat && chantier.lng;
+  const lat = hasCoords ? chantier.lat : 46.603354;
+  const lng = hasCoords ? chantier.lng : 1.888334;
+  const zoom = hasCoords ? 15 : 5;
+  try {
+    CHANTIER_MAP = L.map(mapId, {zoomControl:false, attributionControl:false}).setView([lat, lng], zoom);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19}).addTo(CHANTIER_MAP);
+    if (hasCoords) {
+      L.marker([lat, lng]).addTo(CHANTIER_MAP).bindPopup(chantier.nom).openPopup();
+    }
+  } catch(e) { console.warn('Leaflet error:', e); }
 }
 
 function retourListeChantiers() {
@@ -2207,9 +2265,13 @@ function switchChantierTab(tab) {
 function renderChantierContent() {
   const el = document.getElementById('chantier-content');
   if (!el) return;
-  if (CHANTIER_TAB === 'pointage') renderChantierPointage();
-  else if (CHANTIER_TAB === 'total') renderChantierTotal();
-  else renderChantierLivraisons();
+  if (CHANTIER_TAB === 'pointage') {
+    renderChantierPointage();
+  } else if (CHANTIER_TAB === 'total') {
+    renderChantierTotal();
+  } else {
+    renderChantierLivraisons();
+  }
   updateChantierActions();
 }
 
@@ -2221,22 +2283,24 @@ function updateChantierActions() {
   if (fabEl) fabEl.style.display = CHANTIER_TAB === 'total' ? 'none' : 'flex';
   if (!CHANTIER_DETAIL) { el.innerHTML = ''; return; }
   if (!isAdmin) {
-    el.innerHTML = CHANTIER_TAB === 'livraisons' ? `<div class="ico-btn" onclick="exportXlsLivChef()">${XLS_ICO}</div>` : '';
+    if (CHANTIER_TAB === 'livraisons') {
+      el.innerHTML = `<div class="ico-btn" onclick="exportXlsLivChef()" title="Export Excel">${XLS_ICO}</div>`;
+    } else { el.innerHTML = ''; }
     return;
   }
   if (CHANTIER_TAB === 'livraisons') {
-    el.innerHTML = `<div class="ico-btn" onclick="exportXlsLivAdmin()">${XLS_ICO}</div>`;
+    el.innerHTML = `<div class="ico-btn" onclick="exportXlsLivAdmin()" title="Export Excel Livraisons">${XLS_ICO}</div>`;
   } else if (CHANTIER_TAB === 'pointage') {
     el.innerHTML = `
-      <div class="ico-btn" onclick="exportXlsPointageJour()">${XLS_ICO}</div>
-      <div class="ico-btn" onclick="exportXlsPointageSemaine()" style="margin-left:4px">
+      <div class="ico-btn" onclick="exportXlsPointageJour()" title="Export par jour">${XLS_ICO}</div>
+      <div class="ico-btn" onclick="exportXlsPointageSemaine()" title="Export semaine" style="margin-left:4px">
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2" width="18" height="18">
           <rect x="2" y="3" width="20" height="18" rx="2" stroke="currentColor"/>
           <path d="M8 3v18M16 3v18M2 9h20" stroke="currentColor"/>
         </svg>
       </div>`;
   } else if (CHANTIER_TAB === 'total') {
-    el.innerHTML = `<div class="ico-btn" onclick="exportXlsTotal()">${XLS_ICO}</div>`;
+    el.innerHTML = `<div class="ico-btn" onclick="exportXlsTotal()" title="Export Excel Total">${XLS_ICO}</div>`;
   } else { el.innerHTML = ''; }
 }
 
@@ -2249,22 +2313,24 @@ function chantierFab() {
   else nouvelleLivChantier();
 }
 
+// ── Modales Chantier (admin) ──────────────────────────────────────
 function ouvrirNouveauChantier() { ouvrirModalChantier(null); }
-function ouvrirEditionChantier(id) { ouvrirModalChantier(CHANTIERS_LIST.find(x => x.id === id)); }
-
-function ouvrirModalChantier(c) {
-  document.getElementById('mch-tit').textContent   = c ? 'Modifier le chantier' : 'Nouveau chantier';
-  document.getElementById('mch-id').value          = c ? c.id : '';
-  document.getElementById('mch-nom').value         = c ? c.nom : '';
-  document.getElementById('mch-loc').value         = c ? (c.localisation||'') : '';
-  document.getElementById('mch-lat').value         = c ? (c.lat||'') : '';
-  document.getElementById('mch-lng').value         = c ? (c.lng||'') : '';
-  document.getElementById('mch-debut').value       = c ? (c.date_debut||'') : '';
-  document.getElementById('mch-fin').value         = c ? (c.date_fin||'') : '';
-  document.getElementById('del-mch').style.display = c ? 'flex' : 'none';
-  om('mch');
+function ouvrirEditionChantier(id) {
+  const c = CHANTIERS_LIST.find(x => x.id === id);
+  ouvrirModalChantier(c);
 }
-  fm('mch');
+
+function ouvrirModalChantier(chantier) {
+  document.getElementById('mch-tit').textContent = chantier ? 'Modifier le chantier' : 'Nouveau chantier';
+  document.getElementById('mch-id').value = chantier ? chantier.id : '';
+  document.getElementById('mch-nom').value = chantier ? chantier.nom : '';
+  document.getElementById('mch-loc').value = chantier ? (chantier.localisation||'') : '';
+  document.getElementById('mch-lat').value = chantier ? (chantier.lat||'') : '';
+  document.getElementById('mch-lng').value = chantier ? (chantier.lng||'') : '';
+  document.getElementById('mch-debut').value = chantier ? (chantier.date_debut||'') : '';
+  document.getElementById('mch-fin').value   = chantier ? (chantier.date_fin||'') : '';
+  document.getElementById('del-mch').style.display = chantier ? 'flex' : 'none';
+  om('mch');
 }
 
 async function geocodeAdresse() {
@@ -2273,38 +2339,44 @@ async function geocodeAdresse() {
   try {
     const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(loc)}&format=json&limit=1`);
     const data = await r.json();
-    if (data?.[0]) {
+    if (data && data[0]) {
       document.getElementById('mch-lat').value = parseFloat(data[0].lat).toFixed(6);
       document.getElementById('mch-lng').value = parseFloat(data[0].lon).toFixed(6);
       toast('📍 Coordonnées trouvées !');
-    } else { toast('Adresse non trouvée'); }
-  } catch(e) { toast('Erreur géocodage'); }
+    } else {
+      toast('Adresse non trouvée — entrez les coords manuellement');
+    }
+  } catch(e) { toast('Erreur de géocodage'); }
 }
 
 async function savChantier() {
-  if (!(USER?.role === 'admin' || USER?.role === 'rh')) return;
+  const isAdmin = USER?.role === 'admin' || USER?.role === 'rh';
+  if (!isAdmin) return;
   const id  = document.getElementById('mch-id').value;
   const nom = document.getElementById('mch-nom').value.trim();
-  if (!nom) { toast('Nom obligatoire'); return; }
-  const payload = {
-    id: id ? parseInt(id) : null,
-    nom,
-    localisation: document.getElementById('mch-loc').value.trim(),
-    lat:          parseFloat(document.getElementById('mch-lat').value) || null,
-    lng:          parseFloat(document.getElementById('mch-lng').value) || null,
-    date_debut:   document.getElementById('mch-debut').value || null,
-    date_fin:     document.getElementById('mch-fin').value   || null,
-    cree_par:     USER?.nom || ''
-  };
+  const loc = document.getElementById('mch-loc').value.trim();
+  const lat = parseFloat(document.getElementById('mch-lat').value) || null;
+  const lng = parseFloat(document.getElementById('mch-lng').value) || null;
+  const dd  = document.getElementById('mch-debut').value || null;
+  const df  = document.getElementById('mch-fin').value   || null;
+  if (!nom) { toast('Le nom du chantier est obligatoire'); return; }
   try {
-    const r = await fetch('/api/chantiers', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+    const r = await fetch('/api/chantiers', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ id: id ? parseInt(id) : null, nom, localisation:loc, lat, lng, date_debut:dd, date_fin:df, cree_par: USER?.nom||'' })
+    });
     const d = await r.json();
     if (d.ok) {
       toast(id ? 'Chantier modifié ✓' : 'Chantier créé ✓');
       fm('mch');
       await chargerChantiers();
-      if (CHANTIER_DETAIL) renderChantierDetail(CHANTIERS_LIST.find(c => c.id === (id ? parseInt(id) : d.id)));
-      else renderChantierListe();
+      if (CHANTIER_DETAIL) {
+        CHANTIER_DETAIL = CHANTIERS_LIST.find(c => c.id === (id ? parseInt(id) : d.id));
+        renderChantierDetail(CHANTIER_DETAIL);
+      } else {
+        renderChantierListe();
+      }
     } else { toast('Erreur : ' + (d.erreur||'inconnue')); }
   } catch(e) { toast('Erreur réseau'); }
 }
@@ -2312,12 +2384,14 @@ async function savChantier() {
 async function delChantier() {
   const id = document.getElementById('mch-id').value;
   if (!id || !confirm('Supprimer ce chantier ?')) return;
-  await fetch('/api/chantiers/' + id, {method:'DELETE'});
-  toast('Chantier supprimé');
-  fm('mch');
-  CHANTIER_DETAIL = null;
-  await chargerChantiers();
-  renderChantierListe();
+  try {
+    await fetch('/api/chantiers/' + id, {method:'DELETE'});
+    toast('Chantier supprimé');
+    fm('mch');
+    CHANTIER_DETAIL = null;
+    await chargerChantiers();
+    renderChantierListe();
+  } catch(e) { toast('Erreur'); }
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -3215,6 +3289,9 @@ function renderTotalBody() {
       </div>`;
     }).join('')}`;
 }
+
+
+
 // ══════════════════════════════════════════════════════════════════
 // MODULE PERSONNEL
 // ══════════════════════════════════════════════════════════════════
@@ -3235,7 +3312,6 @@ function pgPersonnel() {
 
 async function initPersonnel() {
   await chargerPersonnel();
-  const isAdmin = USER?.role === 'admin' || USER?.role === 'rh';
   document.getElementById('fab').style.display = 'flex';
 }
 
@@ -3268,14 +3344,14 @@ function renderPersonnel(liste) {
       <div class="perso-card-top">
         <div class="perso-avatar">${initiale}</div>
         <div>
-          <div class="perso-nom">${p.prenom} ${p.nom}</div>
+          <div class="perso-nom">${p.prenom||''} ${p.nom}</div>
           <div class="perso-poste">${p.poste||'Poste non défini'}</div>
         </div>
       </div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap">
-        ${p.adresse?`<span class="perso-tag">📍 ${p.adresse}</span>`:''}
-        ${p.urgence_nom?`<span class="perso-tag">🚨 ${p.urgence_nom}</span>`:''}
-        ${isAdmin&&p.cout_horaire!=null?`<span class="perso-tag secret">💶 ${parseFloat(p.cout_horaire).toFixed(2)} €/h</span>`:''}
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">
+        ${p.adresse?`<span style="font-size:11px;color:var(--tx3)">📍 ${p.adresse}</span>`:''}
+        ${p.urgence_nom?`<span style="font-size:11px;color:var(--tx3)">🚨 ${p.urgence_nom}</span>`:''}
+        ${isAdmin&&p.cout_horaire!=null?`<span style="font-size:11px;color:var(--tx3)">💶 ${parseFloat(p.cout_horaire).toFixed(2)} €/h</span>`:''}
       </div>
     </div>`;
   }).join('');
@@ -3293,8 +3369,8 @@ function ouvrirModalPersonnel(p) {
   PERSO_EDIT_ID = p ? p.id : null;
   document.getElementById('mperso-tit').textContent   = p ? 'Fiche employé' : 'Nouvel employé';
   document.getElementById('mperso-nom').value         = p ? p.nom    : '';
-  document.getElementById('mperso-prenom').value      = p ? p.prenom : '';
-  document.getElementById('mperso-poste').value       = p ? p.poste  : '';
+  document.getElementById('mperso-prenom').value      = p ? (p.prenom||'') : '';
+  document.getElementById('mperso-poste').value       = p ? (p.poste||'')  : '';
   document.getElementById('mperso-adresse').value     = p ? (p.adresse||'')     : '';
   document.getElementById('mperso-urgnom').value      = p ? (p.urgence_nom||'') : '';
   document.getElementById('mperso-urgtel').value      = p ? (p.urgence_tel||'') : '';
@@ -3303,7 +3379,7 @@ function ouvrirModalPersonnel(p) {
   if (coutWrap) coutWrap.style.display = isAdmin ? 'flex' : 'none';
   if (isAdmin) document.getElementById('mperso-cout').value = p&&p.cout_horaire!=null ? p.cout_horaire : '';
   document.getElementById('del-mperso').style.display = (p && isAdmin) ? 'flex' : 'none';
-  fm('mperso');
+  om('mperso');
 }
 
 async function savPersonnel() {
@@ -3471,6 +3547,10 @@ async function delPersonnel() {
     <button class="btn bp" onclick="savStockAdj()">✓ Appliquer</button>
   </div>
 </div></div>
+
+
+</body>
+</html>
 <!-- MODAL NOUVEAU CHANTIER (admin) -->
 <div class="fmod" id="mch" onclick="if(event.target===this)fm('mch')"><div class="mod">
   <div class="poignee"></div>
@@ -3482,7 +3562,6 @@ async function delPersonnel() {
       <input id="mch-loc" placeholder="12 rue de la Paix, Lyon" style="flex:1"/>
       <button class="btn bs" style="width:auto;padding:0 14px;font-size:12px" onclick="geocodeAdresse()">📍</button>
     </div>
-    <div style="font-size:11px;color:var(--tx3);margin-top:4px">Appuyez sur 📍 pour localiser automatiquement</div>
   </div>
   <div style="display:flex;gap:8px">
     <div class="gch" style="flex:1"><label>Lat</label><input id="mch-lat" type="number" step="0.000001" placeholder="45.764"/></div>
@@ -3519,6 +3598,3 @@ async function delPersonnel() {
     <button class="btn bp" onclick="savPersonnel()">Enregistrer</button>
   </div>
 </div></div>
-
-</body>
-</html>
