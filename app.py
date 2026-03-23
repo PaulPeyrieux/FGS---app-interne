@@ -143,6 +143,7 @@ CREATE TABLE IF NOT EXISTS personnel (
     nom           TEXT NOT NULL,
     prenom        TEXT NOT NULL DEFAULT '',
     poste         TEXT NOT NULL DEFAULT '',
+    type_contrat  TEXT NOT NULL DEFAULT 'CDI',
     cout_horaire  NUMERIC(10,2),
     adresse       TEXT DEFAULT '',
     urgence_nom   TEXT DEFAULT '',
@@ -154,6 +155,10 @@ CREATE TABLE IF NOT EXISTS personnel (
 )
 """
 
+SCHEMA_PERSONNEL_MIGRATION = """
+ALTER TABLE personnel ADD COLUMN IF NOT EXISTS type_contrat TEXT NOT NULL DEFAULT 'CDI'
+"""
+
 def init_db():
     conn = get_conn()
     conn.run(SCHEMA_BD)
@@ -162,6 +167,10 @@ def init_db():
     conn.run(SCHEMA_PRIX_REF)
     conn.run(SCHEMA_CHANTIERS)
     conn.run(SCHEMA_PERSONNEL)
+    try:
+        conn.run(SCHEMA_PERSONNEL_MIGRATION)
+    except Exception:
+        pass  # colonne déjà présente
     rows = conn.run("SELECT COUNT(*) FROM fgs_data WHERE cle = 'bd'")
     if rows[0][0] == 0:
         conn.run(
@@ -712,11 +721,11 @@ def get_personnel():
         role = request.args.get("role", "chef")
         conn = get_conn()
         rows = conn.run(
-            "SELECT id, nom, prenom, poste, cout_horaire, adresse, urgence_nom, urgence_tel, notes, cree_par, cree_le "
+            "SELECT id, nom, prenom, poste, type_contrat, cout_horaire, adresse, urgence_nom, urgence_tel, notes, cree_par, cree_le "
             "FROM personnel ORDER BY nom, prenom"
         )
         conn.close()
-        cols = ["id", "nom", "prenom", "poste", "cout_horaire", "adresse",
+        cols = ["id", "nom", "prenom", "poste", "type_contrat", "cout_horaire", "adresse",
                 "urgence_nom", "urgence_tel", "notes", "cree_par", "cree_le"]
         result = []
         for row in rows:
@@ -743,6 +752,7 @@ def save_personnel():
         nom         = data.get("nom", "").strip()
         prenom      = data.get("prenom", "").strip()
         poste       = data.get("poste", "").strip()
+        type_contrat = data.get("type_contrat", "CDI").strip()
         cout_h      = data.get("cout_horaire")
         adresse     = data.get("adresse", "").strip()
         urgence_nom = data.get("urgence_nom", "").strip()
@@ -752,29 +762,31 @@ def save_personnel():
         role        = data.get("role", "chef")
         if not nom:
             return jsonify({"erreur": "Nom obligatoire"}), 400
+        if type_contrat not in ("CDI", "CDD", "Intérimaire"):
+            type_contrat = "CDI"
         cout_h = float(cout_h) if (cout_h is not None and role in ("admin", "rh")) else None
         conn = get_conn()
         if pid:
             if role in ("admin", "rh"):
                 conn.run(
-                    """UPDATE personnel SET nom=:nom, prenom=:prenom, poste=:poste, cout_horaire=:ch,
+                    """UPDATE personnel SET nom=:nom, prenom=:prenom, poste=:poste, type_contrat=:tc, cout_horaire=:ch,
                        adresse=:adr, urgence_nom=:un, urgence_tel=:ut, notes=:no, maj_le=NOW() WHERE id=:id""",
-                    nom=nom, prenom=prenom, poste=poste, ch=cout_h,
+                    nom=nom, prenom=prenom, poste=poste, tc=type_contrat, ch=cout_h,
                     adr=adresse, un=urgence_nom, ut=urgence_tel, no=notes, id=pid
                 )
             else:
                 conn.run(
-                    """UPDATE personnel SET nom=:nom, prenom=:prenom, poste=:poste,
+                    """UPDATE personnel SET nom=:nom, prenom=:prenom, poste=:poste, type_contrat=:tc,
                        adresse=:adr, urgence_nom=:un, urgence_tel=:ut, notes=:no, maj_le=NOW() WHERE id=:id""",
-                    nom=nom, prenom=prenom, poste=poste,
+                    nom=nom, prenom=prenom, poste=poste, tc=type_contrat,
                     adr=adresse, un=urgence_nom, ut=urgence_tel, no=notes, id=pid
                 )
             new_id = pid
         else:
             rows = conn.run(
-                """INSERT INTO personnel (nom, prenom, poste, cout_horaire, adresse, urgence_nom, urgence_tel, notes, cree_par)
-                   VALUES (:nom, :prenom, :poste, :ch, :adr, :un, :ut, :no, :cp) RETURNING id""",
-                nom=nom, prenom=prenom, poste=poste, ch=cout_h,
+                """INSERT INTO personnel (nom, prenom, poste, type_contrat, cout_horaire, adresse, urgence_nom, urgence_tel, notes, cree_par)
+                   VALUES (:nom, :prenom, :poste, :tc, :ch, :adr, :un, :ut, :no, :cp) RETURNING id""",
+                nom=nom, prenom=prenom, poste=poste, tc=type_contrat, ch=cout_h,
                 adr=adresse, un=urgence_nom, ut=urgence_tel, no=notes, cp=cree_par
             )
             new_id = rows[0][0]
