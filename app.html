@@ -1,6 +1,3 @@
-
-
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -1547,8 +1544,9 @@ async function exportBilanExcel() {
   <nav class="nav" id="main-nav">
     <!-- remplie par buildNav() selon le rôle -->
   </nav>
-  <button class="fab np" id="fab" onclick="fab()">
-    <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  <button class="fab np" id="fab" onclick="fab()" style="width:auto;min-width:54px;border-radius:28px;padding:0 18px;gap:6px;flex-direction:row">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;flex-shrink:0"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    <span id="fab-lbl" style="font-size:13px;font-weight:700;white-space:nowrap"></span>
   </button>
 </div>
 
@@ -1699,79 +1697,108 @@ async function exportBilanExcel() {
 
 const LOGO = 'data:image/jpeg;base64,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f6v7lbHyyQxvI5Y3B/Ujpv8Arn+12e02oSC12uioRJrn9zU7Y+bXhvlA34r+3S12y603ua6W6kroN77uphbI3fr04EIMbg+Q4pktpluGH3G319vbUPiklotd33o0XeHQnqDvz2o57H7mjg0XFwAF5uRJ30H+svUu0FFR2+lbS0FJBSU7PexQxhjG/AB0C/lLQ0VJTGmpaOnggJJMcUYa0k+J0OnXzQUpzR2c5neMk4zY1hUlzpKC6RVNgvYuEbO4o7e57XtZD797JfTcdePqOlYvi3c4s17MWQ3iwxyVcd1x2Spp2RDmcQ6Pm5dDxI6gj1gqTKaio6ajbR01LBBTMbythjjDWAeoNHTS/tHSUtFTMpqOmhpoIxpkUTAxjR7AOgQVe4k8QsLy7ghhOLYzkNHdb9V1tnjjt1M7nqGujfGX87B1ZrlOydKceOOQYrjvDO71OYUza621ELqX6X+L66R402Fg8S5x8CPDW/JbJRY/YaGvfcKKyW2lrH756iGlYyR2/HbgNleqsoaKtdC6so6epMEglhMsQf3bx4ObsdD7Qgq52arfcOHfEunsnFGmkiyC92eFmN11TVGVsNMzq63Nc4ANkYSNgeOh7N2rXmrLfQ1j4X1lFT1LoH95C6WIPMb/AOE3Y6H2helAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQf/9k=';
 
-// ── Auth (vérification côté serveur — mots de passe jamais dans le code) ──
+// ── Auth ──────────────────────────────────────────────────────────────
+// Comptes locaux (utilisés si le serveur Flask est injoignable)
+// IMPORTANT : changer ces mots de passe en production !
+const LOCAL_USERS = [
+  {identifiant:'admin',  mdp:'admin2024', nom:'Administrateur', role:'admin'},
+  {identifiant:'chef',   mdp:'chef2024',  nom:'Chef de chantier', role:'chef'},
+  {identifiant:'rh',     mdp:'rh2024',    nom:'RH',              role:'rh'},
+];
 let USER = null;
 async function login(){
   const id=V('lid'), pw=V('lpwd');
   const lbtn = document.querySelector('.lbtn');
   lbtn.textContent = 'Connexion...'; lbtn.disabled = true;
+  let loginOk = false;
   try {
-    const r = await fetch('/api/auth', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({identifiant:id, mdp:pw})
-    });
+    const r = await Promise.race([
+      fetch('/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({identifiant:id,mdp:pw})}),
+      new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),3000))
+    ]);
     const data = await r.json();
     if(data.ok){
-      USER = {identifiant:id, nom:data.nom, role: data.role||'chef'};
-
-      document.getElementById('login').style.display='none';
-      document.getElementById('app').classList.add('on');
-      init();
-    } else {
-      const e=document.getElementById('lerr');
-      e.style.display='block';
-      document.getElementById('lpwd').value='';
-      document.getElementById('lpwd').focus();
-      setTimeout(()=>e.style.display='none',3000);
+      USER={identifiant:id,nom:data.nom,role:data.role||'chef'};
+      loginOk=true;
     }
   } catch(err) {
+    // Serveur indisponible → fallback local
+    const u=LOCAL_USERS.find(x=>x.identifiant===id&&x.mdp===pw);
+    if(u){USER={identifiant:u.identifiant,nom:u.nom,role:u.role};loginOk=true;}
+  } finally { lbtn.textContent='Se connecter'; lbtn.disabled=false; }
+  if(loginOk){
+    document.getElementById('login').style.display='none';
+    document.getElementById('app').classList.add('on');
+    init();
+  } else {
     const e=document.getElementById('lerr');
-    e.textContent='Erreur serveur — réessayez';
+    e.textContent='Identifiant ou mot de passe incorrect';
     e.style.display='block';
-    setTimeout(()=>{ e.style.display='none'; e.textContent='Identifiant ou mot de passe incorrect'; },3000);
-  } finally {
-    lbtn.textContent='Se connecter'; lbtn.disabled=false;
+    document.getElementById('lpwd').value='';
+    document.getElementById('lpwd').focus();
+    setTimeout(()=>e.style.display='none',3000);
   }
 }
 function decon(){ if(!confirm('Se déconnecter ?'))return; USER=null; BD=null; document.getElementById('app').classList.remove('on'); document.getElementById('login').style.display='flex'; document.getElementById('lid').value=''; document.getElementById('lpwd').value=''; }
 
-// ── BD via API Flask ──────────────────────────────────────────────────
+// ── Suivi des modifications ────────────────────────────────────────────
+function trackModif(pageKey){
+  if(!BD) return;
+  if(!BD.dernieres_modifs) BD.dernieres_modifs={};
+  BD.dernieres_modifs[pageKey]={par:USER?.nom||'—',date:new Date().toISOString()};
+}
+function modifBadge(pageKey){
+  const m=(BD?.dernieres_modifs||{})[pageKey];
+  if(!m) return '';
+  return `<div style="font-size:10px;color:var(--tx3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px">✏️ <b>${m.par}</b> · ${fdts(m.date)}</div>`;
+}
+function fdts(iso){ // format date courte
+  if(!iso) return '—';
+  const d=new Date(iso);
+  return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'2-digit'})+' '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+}
+
+// ── BD via API Flask (avec fallback localStorage) ─────────────────────
+const _LS_KEY='fgs_bd_v1';
 let BD=null;
 async function load(){
   try{
-    const r=await fetch('/api/bd');
-    if(!r.ok){
-      const err=await r.json().catch(()=>({}));
-      throw new Error(err.erreur||('HTTP '+r.status));
-    }
+    const r=await Promise.race([
+      fetch('/api/bd'),
+      new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),4000))
+    ]);
+    if(!r.ok){const err=await r.json().catch(()=>({}));throw new Error(err.erreur||('HTTP '+r.status));}
     const data=await r.json();
-    if(data.erreur) throw new Error(data.erreur);
+    if(data.erreur)throw new Error(data.erreur);
     BD=data;
-  } catch(e){
-    const msg = e.message||'Erreur inconnue';
-    document.getElementById('main').innerHTML=`
-      <div style="padding:24px 20px;display:flex;flex-direction:column;gap:16px">
-        <div style="background:#FEF2F2;border:1.5px solid #FECACA;border-radius:14px;padding:20px">
-          <div style="font-size:15px;font-weight:700;color:#DC2626;margin-bottom:8px">❌ Impossible de charger les données</div>
-          <div style="font-size:13px;color:#7F1D1D;font-family:monospace;background:#fff;padding:10px;border-radius:8px;word-break:break-all">${msg}</div>
-        </div>
-        <div style="background:#F0FDF4;border:1.5px solid #BBF7D0;border-radius:14px;padding:16px;font-size:13px;color:#166534;line-height:1.7">
-          <b>À vérifier sur Render :</b><br>
-          1. La variable <b>DATABASE_URL</b> est-elle bien définie ?<br>
-          2. La base PostgreSQL est-elle dans la <b>même région</b> que le service web ?<br>
-          3. Allez sur <b>/api/sante</b> pour diagnostiquer la connexion.
-        </div>
-        <button onclick="location.reload()" style="background:#C0392B;color:#fff;border:none;border-radius:10px;padding:13px;font-size:15px;font-weight:700;cursor:pointer">🔄 Réessayer</button>
-      </div>`;
+    try{localStorage.setItem(_LS_KEY,JSON.stringify(BD));}catch(e){}
+  }catch(e){
+    const cached=localStorage.getItem(_LS_KEY);
+    if(cached){
+      try{BD=JSON.parse(cached);setTimeout(()=>toast('⚠️ Mode hors-ligne — données locales'),500);}
+      catch(pe){BD=_emptyBD();}
+    }else{
+      BD=_emptyBD();
+      setTimeout(()=>toast('⚠️ Mode hors-ligne — base vide'),500);
+    }
+    document.getElementById('main').innerHTML='';
   }
 }
+function _emptyBD(){return{machines:[],categories:[],pieces:[],livraisons:[],commandes:[],chantiers:[],personnel:[],anomalies:[],dernieres_modifs:{}};}
 async function save(){
   try{
-    const r=await fetch('/api/bd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(BD)});
+    const r=await Promise.race([
+      fetch('/api/bd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(BD)}),
+      new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),4000))
+    ]);
     if(!r.ok)throw new Error(r.status);
+    try{localStorage.setItem(_LS_KEY,JSON.stringify(BD));}catch(e){}
     return true;
-  }catch(e){toast('❌ Erreur de sauvegarde (serveur non joignable)');return false;}
+  }catch(e){
+    // Sauvegarde locale en fallback
+    try{localStorage.setItem(_LS_KEY,JSON.stringify(BD));toast('💾 Sauvegardé localement');return true;}
+    catch(le){toast('❌ Erreur de sauvegarde');return false;}
+  }
 }
 
 // ── Init ─────────────────────────────────────────────────────────────
@@ -1781,13 +1808,16 @@ async function init(){
   buildNav();
   if(BD){ render(); }
   // Charger chantiers et anomalies en arrière-plan
-  try { await chargerChantiers(); } catch(e){}
+  try { await chargerChantiers(); } catch(e){ CHANTIERS_LIST = BD?.chantiers||[]; }
   var isAdmin = USER && (USER.role==='admin' || USER.role==='rh');
   if(isAdmin){
     try {
-      var r = await fetch('/api/anomalies?role=admin');
+      const r = await Promise.race([
+        fetch('/api/anomalies?role=admin'),
+        new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),3000))
+      ]);
       ANOMALIES = await r.json();
-    } catch(e){}
+    } catch(e){ ANOMALIES = BD?.anomalies||[]; }
   }
   if(PAGE==='accueil') render();
 }
@@ -1860,6 +1890,7 @@ function render(){\
   else if(PAGE==='chantier'){m.innerHTML=pgChantier();initChantierTab();}
   else if(PAGE==='anomalie'){m.innerHTML=pgAnomalie();chargerAnomalies();}
   else if(PAGE==='personnel'){m.innerHTML=pgPersonnel();initPersonnel();}
+  updateFabLabel();
 }
 
 // ── Calculs ──────────────────────────────────────────────────────────
@@ -2091,12 +2122,15 @@ function pgParcMat(){
   var tabParc  = '<div class="sub-ni'+(p==='parc'?' on':'')+'" onclick="switchParcMatTab(\'parc\')">🏗 Parc</div>';
   var tabEnt   = '<div class="sub-ni'+(p==='entretien'?' on':'')+'" onclick="switchParcMatTab(\'entretien\')">🔧 Entretiens</div>';
   var tabPc    = '<div class="sub-ni'+(p==='pieces'?' on':'')+'" onclick="switchParcMatTab(\'pieces\')">📦 Pièces</div>';
+  var tabCmp   = '<div class="sub-ni'+(p==='compat'?' on':'')+'" onclick="switchParcMatTab(\'compat\')">🔗 Compat.</div>';
   var tabAno   = isAdmin ? '<div class="sub-ni'+(p==='anomalies'?' on':'')+'" onclick="switchParcMatTab(\'anomalies\')">⚠️ Anomalies</div>' : '';
-  return '<div class="ent"><div><h1>Parc matériel</h1></div><div class="ent-act" id="parcmat-act">'
+  return '<div class="ent"><div><h1>Parc matériel</h1>'
+    + modifBadge('parcmat')
+    + '</div><div class="ent-act" id="parcmat-act">'
     + (p==='parc' ? '<div class="ico-btn np" onclick="exportXlsParc()" title="Exporter Excel">'+XLS_ICO+'</div>' : '')
     + '</div></div>'
     + '<div class="pg on"><div class="sub-nav">'
-    + tabParc + tabEnt + tabPc + tabAno
+    + tabParc + tabEnt + tabPc + tabCmp + tabAno
     + '</div><div id="parcmat-content"></div><div style="height:80px"></div></div>';
 }
 
@@ -2104,39 +2138,98 @@ function switchParcMatTab(tab){
   PARCMAT_TAB = tab;
   // Update sub-nav
   var nis = document.querySelectorAll('.sub-nav .sub-ni');
-  var tabs = ['parc','entretien','pieces','anomalies'];
+  var tabs = ['parc','entretien','pieces','compat','anomalies'];
   nis.forEach(function(el,i){ el.classList.toggle('on', tabs[i]===tab); });
   // Update header export button
   var act = document.getElementById('parcmat-act');
   if(act) {
     if(tab==='parc') act.innerHTML = '<div class="ico-btn np" onclick="exportXlsParc()" title="Exporter Excel">'+XLS_ICO+'</div>';
     else if(tab==='entretien') act.innerHTML = '<div class="ico-btn np" onclick="exportXlsEntretiens()" title="Exporter Excel">'+XLS_ICO+'</div>';
-    else if(tab==='pieces') act.innerHTML = '<div class="ico-btn np" onclick="exportXlsPieces()" title="Exporter Excel">'+XLS_ICO+'</div>'; // set by renderPcContent
+    else if(tab==='pieces') act.innerHTML = '<div class="ico-btn np" onclick="exportXlsPieces()" title="Exporter Excel">'+XLS_ICO+'</div>';
     else act.innerHTML = '';
   }
   renderParcMatContent();
+  updateFabLabel();
 }
 
 function renderParcMatContent(){
   var el = document.getElementById('parcmat-content');
   if(!el) return;
   var fabEl = document.getElementById('fab');
-  // Masquer FAB sur onglet anomalies admin (lecture seule)
-  if(fabEl) fabEl.style.display = (PARCMAT_TAB==='anomalies') ? 'none' : 'flex';
+  // Masquer FAB sur onglets lecture seule
+  if(fabEl) fabEl.style.display = (PARCMAT_TAB==='anomalies'||PARCMAT_TAB==='compat') ? 'none' : 'flex';
   // Update action buttons in header
   var act = document.getElementById('parcmat-act');
-  if(act) act.innerHTML = ''; // reset, each tab sets its own
+  if(act) act.innerHTML = '';
   if(PARCMAT_TAB==='parc')      el.innerHTML = renderParcContent();
   else if(PARCMAT_TAB==='entretien') {
     el.innerHTML = renderEntContent();
-    // Add export button for entretiens
     if(act) act.innerHTML = '<div class="ico-btn np" onclick="exportXlsEntretiens()" title="Exporter Excel">'+XLS_ICO+'</div>';
   }
-  else if(PARCMAT_TAB==='pieces') el.innerHTML = renderPcContent(); // button set inside renderPcContent
+  else if(PARCMAT_TAB==='pieces') el.innerHTML = renderPcContent();
+  else if(PARCMAT_TAB==='compat') el.innerHTML = renderCompatContent();
   else if(PARCMAT_TAB==='anomalies') renderAdminAnomalies(el);
 }
 
-function renderParcContent(){
+function renderCompatContent(){
+  var q = (document.getElementById('compat-q')?.value||'').trim();
+  var resultHtml = '';
+  if(q){
+    // Cherche la pièce par référence exacte ou partielle
+    var matchs = BD.pieces.filter(function(p){
+      return p.ref && p.ref.toLowerCase().includes(q.toLowerCase());
+    });
+    if(!matchs.length){
+      resultHtml = '<div class="vide" style="padding:32px 0"><h3>Aucune pièce trouvée</h3><p>Vérifiez la référence saisie.</p></div>';
+    } else {
+      resultHtml = matchs.map(function(p){
+        var machines = (p.machinesCompatibles||[]).map(function(mid){
+          var m = BD.machines.find(function(x){return x.id===mid;});
+          return m ? '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--brd)">'
+            +'<span style="font-size:18px">'+(BD.categories.find(function(c){return c.id===m.catId;})||{icone:'🏗'}).icone+'</span>'
+            +'<div><div style="font-size:13px;font-weight:700">'+m.nom+'</div>'
+            +'<div style="font-size:11px;color:var(--tx3)">'+(m.modele||'')+(m.serie?' · N°'+m.serie:'')+'</div></div>'
+            +'</div>' : '';
+        }).filter(Boolean).join('');
+        var machinesAlt = (p.machinesAussiCompatibles||[]).map(function(mid){
+          var m = BD.machines.find(function(x){return x.id===mid;});
+          return m ? '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--brd)">'
+            +'<span style="font-size:18px">'+(BD.categories.find(function(c){return c.id===m.catId;})||{icone:'🏗'}).icone+'</span>'
+            +'<div><div style="font-size:13px;font-weight:600;color:var(--tx2)">'+m.nom+'</div>'
+            +'<div style="font-size:11px;color:var(--tx3)">'+(m.modele||'')+(m.serie?' · N°'+m.serie:'')+'</div></div>'
+            +'</div>' : '';
+        }).filter(Boolean).join('');
+        var stockColor = p.stock<=0?'var(--da)':p.stock<=3?'var(--wa)':'var(--ok)';
+        var stockBg = p.stock<=0?'var(--da-bg)':p.stock<=3?'var(--wa-bg)':'var(--ok-bg)';
+        var stockBd = p.stock<=0?'var(--da-b)':p.stock<=3?'var(--wa-b)':'var(--ok-b)';
+        return '<div class="carte" style="margin-bottom:10px">'
+          +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">'
+          +'<div><div style="font-size:15px;font-weight:800">'+p.nom+'</div>'
+          +'<div style="font-size:12px;color:var(--tx3);font-family:monospace;margin-top:2px">'+p.ref+'</div></div>'
+          +'<span style="flex-shrink:0;padding:4px 12px;border-radius:20px;font-size:13px;font-weight:700;font-family:monospace;background:'+stockBg+';color:'+stockColor+';border:1px solid '+stockBd+'">Stock : '+(p.stock||0)+'</span>'
+          +'</div>'
+          +(machines ? '<div style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Machines compatibles</div>'+machines : '<div style="font-size:12px;color:var(--tx3);padding:6px 0">Aucune machine principale associée</div>')
+          +(machinesAlt ? '<div style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.8px;margin-top:10px;margin-bottom:6px">Aussi compatibles</div>'+machinesAlt : '')
+          +'</div>';
+      }).join('');
+    }
+  }
+  return '<div style="padding:12px 0">'
+    +'<div style="background:var(--sur);border:1px solid var(--brd);border-radius:var(--r);padding:16px;box-shadow:var(--sh2);margin-bottom:14px">'
+    +'<div style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Rechercher une pièce par référence</div>'
+    +'<div style="display:flex;gap:8px">'
+    +'<input id="compat-q" value="'+q+'" placeholder="ex: HYD-42, filtre…" style="flex:1;background:var(--sur2);border:1px solid var(--brd);border-radius:var(--r2);padding:11px 14px;font-size:14px;font-family:var(--fn);color:var(--tx);outline:none" onkeydown="if(event.key===\'Enter\')rechercherCompat()"/>'
+    +'<button onclick="rechercherCompat()" style="padding:0 18px;background:var(--acc);color:#fff;border:none;border-radius:var(--r2);font-family:var(--fn);font-size:13px;font-weight:700;cursor:pointer">Rechercher</button>'
+    +'</div></div>'
+    + resultHtml
+    +'</div>';
+}
+function rechercherCompat(){
+  var el = document.getElementById('parcmat-content');
+  if(el) el.innerHTML = renderCompatContent();
+  // Re-focus input
+  setTimeout(function(){ var i=document.getElementById('compat-q'); if(i){i.focus();i.select();} },50);
+}
   var cats = BD.categories.map(function(c){
     var n = BD.machines.filter(function(m){return m.catId===c.id;}).length;
     return '<div class="ecat" onclick="ouvrirCat(\''+c.id+'\')">'
@@ -2565,7 +2658,7 @@ function pgLiv(){
     }).join('') : `<div class="vide" style="padding:32px 16px"><h3>Aucune commande</h3></div>`}`;
 
   return `<div class="ent">
-    <div><h1>Réceptions</h1></div>
+    <div><h1>Réceptions</h1>${modifBadge('livraisons')}</div>
     <div class="ent-act" id="liv-act"></div>
   </div>
   <div class="sub-nav" style="position:sticky;top:57px;z-index:49">
@@ -2661,7 +2754,7 @@ async function savCommande() {
   } else {
     BD.commandes.push({id:'CMD-'+Date.now(), numero, date, fournisseur:fourn, lignes:CMD_LIGNES});
   }
-  if(await save()){toast('Commande enregistrée ✓');fm('mc');render();}
+  if(await save()){trackModif('livraisons');toast('Commande enregistrée ✓');fm('mc');render();}
 }
 
 async function delCommande() {
@@ -2727,7 +2820,24 @@ async function _validerReceptionCmd(cmdId) {
   });
   if(!nbReceptionnes){toast('Aucune référence cochée');return;}
   document.getElementById('_inline-overlay')?.remove();
-  if(await save()){toast(`${nbReceptionnes} référence${nbReceptionnes>1?'s':''} réceptionnée${nbReceptionnes>1?'s':''} ✓`);render();}
+  if(await save()){trackModif('livraisons');toast(`${nbReceptionnes} référence${nbReceptionnes>1?'s':''} réceptionnée${nbReceptionnes>1?'s':''} ✓`);render();}
+}
+
+// ── FAB label contextuel ──────────────────────────────────────────────
+function updateFabLabel(){
+  var lbl = document.getElementById('fab-lbl');
+  if(!lbl) return;
+  if(PAGE==='parcmat'){
+    if(PARCMAT_TAB==='parc')       lbl.textContent='Nouvelle machine';
+    else if(PARCMAT_TAB==='entretien') lbl.textContent='Nouvelle intervention';
+    else if(PARCMAT_TAB==='pieces')    lbl.textContent='Nouvelle pièce';
+    else lbl.textContent='';
+  } else if(PAGE==='livraisons'){
+    lbl.textContent = LIV_TAB==='commandes' ? 'Nouvelle commande' : 'Nouvelle réception';
+  } else if(PAGE==='chantier')   lbl.textContent='Nouveau chantier';
+  else if(PAGE==='anomalie')     lbl.textContent='Nouvelle anomalie';
+  else if(PAGE==='personnel')    lbl.textContent='Nouvel employé';
+  else lbl.textContent='';
 }
 
 // ── FAB ───────────────────────────────────────────────────────────────
@@ -2761,7 +2871,7 @@ async function savMach(){
   const d={catId:V('f-cat'),nom,modele:V('f-mod').trim(),annee:parseInt(V('f-an'))||null,heures:parseInt(V('f-h'))||0,hEntretien:parseInt(V('f-he'))||0,seuil:parseInt(V('f-se'))||250,vgp:V('f-vgp')||null,site:V('f-site').trim()||null,serie:V('f-ser').trim()||null,poids:parseInt(V('f-po'))||null};
   if(MOD_ID)Object.assign(BD.machines.find(x=>x.id===MOD_ID),d);
   else BD.machines.push({id:'EQ-'+Date.now(),...d,piecesAssociees:[]});
-  if(await save()){toast(MOD_ID?'Machine mise à jour ✓':'Machine ajoutée ✓');fm('mm');render();}
+  if(await save()){trackModif('parcmat');toast(MOD_ID?'Machine mise à jour ✓':'Machine ajoutée ✓');fm('mm');render();}
 }
 async function delMach(){
   if(!confirm('Supprimer cette machine et tout son historique ?'))return;
@@ -2830,7 +2940,7 @@ async function savPiece(){
   const d={nom,ref,dureeVal:parseInt(V('p-dv'))||0,dureeUnite:V('p-du'),stock:parseInt(V('p-st'))||0,notes:V('p-no').trim()||null,machinesCompatibles:getSelMachines(),machinesAussiCompatibles:getSelMachinesAlt()};
   if(MOD_ID)Object.assign(BD.pieces.find(x=>x.id===MOD_ID),d);
   else BD.pieces.push({id:'P-'+Date.now(),...d});
-  if(await save()){toast(MOD_ID?'Pièce mise à jour ✓':'Pièce ajoutée ✓');fm('mp');render();}
+  if(await save()){trackModif('parcmat');toast(MOD_ID?'Pièce mise à jour ✓':'Pièce ajoutée ✓');fm('mp');render();}
 }
 async function delPiece(){
   if(!confirm('Supprimer cette pièce ?'))return;
@@ -2983,7 +3093,7 @@ async function savInt(){
   }
   if(MOD_INT)Object.assign(BD.interventions.find(x=>x.id===MOD_INT),d);
   else{MOD_INT='I-'+Date.now();BD.interventions.push({id:MOD_INT,...d});}
-  if(await save()){toast('Intervention enregistrée ✓');fm('mi');render();}
+  if(await save()){trackModif('parcmat');toast('Intervention enregistrée ✓');fm('mi');render();}
 }
 async function delInt(){
   if(!confirm('Supprimer cette intervention ?'))return;
@@ -5369,10 +5479,16 @@ async function initChantierTab() {
 
 async function chargerChantiers() {
   try {
-    const r = await fetch('/api/chantiers');
+    const r = await Promise.race([
+      fetch('/api/chantiers'),
+      new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),3000))
+    ]);
     CHANTIERS_LIST = await r.json();
     if (CHANTIERS_LIST.erreur) CHANTIERS_LIST = [];
-  } catch(e) { CHANTIERS_LIST = []; }
+  } catch(e) {
+    // Fallback : utiliser les chantiers stockés dans BD locale
+    CHANTIERS_LIST = BD?.chantiers || [];
+  }
 }
 
 // ── LISTE des chantiers ───────────────────────────────────────────
@@ -5408,7 +5524,7 @@ function renderChantierListe() {
 
   el.innerHTML = `
     <div class="ent">
-      <div><h1>Chantiers</h1></div>
+      <div><h1>Chantiers</h1>${modifBadge('chantier')}</div>
       ${isAdmin ? `<div class="ent-act"><div class="ico-btn" onclick="ouvrirNouveauChantier()" title="Nouveau chantier">
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2" width="17" height="17"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </div></div>` : ''}
@@ -5664,38 +5780,56 @@ async function savChantier() {
   const dd  = document.getElementById('mch-debut').value || null;
   const df  = document.getElementById('mch-fin').value   || null;
   if (!nom) { toast('Le nom du chantier est obligatoire'); return; }
+  const payload = { id: id ? parseInt(id) : null, nom, localisation:loc, lat, lng, date_debut:dd, date_fin:df, cree_par: USER?.nom||'' };
+  let savedOk = false;
+  let newId = null;
   try {
-    const r = await fetch('/api/chantiers', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ id: id ? parseInt(id) : null, nom, localisation:loc, lat, lng, date_debut:dd, date_fin:df, cree_par: USER?.nom||'' })
-    });
+    const r = await Promise.race([
+      fetch('/api/chantiers',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}),
+      new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),3000))
+    ]);
     const d = await r.json();
-    if (d.ok) {
-      toast(id ? 'Chantier modifié ✓' : 'Chantier créé ✓');
-      fm('mch');
-      await chargerChantiers();
-      if (CHANTIER_DETAIL) {
-        CHANTIER_DETAIL = CHANTIERS_LIST.find(c => c.id === (id ? parseInt(id) : d.id));
-        renderChantierDetail(CHANTIER_DETAIL);
-      } else {
-        renderChantierListe();
-      }
-    } else { toast('Erreur : ' + (d.erreur||'inconnue')); }
-  } catch(e) { toast('Erreur réseau'); }
+    if (d.ok) { savedOk=true; newId=d.id; }
+    else { toast('Erreur : ' + (d.erreur||'inconnue')); return; }
+  } catch(e) {
+    // Fallback local
+    if(!BD.chantiers) BD.chantiers=[];
+    if(id){ const c=BD.chantiers.find(x=>String(x.id)===String(id)); if(c) Object.assign(c,{nom,localisation:loc,lat,lng,date_debut:dd,date_fin:df}); }
+    else { newId='CH-'+Date.now(); BD.chantiers.push({id:newId,nom,localisation:loc,lat,lng,date_debut:dd,date_fin:df,cree_par:USER?.nom||''}); }
+    await save();
+    savedOk=true;
+  }
+  if(savedOk){
+    trackModif('chantier');
+    toast(id ? 'Chantier modifié ✓' : 'Chantier créé ✓');
+    fm('mch');
+    await chargerChantiers();
+    if (CHANTIER_DETAIL) {
+      CHANTIER_DETAIL = CHANTIERS_LIST.find(c => String(c.id) === String(id||newId));
+      renderChantierDetail(CHANTIER_DETAIL);
+    } else {
+      renderChantierListe();
+    }
+  }
 }
 
 async function delChantier() {
   const id = document.getElementById('mch-id').value;
   if (!id || !confirm('Supprimer ce chantier ?')) return;
   try {
-    await fetch('/api/chantiers/' + id, {method:'DELETE'});
-    toast('Chantier supprimé');
-    fm('mch');
-    CHANTIER_DETAIL = null;
-    await chargerChantiers();
-    renderChantierListe();
-  } catch(e) { toast('Erreur'); }
+    await Promise.race([
+      fetch('/api/chantiers/' + id, {method:'DELETE'}),
+      new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),3000))
+    ]);
+  } catch(e) {
+    if(BD.chantiers) BD.chantiers=BD.chantiers.filter(x=>String(x.id)!==String(id));
+    await save();
+  }
+  toast('Chantier supprimé');
+  fm('mch');
+  CHANTIER_DETAIL = null;
+  await chargerChantiers();
+  renderChantierListe();
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -6159,14 +6293,19 @@ let ANO_EDIT_ID = null;
 
 async function chargerAnomalies() {
   try {
-    const r = await fetch('/api/anomalies?role='+encodeURIComponent(USER?.role||'chef')+'&auteur='+encodeURIComponent(USER?.nom||''));
+    const r = await Promise.race([
+      fetch('/api/anomalies?role='+encodeURIComponent(USER?.role||'chef')+'&auteur='+encodeURIComponent(USER?.nom||'')),
+      new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),3000))
+    ]);
     ANOMALIES = await r.json();
-    renderListeAnomalies();
-  } catch(e){ toast('Erreur chargement anomalies'); }
+  } catch(e){
+    ANOMALIES = BD?.anomalies || [];
+  }
+  renderListeAnomalies();
 }
 
 function pgAnomalie(){
-  return '<div class="ent"><div><h1>Fiches d\'anomalie</h1></div>'
+  return '<div class="ent"><div><h1>Fiches d\'anomalie</h1>'+modifBadge('anomalie')+'</div>'
     + '<div class="ent-act"><button class="btn bp np" style="padding:8px 14px;font-size:13px" onclick="ouvrirNouvelleAnomalie()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" style="margin-right:4px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nouvelle</button></div></div>'
     + '<div class="pg on"><div id="ano-liste"><div class="spin-c"><div class="spin"></div>Chargement...</div></div>'
     + '<div style="height:80px"></div></div>';
@@ -6660,7 +6799,7 @@ let PERSO_HEURES_MOIS = ''; // YYYY-MM sélectionné
 function pgPersonnel() {
   const ptOn  = PERSONNEL_TAB==='liste' ? ' on' : '';
   const heOn  = PERSONNEL_TAB==='heures' ? ' on' : '';
-  return `<div class="ent"><div><h1>Personnel</h1></div><div class="ent-act" id="perso-act"></div></div>
+  return `<div class="ent"><div><h1>Personnel</h1>${modifBadge('personnel')}</div><div class="ent-act" id="perso-act"></div></div>
   <div class="sub-nav" style="position:sticky;top:57px;z-index:49">
     <div class="sub-ni${ptOn}" onclick="switchPersonnelTab('liste')">👷 Liste</div>
     <div class="sub-ni${heOn}" onclick="switchPersonnelTab('heures')">⏱ Heures</div>
@@ -6846,10 +6985,15 @@ async function initPersonnel() {
 async function chargerPersonnel() {
   const role = USER?.role || 'chef';
   try {
-    const r = await fetch(`/api/personnel?role=${encodeURIComponent(role)}`);
+    const r = await Promise.race([
+      fetch(`/api/personnel?role=${encodeURIComponent(role)}`),
+      new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),3000))
+    ]);
     PERSONNEL_DATA = await r.json();
     if (PERSONNEL_DATA.erreur) PERSONNEL_DATA = [];
-  } catch(e) { PERSONNEL_DATA = []; }
+  } catch(e) {
+    PERSONNEL_DATA = BD?.personnel || [];
+  }
 }
 
 function filtrerPersonnel() {
@@ -7036,6 +7180,7 @@ async function savPersonnel() {
       const pid = PERSO_EDIT_ID || d.id || nom;
       BD.competencesPersonnel[pid] = COMP_EDIT;
       await save();
+      trackModif('personnel');
       toast(PERSO_EDIT_ID?'Employé modifié ✓':'Employé ajouté ✓');
       fm('mperso');
       await chargerPersonnel();
