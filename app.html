@@ -2644,11 +2644,17 @@ function pgEnt(){
 // ── Pièces ────────────────────────────────────────────────────────────
 // ── Calculs besoins pièces ──────────────────────────────────────────
 function calculerBesoinsPiece(pieceId) {
-  // Besoin = machines sur lesquelles cette pièce est MONTÉE et suivie (piecesAssociees)
-  // = 1 pièce de rechange par machine → avoir 1 en avance par machine
-  const engins = BD.machines.filter(m =>
-    (m.piecesAssociees||[]).some(pa => pa.pieceId === pieceId)
-  );
+  // Besoin = toutes les machines pour lesquelles cette pièce est PRINCIPALE
+  // Sources : piecesAssociees sur la machine OU machinesCompatibles sur la pièce
+  const piece = BD.pieces.find(x => x.id === pieceId);
+  const machinesViaCompat = new Set(piece ? (piece.machinesCompatibles||[]) : []);
+  const enginsSet = new Map(); // id -> machine (dédupliqué)
+  BD.machines.forEach(m => {
+    const viaAssoc = (m.piecesAssociees||[]).some(pa => pa.pieceId === pieceId);
+    const viaCompat = machinesViaCompat.has(m.id);
+    if(viaAssoc || viaCompat) enginsSet.set(m.id, m);
+  });
+  const engins = [...enginsSet.values()];
   return { besoin: engins.length, engins };
 }
 
