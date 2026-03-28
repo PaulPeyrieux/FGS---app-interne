@@ -2906,13 +2906,40 @@ function renderCommandeContent(){
 
   const cmds=[...BD.commandes].sort((a,b)=>new Date(b.date)-new Date(a.date));
 
-  return `<div class="carte" style="border:2px dashed var(--in);background:var(--in-bg);margin-bottom:12px">
-    <div style="font-size:14px;font-weight:700;color:var(--in);margin-bottom:4px">🛒 Besoins automatiques${cmdBadge}</div>
-    <div style="font-size:13px;color:var(--tx2);margin-bottom:12px;line-height:1.5">Calculé : 1 pièce de réserve par machine utilisant la même référence.</div>
-    <button class="btn" style="background:var(--in);color:#fff" onclick="ouvrirNouvelleCommandeAuto()">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      Créer un bon de commande
-    </button>
+  // Calcul rapide des manquants pour affichage
+  const lignesAuto = [];
+  BD.pieces.forEach(p=>{
+    const b=calculerBesoinsPiece(p.id);
+    if(b.besoin===0) return;
+    const manque=Math.max(b.besoin-(p.stock||0),0);
+    if(manque>0) lignesAuto.push({ref:p.ref, nom:p.nom, qte:manque, recu:false, engins:b.engins});
+  });
+  const nbRefs = lignesAuto.length;
+  const totalQte = lignesAuto.reduce((s,l)=>s+l.qte,0);
+
+  return `<div class="carte" style="padding:0;overflow:hidden;margin-bottom:12px">
+    <div style="padding:12px 16px;border-bottom:1px solid var(--brd);display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:14px;font-weight:700;color:var(--tx)">🤖 Auto-commande${cmdBadge}</div>
+        <div style="font-size:12px;color:var(--tx3);margin-top:2px">1 pièce de réserve par machine utilisant chaque référence principale</div>
+      </div>
+    </div>
+    <div style="padding:12px 16px">
+      ${nbRefs===0
+        ? `<div style="font-size:13px;color:var(--ok);font-weight:600;padding:4px 0">✓ Tous les stocks sont suffisants</div>`
+        : `<div style="font-size:13px;color:var(--da);font-weight:600;margin-bottom:10px">⚠ ${nbRefs} référence${nbRefs>1?'s':''} manquante${nbRefs>1?'s':''} · ${totalQte} pièce${totalQte>1?'s':''} à commander</div>
+           <div style="display:flex;gap:8px;flex-wrap:wrap">
+             <button class="btn" style="background:var(--da);color:#fff;flex:1" onclick="autoCommandeImmediatePDF()">
+               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+               PDF + QR direct
+             </button>
+             <button class="btn" style="background:var(--in);color:#fff;flex:1" onclick="ouvrirNouvelleCommandeAuto()">
+               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+               Éditer avant envoi
+             </button>
+           </div>`
+      }
+    </div>
   </div>
   <div class="ts">Bons de commande existants</div>
   ${cmds.length ? cmds.map(c=>{
@@ -2957,6 +2984,29 @@ function ouvrirNouvelleCommandeAuto(){
   if(dl) dl.innerHTML=BD.pieces.map(p=>`<option value="${p.ref}">${p.nom}</option>`).join('');
   renderCmdLignes();
   om('mc');
+}
+
+function autoCommandeImmediatePDF(){
+  // Calcule les manquants, crée un BC, l'enregistre et imprime direct
+  const lignes=[];
+  BD.pieces.forEach(p=>{
+    const b=calculerBesoinsPiece(p.id);
+    if(b.besoin===0) return;
+    const manque=Math.max(b.besoin-(p.stock||0),0);
+    if(manque>0) lignes.push({ref:p.ref, nom:p.nom, qte:manque, recu:false});
+  });
+  if(!lignes.length){toast('Tous les stocks sont suffisants ✓');return;}
+  const num = _genNumCommande();
+  const date = new Date().toISOString().split('T')[0];
+  if(!BD.commandes) BD.commandes=[];
+  const cmd = {id:'CMD-'+Date.now(), numero:num, date, fournisseur:'', lignes};
+  BD.commandes.push(cmd);
+  save().then(()=>{
+    trackModif('magasin');
+    render();
+    _imprimerBCAvecQR(cmd);
+    toast(`BC #${num} créé et envoyé en impression ✓`);
+  });
 }
 
 function imprimerBonCommande(cmdId){
