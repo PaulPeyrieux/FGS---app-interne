@@ -1717,26 +1717,26 @@ async function login(){
     e.textContent='Remplissez les deux champs';e.style.display='block';
     setTimeout(()=>e.style.display='none',3000);return;
   }
-  const lbtn = document.querySelector('.lbtn');
+  const lbtn=document.querySelector('.lbtn');
   lbtn.textContent='Connexion…';lbtn.disabled=true;
   let loginOk=false;
 
-  // 1. Vérification locale d'abord (fonctionne sans serveur)
-  const uLocal=LOCAL_USERS.find(x=>x.identifiant===id&&x.mdp===pw);
-  if(uLocal){USER={identifiant:uLocal.identifiant,nom:uLocal.nom,role:uLocal.role};loginOk=true;}
+  // 1. Serveur Render en priorité (comptes créés sur Render)
+  try{
+    const r=await Promise.race([
+      fetch('/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({identifiant:id,mdp:pw})}),
+      new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),3000))
+    ]);
+    if(r.ok){
+      const data=await r.json();
+      if(data.ok){USER={identifiant:id,nom:data.nom||id,role:data.role||'chef'};loginOk=true;}
+    }
+  }catch(e){/* serveur indisponible → fallback local ci-dessous */}
 
-  // 2. Tentative serveur (optionnel — enrichit avec les comptes serveur)
+  // 2. Fallback local uniquement si le serveur est inaccessible
   if(!loginOk){
-    try{
-      const r=await Promise.race([
-        fetch('/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({identifiant:id,mdp:pw})}),
-        new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),3000))
-      ]);
-      if(r.ok){
-        const data=await r.json();
-        if(data.ok){USER={identifiant:id,nom:data.nom||id,role:data.role||'chef'};loginOk=true;}
-      }
-    }catch(e){/* serveur indisponible — OK, fallback local déjà tenté */}
+    const uLocal=LOCAL_USERS.find(x=>x.identifiant===id&&x.mdp===pw);
+    if(uLocal){USER={identifiant:uLocal.identifiant,nom:uLocal.nom,role:uLocal.role};loginOk=true;}
   }
 
   lbtn.textContent='Se connecter';lbtn.disabled=false;
