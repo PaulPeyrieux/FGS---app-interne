@@ -1,3 +1,7 @@
+
+
+
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -1707,33 +1711,42 @@ const LOCAL_USERS = [
 ];
 let USER = null;
 async function login(){
-  const id=V('lid'), pw=V('lpwd');
+  const id=V('lid').trim(), pw=V('lpwd');
+  if(!id||!pw){
+    const e=document.getElementById('lerr');
+    e.textContent='Remplissez les deux champs';e.style.display='block';
+    setTimeout(()=>e.style.display='none',3000);return;
+  }
   const lbtn = document.querySelector('.lbtn');
-  lbtn.textContent = 'Connexion...'; lbtn.disabled = true;
-  let loginOk = false;
-  try {
-    const r = await Promise.race([
-      fetch('/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({identifiant:id,mdp:pw})}),
-      new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),3000))
-    ]);
-    const data = await r.json();
-    if(data.ok){
-      USER={identifiant:id,nom:data.nom,role:data.role||'chef'};
-      loginOk=true;
-    }
-  } catch(err) {
-    // Serveur indisponible → fallback local
-    const u=LOCAL_USERS.find(x=>x.identifiant===id&&x.mdp===pw);
-    if(u){USER={identifiant:u.identifiant,nom:u.nom,role:u.role};loginOk=true;}
-  } finally { lbtn.textContent='Se connecter'; lbtn.disabled=false; }
+  lbtn.textContent='Connexion…';lbtn.disabled=true;
+  let loginOk=false;
+
+  // 1. Vérification locale d'abord (fonctionne sans serveur)
+  const uLocal=LOCAL_USERS.find(x=>x.identifiant===id&&x.mdp===pw);
+  if(uLocal){USER={identifiant:uLocal.identifiant,nom:uLocal.nom,role:uLocal.role};loginOk=true;}
+
+  // 2. Tentative serveur (optionnel — enrichit avec les comptes serveur)
+  if(!loginOk){
+    try{
+      const r=await Promise.race([
+        fetch('/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({identifiant:id,mdp:pw})}),
+        new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),3000))
+      ]);
+      if(r.ok){
+        const data=await r.json();
+        if(data.ok){USER={identifiant:id,nom:data.nom||id,role:data.role||'chef'};loginOk=true;}
+      }
+    }catch(e){/* serveur indisponible — OK, fallback local déjà tenté */}
+  }
+
+  lbtn.textContent='Se connecter';lbtn.disabled=false;
   if(loginOk){
     document.getElementById('login').style.display='none';
     document.getElementById('app').classList.add('on');
     init();
-  } else {
+  }else{
     const e=document.getElementById('lerr');
-    e.textContent='Identifiant ou mot de passe incorrect';
-    e.style.display='block';
+    e.textContent='Identifiant ou mot de passe incorrect';e.style.display='block';
     document.getElementById('lpwd').value='';
     document.getElementById('lpwd').focus();
     setTimeout(()=>e.style.display='none',3000);
