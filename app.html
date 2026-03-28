@@ -1941,10 +1941,16 @@ function pgHome(){
   const entretiensEnRetard = BD.machines.filter(m => stMach(m) === 'da').length;
   const vgpEnRetard = BD.machines.filter(m => stVgp(m) === 'da').length;
   const now60 = new Date(); now60.setDate(now60.getDate() + 60);
+  const nowDate = new Date();
+  let formationsExpired = 0;
   let formationsExpiring = 0;
   (PERSONNEL_DATA || []).forEach(p => {
     (p.competences||[]).forEach(c => {
-      if (c.date_fin && new Date(c.date_fin) <= now60) formationsExpiring++;
+      if (c.date_fin) {
+        const df = new Date(c.date_fin);
+        if (df < nowDate) formationsExpired++;
+        else if (df <= now60) formationsExpiring++;
+      }
     });
   });
 
@@ -2007,11 +2013,12 @@ function pgHome(){
     </div>
 
     <!-- ── ALERTES ── -->
-    ${(entretiensEnRetard > 0 || vgpEnRetard > 0 || formationsExpiring > 0) ? `
+    ${(entretiensEnRetard > 0 || vgpEnRetard > 0 || formationsExpired > 0 || formationsExpiring > 0) ? `
     <div style="background:var(--da-bg);border:1px solid var(--da-b);border-radius:14px;padding:12px 16px;display:flex;flex-direction:column;gap:6px">
       <div style="font-size:10px;font-weight:700;color:var(--da);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">⚠️ Alertes</div>
       ${entretiensEnRetard>0?`<div style="font-size:13px;color:var(--da);font-weight:600;cursor:pointer" onclick="nav('parcmat')">🔧 ${entretiensEnRetard} entretien${entretiensEnRetard>1?'s':''} en retard</div>`:''}
       ${vgpEnRetard>0?`<div style="font-size:13px;color:var(--da);font-weight:600;cursor:pointer" onclick="nav('parcmat')">📋 ${vgpEnRetard} VGP expirée${vgpEnRetard>1?'s':''}</div>`:''}
+      ${formationsExpired>0?`<div style="font-size:13px;color:var(--da);font-weight:600;cursor:pointer" onclick="nav('personnel')">🎓 ${formationsExpired} formation${formationsExpired>1?'s':''} expirée${formationsExpired>1?'s':''} — à renouveler</div>`:''}
       ${formationsExpiring>0?`<div style="font-size:13px;color:var(--wa);font-weight:600;cursor:pointer" onclick="nav('personnel')">🎓 ${formationsExpiring} formation${formationsExpiring>1?'s':''} à renouveler (dans 60j)</div>`:''}
     </div>` : ''}
 
