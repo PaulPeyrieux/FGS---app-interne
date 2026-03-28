@@ -1050,6 +1050,30 @@ input:focus, select:focus, textarea:focus {
 .gantt-bar.a_venir { background:var(--in); }
 .gantt-bar.termine { background:var(--brd2); }
 .gantt-nav { display:flex;gap:4px; }
+
+/* ── Sync temps réel ── */
+#sync-dot {
+  position: fixed;
+  top: 12px;
+  right: 14px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ok);
+  opacity: 0;
+  z-index: 9999;
+  transition: opacity .3s;
+  box-shadow: 0 0 0 2px rgba(22,163,74,.25);
+}
+#sync-dot.sync-active {
+  opacity: 1;
+  animation: syncPulse 1.5s ease-out forwards;
+}
+@keyframes syncPulse {
+  0%   { opacity:1; transform:scale(1); box-shadow:0 0 0 0 rgba(22,163,74,.6); }
+  50%  { opacity:1; transform:scale(1.3); box-shadow:0 0 0 6px rgba(22,163,74,0); }
+  100% { opacity:0; transform:scale(1); box-shadow:0 0 0 0 rgba(22,163,74,0); }
+}
 .gantt-nav button { width:26px;height:26px;border-radius:8px;border:1px solid var(--brd);background:var(--sur);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--tx2); }
 .gantt-nav button:hover { background:var(--sur2); }
 
@@ -1518,6 +1542,7 @@ async function exportBilanExcel() {
 </div>
 
 <!-- APP -->
+<div id="sync-dot" title="Données synchronisées"></div>
 <div id="app">
   <div class="main" id="main"><div class="spin-c"><div class="spin"></div>Chargement...</div></div>
   <nav class="nav" id="main-nav">
@@ -1798,6 +1823,94 @@ async function save(){
   }
 }
 
+// ── Sync temps réel (polling) ─────────────────────────────────────────
+let _syncInterval = null;
+let _lastBDHash = null;
+let _isSaving = false; // empêche de recharger ce qu'on vient de sauvegarder
+
+function _hashBD(bd){
+  // Hash léger : on stringify les clés critiques
+  try{
+    const snap = {
+      pieces: bd.pieces||[],
+      machines: bd.machines||[],
+      livraisons: bd.livraisons||[],
+      commandes: bd.commandes||[],
+      interventions: bd.interventions||[],
+      personnel: bd.personnel||[],
+    };
+    return JSON.stringify(snap);
+  }catch(e){return '';}
+}
+
+async function _syncPoll(){
+  if(_isSaving) return; // on vient de sauvegarder, ignorer ce cycle
+  // Vérifie si un modal est ouvert (on ne recharge pas si l'utilisateur est en train d'éditer)
+  const modalOuvert = document.querySelector('.fmod.on');
+  if(modalOuvert) return;
+  try{
+    const r = await fetch('/api/bd', {cache:'no-store'});
+    if(!r.ok) return;
+    const newBD = await r.json();
+    if(newBD.erreur) return;
+    const newHash = _hashBD(newBD);
+    if(_lastBDHash === null){
+      _lastBDHash = newHash;
+      return; // premier cycle, juste initialiser
+    }
+    if(newHash !== _lastBDHash){
+      _lastBDHash = newHash;
+      BD = newBD;
+      try{localStorage.setItem(_LS_KEY, JSON.stringify(BD));}catch(e){}
+      // Re-render silencieux de la vue courante
+      _syncRender();
+      _showSyncPulse();
+    }
+  }catch(e){/* réseau indispo, ignorer */}
+}
+
+function _syncRender(){
+  // Re-render intelligent : ne perturbe pas si un modal est ouvert
+  if(document.querySelector('.fmod.on')) return;
+  // Sauvegarder la position de scroll
+  const mainEl = document.getElementById('main');
+  const scrollY = mainEl ? mainEl.scrollTop : 0;
+  render();
+  // Restaurer le scroll
+  requestAnimationFrame(()=>{
+    const el = document.getElementById('main');
+    if(el) el.scrollTop = scrollY;
+  });
+}
+
+function _showSyncPulse(){
+  const dot = document.getElementById('sync-dot');
+  if(!dot) return;
+  dot.classList.add('sync-active');
+  setTimeout(()=>dot.classList.remove('sync-active'), 1500);
+}
+
+function startSync(){
+  _lastBDHash = _hashBD(BD); // initialiser avec l'état actuel
+  if(_syncInterval) clearInterval(_syncInterval);
+  _syncInterval = setInterval(_syncPoll, 5000);
+}
+
+function stopSync(){
+  if(_syncInterval){ clearInterval(_syncInterval); _syncInterval=null; }
+}
+
+// Patch save() pour bloquer le polling pendant une sauvegarde
+const _origSave = save;
+save = async function(){
+  _isSaving = true;
+  const result = await _origSave.apply(this, arguments);
+  // Après save, mettre à jour le hash pour éviter de recharger notre propre écriture
+  _lastBDHash = _hashBD(BD);
+  setTimeout(()=>{ _isSaving = false; }, 1000);
+  return result;
+};
+
 // ── Init ─────────────────────────────────────────────────────────────
 async function init(){
   document.getElementById('main').innerHTML='<div class="spin-c"><div class="spin"></div>Chargement des données...</div>';
@@ -1817,6 +1930,8 @@ async function init(){
     } catch(e){ ANOMALIES = BD?.anomalies||[]; }
   }
   if(PAGE==='accueil') render();
+  // Démarrer la sync temps réel
+  startSync();
 }
 
 // ── Nav ───────────────────────────────────────────────────────────────
