@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -1114,6 +1115,7 @@ input:focus, select:focus, textarea:focus {
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 // ══════════════════════════════════════════════════════════════════
@@ -1554,17 +1556,26 @@ async function exportBilanExcel() {
   <div class="gch"><label>Durée de vie</label><input id="p-dv" type="number" placeholder="250"/></div>
   <div class="gch"><label>Unité</label><select id="p-du"><option value="heures">Heures</option><option value="mois">Mois</option></select></div>
   <div class="gch"><label>Stock</label><input id="p-st" type="number" placeholder="0"/></div>
-  <div class="gch">
-    <label>Machines principales <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--tx3)">— pièce montée, usure suivie, stock commandé</span></label>
-    <div class="lpc" id="p-machs"><div style="font-size:13px;color:var(--tx3);padding:4px">Aucune machine enregistrée</div></div>
-  </div>
-  <div class="gch">
-    <label>Aussi compatibles <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--tx3)">— références alternatives, non commandées automatiquement</span></label>
-    <div class="lpc" id="p-machs-alt"><div style="font-size:13px;color:var(--tx3);padding:4px">Aucune machine enregistrée</div></div>
-  </div>
   <div class="gch"><label>Notes</label><textarea id="p-no" placeholder="Utiliser pièce d'origine..."></textarea></div>
-  <div class="rbtn np"><button class="btn bs" onclick="fm('mp')">Annuler</button><button class="btn bp" onclick="savPiece()">Enregistrer</button></div>
+  <div class="rbtn np"><button class="btn bs" onclick="fm('mp')">Annuler</button><button class="btn bp" onclick="_COMPAT_MACH_ID?savPieceCompat():savPiece()">Enregistrer</button></div>
   <button class="btn bd np" id="del-mp" style="margin-top:12px;display:none" onclick="delPiece()">Supprimer cette pièce</button>
+</div></div>
+
+<!-- Modal sélection pièces compatibles machine -->
+<div class="fmod" id="spc" onclick="if(event.target===this)fm('spc')"><div class="mod" style="max-height:90vh;display:flex;flex-direction:column">
+  <div class="poignee"></div>
+  <div class="mod-tit" id="spc-tit">Pièces compatibles</div>
+  <input id="spc-search" placeholder="Rechercher par nom ou référence…" oninput="_renderSelPiecesModal()"
+    style="border:1.5px solid var(--brd);border-radius:var(--r2);padding:10px 14px;font-size:14px;font-family:var(--fn);color:var(--tx);background:var(--sur2);outline:none;margin-bottom:10px"/>
+  <div id="spc-liste" style="flex:1;overflow-y:auto;min-height:0;margin-bottom:10px"></div>
+  <div style="border-top:1px solid var(--brd);padding-top:12px">
+    <div style="font-size:11px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Créer une nouvelle référence</div>
+    <div style="display:flex;gap:8px">
+      <button class="btn bp np" style="flex:1;font-size:12px" onclick="ouvrirNouvelleReferenceCompat('principale')">+ Principale</button>
+      <button class="btn np" style="flex:1;font-size:12px;background:var(--wa-bg);color:var(--wa);border:1px solid var(--wa-b)" onclick="ouvrirNouvelleReferenceCompat('alternative')">+ Alternative</button>
+    </div>
+  </div>
+  <button class="btn bs np" style="margin-top:8px" onclick="fm('spc')">Fermer</button>
 </div></div>
 
 <div class="fmod" id="mi" onclick="if(event.target===this)fm('mi')"><div class="mod">
@@ -2304,27 +2315,9 @@ function pageMach(id){
   const s=stMach(m), seuil=m.seuil||250, dh=m.heures-m.hEntretien, pct=Math.min(dh/seuil,1);
   const vgp=infoVgp(m), ivs=BD.interventions.filter(i=>i.machineId===id).sort((a,b)=>new Date(b.date)-new Date(a.date));
   const pas=m.piecesAssociees||[];
-  const altPieces=BD.pieces.filter(p=>(p.machinesAussiCompatibles||[]).includes(id));
 
   const stColor = s==='ok'?'var(--ok)':s==='wa'?'var(--wa)':'var(--da)';
   const stBg    = s==='ok'?'var(--ok-bg)':s==='wa'?'var(--wa-bg)':'var(--da-bg)';
-
-  // ── Usure pièces associées
-  const puH = pas.map(pa=>{
-    const p=BD.pieces.find(x=>x.id===pa.pieceId); if(!p)return'';
-    const u=usure(m,pa); if(!u)return'';
-    return `<div style="padding:10px 0;border-bottom:1px solid var(--brd)">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-        <div><div style="font-size:13px;font-weight:700">${p.nom}</div><div style="font-size:11px;color:var(--tx3);font-family:monospace">${p.ref}</div></div>
-        <span class="bdg ${u.st}">${u.rest}h restantes</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--tx3);margin-bottom:4px">
-        <span>Installée à ${pa.heuresInstallation}h · ${fdt(pa.dateInstallation)}</span>
-        <span style="font-weight:700;color:var(--${u.st})">${Math.round(u.pct*100)}%</span>
-      </div>
-      <div class="bar-bg"><div class="bar ${u.st}" style="width:${Math.min(u.pct*100,100)}%"></div></div>
-    </div>`;
-  }).join('') || '<p style="color:var(--tx3);font-size:13px;padding:8px 0">Aucune pièce associée</p>';
 
   return `
   <div class="ent-det">
@@ -2404,23 +2397,16 @@ function pageMach(id){
       </div>
     </div>
 
-    <!-- Usure pièces associées -->
-    ${pas.length ? `<div class="carte">
-      <div class="carte-ent"><div class="carte-tit">🔩 Usure des pièces</div></div>
-      ${puH}
-    </div>` : ''}
-
-    <!-- Pièces alternatives -->
-    ${altPieces.length ? `<div class="carte">
-      <div class="carte-ent"><div class="carte-tit">🔄 Aussi compatibles</div></div>
-      ${altPieces.map(p=>{
-        const sb=p.stock>0?`<span class="bdg ok">${p.stock} en stock</span>`:`<span class="bdg" style="background:var(--sur2);color:var(--tx3)">0 en stock</span>`;
-        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--brd)">
-          <div><div style="font-size:13px;font-weight:600">${p.nom}</div><div style="font-size:11px;color:var(--tx3);font-family:monospace">${p.ref}</div></div>
-          ${sb}
-        </div>`;
-      }).join('')}
-    </div>` : ''}
+    <!-- Pièces compatibles (toutes) avec gestion depuis la fiche -->
+    <div class="carte" style="padding:0;overflow:hidden">
+      <div style="padding:12px 16px;border-bottom:1px solid var(--brd);display:flex;align-items:center;justify-content:space-between">
+        <div class="carte-tit">🔩 Pièces compatibles</div>
+        <button class="btn bp np" style="width:auto;padding:5px 12px;font-size:12px" onclick="ouvrirSelPiecesCompat('${id}')">+ Ajouter</button>
+      </div>
+      <div style="padding:14px 16px" data-compat-mach="${id}" id="compat-mach-${id}">
+        ${_renderPiecesCompatMachine(id)}
+      </div>
+    </div>
 
     <!-- Historique interventions -->
     <div class="carte">
@@ -2443,6 +2429,208 @@ function pageMach(id){
 
     <div style="height:60px"></div>
   </div>`;
+}
+
+// ── Pièces compatibles machine ────────────────────────────────────────
+
+function _renderPiecesCompatMachine(machId){
+  const m = BD.machines.find(x=>x.id===machId); if(!m) return '';
+  // Pièces principales : dans piecesAssociees OU machinesCompatibles
+  const principales = BD.pieces.filter(p=>
+    (p.machinesCompatibles||[]).includes(machId) ||
+    (m.piecesAssociees||[]).some(pa=>pa.pieceId===p.id)
+  );
+  // Pièces aussi compatibles
+  const alternatives = BD.pieces.filter(p=>
+    (p.machinesAussiCompatibles||[]).includes(machId) &&
+    !principales.find(pc=>pc.id===p.id)
+  );
+  const allPieces = [...principales, ...alternatives];
+  if(!allPieces.length) return '<div style="font-size:13px;color:var(--tx3);padding:4px 0">Aucune pièce compatible — appuyez sur + Ajouter</div>';
+
+  let html = '';
+  allPieces.forEach(p=>{
+    const isAlt = !principales.find(pc=>pc.id===p.id);
+    const pa = (m.piecesAssociees||[]).find(x=>x.pieceId===p.id);
+    const u = pa ? usure(m,pa) : null;
+    const stBdg = p.stock>0
+      ? `<span class="bdg ok">${p.stock} en stock</span>`
+      : `<span class="bdg da">0 en stock</span>`;
+    let usureHtml = '';
+    if(u){
+      const col=u.st==='da'?'var(--da)':u.st==='wa'?'var(--wa)':'var(--ok)';
+      usureHtml = `<div style="margin-top:6px"><div class="bar-bg" style="height:6px;border-radius:3px"><div class="bar ${u.st}" style="width:${Math.min(u.pct*100,100)}%;height:6px;border-radius:3px"></div></div><div style="display:flex;justify-content:space-between;font-size:10px;color:var(--tx3);margin-top:3px"><span>Installée à ${pa.heuresInstallation}h</span><span style="color:${col};font-weight:700">${Math.round(u.pct*100)}% · ${u.rest}h rest.</span></div></div>`;
+    }
+    html += `<div style="padding:10px 0;border-bottom:1px solid var(--brd);display:flex;align-items:flex-start;gap:10px">
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <div style="font-size:13px;font-weight:700">${p.nom}</div>
+          ${isAlt?'<span style="font-size:10px;color:var(--tx3);font-weight:600;background:var(--sur2);padding:1px 6px;border-radius:8px">alternative</span>':''}
+        </div>
+        <div style="font-size:11px;color:var(--tx3);font-family:monospace;margin-top:1px">${p.ref}</div>
+        ${usureHtml}
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
+        ${stBdg}
+        <button onclick="event.stopPropagation();retirerPieceCompat('${machId}','${p.id}')" style="font-size:10px;color:var(--da);background:none;border:none;cursor:pointer;padding:2px 4px;font-weight:600">retirer</button>
+      </div>
+    </div>`;
+  });
+  return html;
+}
+
+
+function ouvrirSelPiecesCompat(machId){
+  _COMPAT_MACH_ID = machId;
+  const m = BD.machines.find(x=>x.id===machId);
+  document.getElementById('spc-tit').textContent = 'Pièces compatibles — ' + (m?.nom||'');
+  _renderSelPiecesModal();
+  om('spc');
+}
+
+function _renderSelPiecesModal(){
+  const machId = _COMPAT_MACH_ID;
+  const m = BD.machines.find(x=>x.id===machId); if(!m) return;
+  const el = document.getElementById('spc-liste');
+  const q = (document.getElementById('spc-search')?.value||'').toLowerCase().trim();
+
+  // Pièces déjà associées
+  const dejaPrincipales = new Set(BD.pieces.filter(p=>(p.machinesCompatibles||[]).includes(machId)||(m.piecesAssociees||[]).some(pa=>pa.pieceId===p.id)).map(p=>p.id));
+  const dejaAlt = new Set(BD.pieces.filter(p=>(p.machinesAussiCompatibles||[]).includes(machId)).map(p=>p.id));
+
+  let pieces = BD.pieces;
+  if(q) pieces = pieces.filter(p=>p.nom.toLowerCase().includes(q)||p.ref.toLowerCase().includes(q));
+
+  if(!pieces.length){
+    el.innerHTML='<div style="font-size:13px;color:var(--tx3);padding:16px 0;text-align:center">Aucune pièce trouvée</div>';
+    return;
+  }
+
+  el.innerHTML = pieces.map(p=>{
+    const isPrinc = dejaPrincipales.has(p.id);
+    const isAlt   = dejaAlt.has(p.id);
+    const stBdg = p.stock>0
+      ? `<span style="font-size:10px;font-weight:700;color:var(--ok)">${p.stock} en stock</span>`
+      : `<span style="font-size:10px;font-weight:700;color:var(--da)">0 en stock</span>`;
+
+    let actionHtml;
+    if(isPrinc){
+      actionHtml = `<span style="font-size:11px;font-weight:700;color:var(--ok)">✓ Principale</span>`;
+    } else if(isAlt){
+      actionHtml = `<span style="font-size:11px;font-weight:700;color:var(--wa)">✓ Alternative</span>`;
+    } else {
+      actionHtml = `<div style="display:flex;gap:4px">
+        <button onclick="ajouterCompatPrincipale('${p.id}')" class="btn bp np" style="padding:4px 8px;font-size:11px;width:auto">Principale</button>
+        <button onclick="ajouterCompatAlternative('${p.id}')" class="btn np" style="padding:4px 8px;font-size:11px;width:auto;background:var(--wa-bg);color:var(--wa);border:1px solid var(--wa-b)">Alternative</button>
+      </div>`;
+    }
+
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--brd)">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:600">${p.nom}</div>
+        <div style="font-size:11px;color:var(--tx3);font-family:monospace">${p.ref} · ${p.dureeVal||'—'} ${p.dureeUnite||''}</div>
+        ${stBdg}
+      </div>
+      <div style="flex-shrink:0">${actionHtml}</div>
+    </div>`;
+  }).join('');
+}
+
+function ajouterCompatPrincipale(pieceId){
+  const machId = _COMPAT_MACH_ID;
+  const p = BD.pieces.find(x=>x.id===pieceId); if(!p) return;
+  if(!(p.machinesCompatibles||[]).includes(machId)){
+    if(!p.machinesCompatibles) p.machinesCompatibles=[];
+    p.machinesCompatibles.push(machId);
+  }
+  // Retirer des alternatives si besoin
+  if(p.machinesAussiCompatibles) p.machinesAussiCompatibles=p.machinesAussiCompatibles.filter(id=>id!==machId);
+  // Vérifier stock — si 0, créer besoin de commande
+  _verifierStockApresCompat(pieceId, machId);
+  save().then(()=>{ trackModif('magasin'); _renderSelPiecesModal(); _refreshPiecesCompatInFiche(machId); toast('Pièce ajoutée ✓'); });
+}
+
+function ajouterCompatAlternative(pieceId){
+  const machId = _COMPAT_MACH_ID;
+  const p = BD.pieces.find(x=>x.id===pieceId); if(!p) return;
+  if(!(p.machinesAussiCompatibles||[]).includes(machId)){
+    if(!p.machinesAussiCompatibles) p.machinesAussiCompatibles=[];
+    p.machinesAussiCompatibles.push(machId);
+  }
+  if(p.machinesCompatibles) p.machinesCompatibles=p.machinesCompatibles.filter(id=>id!==machId);
+  save().then(()=>{ trackModif('magasin'); _renderSelPiecesModal(); _refreshPiecesCompatInFiche(machId); toast('Pièce ajoutée comme alternative ✓'); });
+}
+
+function retirerPieceCompat(machId, pieceId){
+  const p = BD.pieces.find(x=>x.id===pieceId); if(!p) return;
+  if(p.machinesCompatibles) p.machinesCompatibles=p.machinesCompatibles.filter(id=>id!==machId);
+  if(p.machinesAussiCompatibles) p.machinesAussiCompatibles=p.machinesAussiCompatibles.filter(id=>id!==machId);
+  // Retirer aussi de piecesAssociees
+  const m = BD.machines.find(x=>x.id===machId);
+  if(m&&m.piecesAssociees) m.piecesAssociees=m.piecesAssociees.filter(pa=>pa.pieceId!==pieceId);
+  save().then(()=>{ trackModif('magasin'); _refreshPiecesCompatInFiche(machId); toast('Pièce retirée'); });
+}
+
+function _refreshPiecesCompatInFiche(machId){
+  const el = document.getElementById('compat-mach-'+machId);
+  if(el) el.innerHTML = _renderPiecesCompatMachine(machId);
+}
+
+function _verifierStockApresCompat(pieceId, machId){
+  const p = BD.pieces.find(x=>x.id===pieceId); if(!p) return;
+  // Calcul besoin global pour cette pièce
+  const b = calculerBesoinsPiece(pieceId);
+  if((p.stock||0) < b.besoin){
+    // Signaler qu'une commande est nécessaire via toast orange
+    const manque = b.besoin - (p.stock||0);
+    setTimeout(()=>toast(`⚠ ${p.nom} : stock insuffisant, ${manque} à commander`),600);
+  }
+}
+
+// Nouvelle pièce depuis la fiche machine
+function ouvrirNouvelleReferenceCompat(type){
+  // type: 'principale' ou 'alternative'
+  _COMPAT_NEW_TYPE = type;
+  fm('spc');
+  // Reset champs
+  ['p-nom','p-ref','p-dv','p-st','p-no'].forEach(k=>{const el=document.getElementById(k);if(el)el.value='';});
+  document.getElementById('p-du').value='heures';
+  document.getElementById('mp-tit').textContent='Nouvelle pièce compatible';
+  MOD_ID = null;
+  om('mp');
+}
+
+// Override savPiece pour gérer le contexte "depuis fiche machine"
+const _origSavPiece = window.savPiece;
+
+async function savPieceCompat(){
+  const nom=V('p-nom').trim(),ref=V('p-ref').trim();if(!nom||!ref){toast('Nom et référence obligatoires');return;}
+  const machId = _COMPAT_MACH_ID;
+  const existing=MOD_ID?BD.pieces.find(x=>x.id===MOD_ID):null;
+  const d={nom,ref,dureeVal:parseInt(V('p-dv'))||0,dureeUnite:V('p-du'),stock:parseInt(V('p-st'))||0,notes:V('p-no').trim()||null,
+    machinesCompatibles:existing?.machinesCompatibles||[],
+    machinesAussiCompatibles:existing?.machinesAussiCompatibles||[]};
+  // Associer à la machine
+  if(machId){
+    if(_COMPAT_NEW_TYPE==='principale'){
+      if(!d.machinesCompatibles.includes(machId)) d.machinesCompatibles.push(machId);
+    } else {
+      if(!d.machinesAussiCompatibles.includes(machId)) d.machinesAussiCompatibles.push(machId);
+    }
+  }
+  let newId;
+  if(MOD_ID) Object.assign(BD.pieces.find(x=>x.id===MOD_ID),d);
+  else { newId='P-'+Date.now(); BD.pieces.push({id:newId,...d}); }
+  if(await save()){
+    trackModif('magasin');
+    fm('mp');
+    const pid = MOD_ID||newId;
+    // Vérifier stock
+    if(machId) _verifierStockApresCompat(pid, machId);
+    toast(MOD_ID?'Pièce mise à jour ✓':'Pièce créée et ajoutée ✓');
+    if(machId){ _refreshPiecesCompatInFiche(machId); }
+    if(PAGE==='magasin'||PAGE==='livraisons'){MAGASIN_TAB='stock'; render();}
+  }
 }
 
 // ── Entretien ─────────────────────────────────────────────────────────
@@ -2615,6 +2803,7 @@ async function savStockAdj(){
 // ══════════════════════════════════════════════════════════════════
 
 let MAGASIN_TAB = 'stock'; // 'stock' | 'commande' | 'compat' | 'reception'
+let _COMPAT_MACH_ID = null;
 
 function pgMagasin(){
   const sOn = MAGASIN_TAB==='stock'     ?' on':'';
@@ -2936,7 +3125,7 @@ async function _validerReceptionMagasin(cmdId){
   }
 }
 
-// ── Scanner QR Code ───────────────────────────────────────────────
+// ── Scanner QR Code (jsQR — universel iOS/Android/Desktop) ───────
 let _scanStream = null;
 let _scanInterval = null;
 
@@ -2947,28 +3136,25 @@ function ouvrirScannerQR(){
   const video=document.getElementById('scanner-video');
   const canvas=document.getElementById('scanner-canvas');
   if(!navigator.mediaDevices?.getUserMedia){toast('Caméra non supportée sur ce navigateur');wrap.style.display='none';return;}
-  navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}})
+  navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}}})
     .then(stream=>{
       _scanStream=stream;
       video.srcObject=stream;
       video.play();
-      // Tentative de lecture QR via BarcodeDetector si dispo
-      if('BarcodeDetector' in window){
-        const detector=new BarcodeDetector({formats:['qr_code']});
-        _scanInterval=setInterval(async()=>{
-          try{
-            const barcodes=await detector.detect(video);
-            if(barcodes.length){
-              const raw=barcodes[0].rawValue;
-              fermerScanner();
-              _parseQRCodeBC(raw);
-            }
-          }catch(e){}
-        },500);
-      } else {
-        // Fallback : invite à saisir manuellement
-        toast('Détection QR auto non supportée — saisissez le numéro manuellement');
-      }
+      _scanInterval=setInterval(()=>{
+        if(video.readyState!==video.HAVE_ENOUGH_DATA)return;
+        const ctx=canvas.getContext('2d');
+        canvas.width=video.videoWidth;
+        canvas.height=video.videoHeight;
+        ctx.drawImage(video,0,0,canvas.width,canvas.height);
+        const imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
+        if(typeof jsQR==='undefined')return;
+        const code=jsQR(imgData.data,imgData.width,imgData.height,{inversionAttempts:'dontInvert'});
+        if(code && code.data){
+          fermerScanner();
+          _parseQRCodeBC(code.data);
+        }
+      },300);
     })
     .catch(()=>{toast('Impossible d\'accéder à la caméra — vérifiez les permissions');wrap.style.display='none';});
 }
@@ -2987,7 +3173,6 @@ function _parseQRCodeBC(raw){
   let num=raw;
   const match=raw.match(/BC:([^|]+)/);
   if(match) num=match[1];
-  // Sinon on essaie directement
   if(document.getElementById('recep-num')) document.getElementById('recep-num').value=num;
   _afficherReceptionBC(num);
   toast(`QR scanné : BC #${num}`);
@@ -3302,11 +3487,8 @@ function openMP(id){
     document.getElementById('p-st').value=p.stock||0;
     document.getElementById('p-no').value=p.notes||'';
   }
-  // Remplir la liste des machines principales (montées, usure suivie)
-  const sel    = (p&&id) ? (p.machinesCompatibles||[]) : [];
-  const selAlt = (p&&id) ? (p.machinesAussiCompatibles||[]) : [];
-  _fillMachList('p-machs',    sel,    'pmc',  'tglMC');
-  _fillMachList('p-machs-alt', selAlt, 'pmca', 'tglMCA');
+  _COMPAT_MACH_ID = null; // contexte normal (pas depuis fiche machine)
+  document.getElementById('mp-tit').textContent = MOD_ID ? 'Modifier la pièce' : 'Ajouter une pièce';
   om('mp');
 }
 function _fillMachList(containerId, selected, prefix, toggleFn){
@@ -3343,7 +3525,10 @@ function getSelMachinesAlt(){
 function openMPmod(id){openMP(id);}
 async function savPiece(){
   const nom=V('p-nom').trim(),ref=V('p-ref').trim();if(!nom||!ref){toast('Nom et référence obligatoires');return;}
-  const d={nom,ref,dureeVal:parseInt(V('p-dv'))||0,dureeUnite:V('p-du'),stock:parseInt(V('p-st'))||0,notes:V('p-no').trim()||null,machinesCompatibles:getSelMachines(),machinesAussiCompatibles:getSelMachinesAlt()};
+  const existing=MOD_ID?BD.pieces.find(x=>x.id===MOD_ID):null;
+  const d={nom,ref,dureeVal:parseInt(V('p-dv'))||0,dureeUnite:V('p-du'),stock:parseInt(V('p-st'))||0,notes:V('p-no').trim()||null,
+    machinesCompatibles:existing?.machinesCompatibles||[],
+    machinesAussiCompatibles:existing?.machinesAussiCompatibles||[]};
   if(MOD_ID)Object.assign(BD.pieces.find(x=>x.id===MOD_ID),d);
   else BD.pieces.push({id:'P-'+Date.now(),...d});
   if(await save()){
