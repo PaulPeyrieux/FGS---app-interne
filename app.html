@@ -1,3 +1,6 @@
+
+
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -1639,6 +1642,41 @@ async function exportBilanExcel() {
   <button class="btn bd np" id="del-ml" style="margin-top:10px;display:none" onclick="delLiv()">🗑 Supprimer cette réception</button>
 </div></div>
 
+<!-- MODAL COMMANDE -->
+<div class="fmod" id="mc" onclick="if(event.target===this)fm('mc')"><div class="mod" style="max-height:92vh">
+  <div class="poignee"></div>
+  <div class="mod-tit" id="mc-tit">Nouvelle commande</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <div class="gch"><label>N° commande *</label><input id="mc-num" placeholder="25-001"/></div>
+    <div class="gch"><label>Date</label><input id="mc-date" type="date"/></div>
+  </div>
+  <div class="gch"><label>Fournisseur</label><input id="mc-fourn" placeholder="Optionnel"/></div>
+  <!-- Lignes commande -->
+  <div style="margin-top:8px">
+    <div style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Références commandées</div>
+    <div id="mc-lignes" style="margin-bottom:12px"></div>
+    <div style="background:var(--sur2);border-radius:var(--r2);padding:12px;border:1px solid var(--brd)">
+      <div style="font-size:11px;font-weight:700;color:var(--tx3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.8px">Ajouter une référence</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+        <input id="mc-l-ref" list="mc-l-ref-list" placeholder="Référence" autocomplete="off" oninput="onCmdRefChange(this.value)"
+          style="background:var(--sur);border:1px solid var(--brd);border-radius:var(--r3);padding:9px 12px;font-size:13px;font-family:var(--fn);color:var(--tx)"/>
+        <datalist id="mc-l-ref-list"></datalist>
+        <input id="mc-l-qte" type="number" min="1" value="1" placeholder="Qté"
+          style="background:var(--sur);border:1px solid var(--brd);border-radius:var(--r3);padding:9px 12px;font-size:13px;font-family:var(--fn);color:var(--tx)"/>
+      </div>
+      <input id="mc-l-nom" placeholder="Désignation"
+        style="width:100%;background:var(--sur);border:1px solid var(--brd);border-radius:var(--r3);padding:9px 12px;font-size:13px;font-family:var(--fn);color:var(--tx);margin-bottom:8px"/>
+      <button onclick="ajouterLigneCmd()" style="width:100%;padding:9px;border-radius:var(--r2);border:none;background:var(--in);color:#fff;font-family:var(--fn);font-size:13px;font-weight:700;cursor:pointer">+ Ajouter</button>
+    </div>
+  </div>
+  <button id="mc-recep-btn" onclick="ouvrirReceptionCommande()" class="btn" style="background:var(--ok);color:#fff;margin-top:12px;display:none">✓ Réceptionner cette commande</button>
+  <div class="rbtn np" style="margin-top:10px">
+    <button class="btn bs" onclick="fm('mc')">Annuler</button>
+    <button class="btn bp" onclick="savCommande()">Enregistrer</button>
+  </div>
+  <button class="btn bd np" id="del-mc" style="margin-top:10px;display:none" onclick="delCommande()">🗑 Supprimer</button>
+</div></div>
+
 <div id="toast" class="toast"></div>
 
 <script>
@@ -1790,15 +1828,15 @@ function buildNav(){
 
 function nav(p){
   PAGE = p; DET = null;
-  // Réinitialise les états de sous-navigation pour revenir à la liste
   if(p === 'chantier') CHANTIER_DETAIL = null;
   if(p === 'parcmat') DET = null;
-  render(); buildNav();
+  render();
 }
-function render(){
+function render(){\
   if(!BD)return;
   const m=document.getElementById('main'); m.innerHTML='';
   document.getElementById('fab').style.display='flex';
+  buildNav();
 
   if(DET?.t==='machine'){
     document.getElementById('fab').style.display='none';
@@ -2171,64 +2209,153 @@ function renderCat(el,cid){const cat=BD.categories.find(c=>c.id===cid),ms=BD.mac
 // ── Détail machine ────────────────────────────────────────────────────
 function ouvrirDet(id){DET={t:'machine',id};PAGE='parcmat';render();}
 function ouvrirCat(id){DET={t:'cat',id};PAGE='parcmat';render();}
+function _editBtn(id, champ, type, label, val) {
+  return `<button onclick="inlineEdit('${id}','${champ}','${type}','${label}',${JSON.stringify(val)})" style="width:26px;height:26px;border-radius:6px;border:1px solid var(--brd);background:var(--sur2);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;vertical-align:middle;margin-left:6px"><svg viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="2" width="11" height="11"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`;
+}
+
 function pageMach(id){
   const m=BD.machines.find(x=>x.id===id); if(!m)return'';
-  const s=stMach(m),seuil=m.seuil||250,d=m.heures-m.hEntretien,pct=Math.min(d/seuil,1);
-  const vgp=infoVgp(m),ivs=BD.interventions.filter(i=>i.machineId===id).sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const s=stMach(m), seuil=m.seuil||250, dh=m.heures-m.hEntretien, pct=Math.min(dh/seuil,1);
+  const vgp=infoVgp(m), ivs=BD.interventions.filter(i=>i.machineId===id).sort((a,b)=>new Date(b.date)-new Date(a.date));
   const pas=m.piecesAssociees||[];
-  const puH=pas.length?pas.map(pa=>{const p=BD.pieces.find(x=>x.id===pa.pieceId);if(!p)return'';const u=usure(m,pa);if(!u)return'';return`<div class="pu"><div class="pu-ent"><div><div class="pu-nom">${p.nom}</div><div class="pu-ref">${p.ref}</div></div><span class="bdg ${u.st}">${u.rest}h restantes</span></div><div class="pu-det"><span>Installée à ${pa.heuresInstallation}h (${fdt(pa.dateInstallation)})</span><span style="font-weight:700;color:var(--${u.st})">${Math.round(u.pct*100)}%</span></div><div class="bar-bg"><div class="bar ${u.st}" style="width:${Math.min(u.pct*100,100)}%"></div></div></div>`;}).join(''):`<p style="color:var(--tx3);font-size:13px;padding:6px 0">Aucune pièce associée</p>`;
-  return`<div class="ent-det">
+  const altPieces=BD.pieces.filter(p=>(p.machinesAussiCompatibles||[]).includes(id));
+
+  const stColor = s==='ok'?'var(--ok)':s==='wa'?'var(--wa)':'var(--da)';
+  const stBg    = s==='ok'?'var(--ok-bg)':s==='wa'?'var(--wa-bg)':'var(--da-bg)';
+
+  // ── Usure pièces associées
+  const puH = pas.map(pa=>{
+    const p=BD.pieces.find(x=>x.id===pa.pieceId); if(!p)return'';
+    const u=usure(m,pa); if(!u)return'';
+    return `<div style="padding:10px 0;border-bottom:1px solid var(--brd)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div><div style="font-size:13px;font-weight:700">${p.nom}</div><div style="font-size:11px;color:var(--tx3);font-family:monospace">${p.ref}</div></div>
+        <span class="bdg ${u.st}">${u.rest}h restantes</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--tx3);margin-bottom:4px">
+        <span>Installée à ${pa.heuresInstallation}h · ${fdt(pa.dateInstallation)}</span>
+        <span style="font-weight:700;color:var(--${u.st})">${Math.round(u.pct*100)}%</span>
+      </div>
+      <div class="bar-bg"><div class="bar ${u.st}" style="width:${Math.min(u.pct*100,100)}%"></div></div>
+    </div>`;
+  }).join('') || '<p style="color:var(--tx3);font-size:13px;padding:8px 0">Aucune pièce associée</p>';
+
+  return `
+  <div class="ent-det">
     <div class="btn-ret" onclick="DET=null;nav('parcmat')"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></div>
-    <div style="flex:1;min-width:0"><div class="tit-det">${m.nom}</div><span class="bdg ${s}" style="margin-top:3px">${lblSt(s)}</span></div>
+    <div style="flex:1;min-width:0">
+      <div class="tit-det">${m.nom}</div>
+      <div style="font-size:12px;color:var(--tx3);margin-top:2px">${ncat(m.catId)}${m.site?' · '+m.site:''}</div>
+    </div>
     <div class="ico-btn np" onclick="openMM('${id}')"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
   </div>
-  <div class="pg on">
-    <div class="carte"><div class="carte-ent"><div class="carte-tit">Informations</div><span class="etiq">${ncat(m.catId)}</span></div>
-      <div class="li"><span class="li-k">Modèle</span><span class="li-v">${m.modele||'—'}</span></div>
-      <div class="li"><span class="li-k">Année</span><span class="li-v">${m.annee||'—'}</span></div>
-      ${m.site?`<div class="li"><span class="li-k">Site</span><span class="li-v">${m.site}</span></div>`:''}
-      ${m.serie?`<div class="li"><span class="li-k">N° parc</span><span class="li-v">${m.serie}</span></div>`:''}
-      ${m.poids?`<div class="li"><span class="li-k">Poids</span><span class="li-v">${m.poids} kg</span></div>`:''}
+
+  <div class="pg on" style="gap:10px">
+
+    <!-- Statut global -->
+    <div style="background:${stBg};border:1.5px solid ${stColor}33;border-radius:14px;padding:16px 18px;display:flex;align-items:center;gap:14px">
+      <div style="width:44px;height:44px;border-radius:12px;background:${stColor}22;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">${ico(m.catId)}</div>
+      <div style="flex:1">
+        <div style="font-size:16px;font-weight:800;color:var(--tx)">${m.nom}</div>
+        <div style="font-size:12px;color:var(--tx3);margin-top:1px">${m.modele||''}${m.serie?' · N°'+m.serie:''}</div>
+      </div>
+      <span class="bdg ${s}" style="font-size:11px;font-weight:800">${lblSt(s)}</span>
     </div>
-    <div class="carte"><div class="carte-ent"><div class="carte-tit">Heures moteur</div><button class="btn bp np" style="width:auto;padding:7px 14px;font-size:13px" onclick="openMH('${id}')">+ Saisir</button></div>
-      <div class="li"><span class="li-k">Heures actuelles</span><span class="li-v" style="display:flex;align-items:center;gap:8px"><span style="font-size:20px;font-weight:700">${m.heures}h</span><button onclick="inlineEdit('${id}','heures','number','Heures actuelles',${m.heures})" style="width:24px;height:24px;border-radius:6px;border:1px solid var(--brd);background:var(--sur2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="2" width="12" height="12"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button></span></div>
-      <div class="li"><span class="li-k">Heures à l'achat</span><span class="li-v" style="display:flex;align-items:center;gap:8px"><span>${m.hAchat||'—'}h</span><button onclick="inlineEdit('${id}','hAchat','number','Heures à l\\'achat',${m.hAchat||0})" style="width:24px;height:24px;border-radius:6px;border:1px solid var(--brd);background:var(--sur2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="2" width="12" height="12"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button></span></div>
-      <div class="li"><span class="li-k">Dernier entretien</span><span class="li-v" style="display:flex;align-items:center;gap:8px"><span>${m.hEntretien}h</span><button onclick="inlineEdit('${id}','hEntretien','number','Dernier entretien (heures)',${m.hEntretien})" style="width:24px;height:24px;border-radius:6px;border:1px solid var(--brd);background:var(--sur2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="2" width="12" height="12"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button></span></div>
-      <div class="li"><span class="li-k">Seuil entretien</span><span class="li-v" style="display:flex;align-items:center;gap:8px"><span>${seuil}h</span><button onclick="inlineEdit('${id}','seuil','number','Seuil entretien (heures)',${seuil})" style="width:24px;height:24px;border-radius:6px;border:1px solid var(--brd);background:var(--sur2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="2" width="12" height="12"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button></span></div>
-      <div class="li"><span class="li-k">Depuis dernier entretien</span><span class="li-v" style="color:var(--${s})">${d}h / ${seuil}h</span></div>
-      <div style="margin-top:12px;display:flex;flex-direction:column;gap:6px">
-        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--tx3)"><span>Usure</span><span style="font-weight:700;color:var(--${s})">${Math.round(pct*100)}%</span></div>
-        <div class="bar-bg"><div class="bar ${s}" style="width:${Math.min(pct*100,100)}%"></div></div>
+
+    <!-- Heures & entretien -->
+    <div class="carte" style="padding:0;overflow:hidden">
+      <div style="padding:12px 16px;border-bottom:1px solid var(--brd);display:flex;align-items:center;justify-content:space-between">
+        <div class="carte-tit">⏱ Heures moteur</div>
+        <button class="btn bp np" style="width:auto;padding:5px 12px;font-size:12px" onclick="openMH('${id}')">+ Saisir</button>
+      </div>
+      <!-- Jauge principale -->
+      <div style="padding:16px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:8px">
+          <div>
+            <div style="font-size:11px;color:var(--tx3);font-weight:600;text-transform:uppercase;letter-spacing:.6px">Heures actuelles</div>
+            <div style="font-size:32px;font-weight:800;font-family:var(--mo);letter-spacing:-1px;color:var(--tx);line-height:1">${m.heures}<span style="font-size:16px;font-weight:600">h</span>${_editBtn(id,'heures','number','Heures actuelles',m.heures)}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:11px;color:var(--tx3);font-weight:600">Usure</div>
+            <div style="font-size:22px;font-weight:800;color:${stColor}">${Math.round(pct*100)}%</div>
+          </div>
+        </div>
+        <div class="bar-bg" style="height:10px;border-radius:5px"><div class="bar ${s}" style="width:${Math.min(pct*100,100)}%;height:10px;border-radius:5px"></div></div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--tx3);margin-top:5px">
+          <span>${dh}h depuis dernier entretien</span>
+          <span>Seuil : ${seuil}h${_editBtn(id,'seuil','number','Seuil entretien (h)',seuil)}</span>
+        </div>
+      </div>
+      <!-- Ligne infos secondaires -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid var(--brd)">
+        <div style="padding:10px 14px;border-right:1px solid var(--brd)">
+          <div style="font-size:10px;color:var(--tx3);font-weight:600;text-transform:uppercase;margin-bottom:3px">À l'achat</div>
+          <div style="font-size:15px;font-weight:700;font-family:var(--mo)">${m.hAchat||'—'}h${_editBtn(id,'hAchat','number',"Heures à l'achat",m.hAchat||0)}</div>
+        </div>
+        <div style="padding:10px 14px;border-right:1px solid var(--brd)">
+          <div style="font-size:10px;color:var(--tx3);font-weight:600;text-transform:uppercase;margin-bottom:3px">Der. entretien</div>
+          <div style="font-size:15px;font-weight:700;font-family:var(--mo)">${m.hEntretien}h${_editBtn(id,'hEntretien','number','Dernier entretien (h)',m.hEntretien)}</div>
+        </div>
+        <div style="padding:10px 14px">
+          <div style="font-size:10px;color:var(--tx3);font-weight:600;text-transform:uppercase;margin-bottom:3px">Année</div>
+          <div style="font-size:15px;font-weight:700;font-family:var(--mo)">${m.annee||'—'}</div>
+        </div>
       </div>
     </div>
-    <div class="carte"><div class="carte-ent"><div class="carte-tit">VGP</div>${vgp?`<span class="bdg ${vgp.st}">${vgp.lbl}</span>`:''}</div>
-      <div class="li"><span class="li-k">Date dernière VGP</span><span class="li-v" style="display:flex;align-items:center;gap:8px"><span>${fdt(m.vgp)}</span><button onclick="inlineEdit('${id}','vgp','date','Date VGP','${m.vgp||''}')" style="width:24px;height:24px;border-radius:6px;border:1px solid var(--brd);background:var(--sur2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="2" width="12" height="12"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button></span></div>
-      <button class="btn bs np" style="margin-top:12px" onclick="printMach('${id}')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Imprimer fiche machine</button>
+
+    <!-- VGP -->
+    <div class="carte" style="padding:0;overflow:hidden">
+      <div style="padding:12px 16px;border-bottom:1px solid var(--brd);display:flex;align-items:center;justify-content:space-between">
+        <div class="carte-tit">📋 VGP</div>
+        ${vgp?`<span class="bdg ${vgp.st}">${vgp.lbl}</span>`:''}
+      </div>
+      <div style="padding:14px 16px;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:11px;color:var(--tx3);font-weight:600;margin-bottom:2px">Date dernière VGP</div>
+          <div style="font-size:17px;font-weight:700">${fdt(m.vgp)||'—'}${_editBtn(id,'vgp','date','Date dernière VGP',m.vgp||'')}</div>
+        </div>
+        <button class="ico-btn np" onclick="printMach('${id}')" title="Imprimer fiche"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--tx2)" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg></button>
+      </div>
     </div>
-    <div class="carte"><div class="carte-ent"><div class="carte-tit">Usure des pièces</div></div>${puH}</div>
+
+    <!-- Usure pièces associées -->
+    ${pas.length ? `<div class="carte">
+      <div class="carte-ent"><div class="carte-tit">🔩 Usure des pièces</div></div>
+      ${puH}
+    </div>` : ''}
+
+    <!-- Pièces alternatives -->
+    ${altPieces.length ? `<div class="carte">
+      <div class="carte-ent"><div class="carte-tit">🔄 Aussi compatibles</div></div>
+      ${altPieces.map(p=>{
+        const sb=p.stock>0?`<span class="bdg ok">${p.stock} en stock</span>`:`<span class="bdg" style="background:var(--sur2);color:var(--tx3)">0 en stock</span>`;
+        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--brd)">
+          <div><div style="font-size:13px;font-weight:600">${p.nom}</div><div style="font-size:11px;color:var(--tx3);font-family:monospace">${p.ref}</div></div>
+          ${sb}
+        </div>`;
+      }).join('')}
+    </div>` : ''}
+
+    <!-- Historique interventions -->
     <div class="carte">
-      <div class="carte-ent"><div class="carte-tit">Aussi compatibles</div></div>
-      ${(()=>{
-        // Pièces marquées comme "aussi compatibles" sur cette machine
-        const altPieces = BD.pieces.filter(p=>(p.machinesAussiCompatibles||[]).includes(id));
-        if(!altPieces.length) return '<p style="color:var(--tx3);font-size:13px;padding:6px 0">Aucune pièce alternative renseignée</p>';
-        return altPieces.map(p=>{
-          const stockBadge = p.stock>0
-            ?`<span class="bdg ok" style="font-size:11px">${p.stock} en stock</span>`
-            :`<span class="bdg" style="font-size:11px;background:var(--sur2);color:var(--tx3)">0 en stock</span>`;
-          return `<div class="li" style="align-items:flex-start;flex-direction:column;gap:4px;padding:10px 0;border-bottom:1px solid var(--brd)">
-            <div style="display:flex;justify-content:space-between;width:100%;align-items:center">
-              <div><div style="font-weight:600;font-size:13px">${p.nom}</div><div style="font-size:12px;color:var(--tx3);font-family:monospace">${p.ref}</div></div>
-              ${stockBadge}
-            </div>
-            <div style="font-size:11px;color:var(--tx3)">${p.dureeVal} ${p.dureeUnite}${p.notes?` · ${p.notes}`:''}</div>
-          </div>`;
-        }).join('');
-      })()}
+      <div class="carte-ent">
+        <div class="carte-tit">📝 Historique</div>
+        <button class="btn bp np" style="width:auto;padding:5px 12px;font-size:12px" onclick="openMIfor('${id}')">+ Ajouter</button>
+      </div>
+      ${ivs.length ? ivs.map(i=>`
+        <div class="eint np" onclick="openMImod('${i.id}')">
+          <div class="pt-int" style="background:${i.type==='VGP'?'var(--in)':i.type==='reparation'?'var(--da)':'var(--ok)'}"></div>
+          <div class="info-int">
+            <div class="dt-int">${fdt(i.date)} · ${i.heures||'—'}h</div>
+            <div class="tit-int">${lblTy(i.type)}</div>
+            ${i.notes?`<div class="ss-int">${i.notes}</div>`:''}
+            <div class="pcs-int">${(i.piecesChangees||[]).map(pid=>{const p=BD.pieces.find(x=>x.id===pid);return p?`<span class="bdg bl">${p.nom}</span>`:'';}).join('')}</div>
+          </div>
+          <button class="ico-btn" style="width:30px;height:30px;flex-shrink:0" onclick="event.stopPropagation();printInt('${i.id}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg></button>
+        </div>`).join('') : '<p style="color:var(--tx3);font-size:13px;padding:8px 0">Aucune intervention</p>'}
     </div>
-    <div class="carte"><div class="carte-ent"><div class="carte-tit">Historique</div><button class="btn bp np" style="width:auto;padding:7px 14px;font-size:13px" onclick="openMIfor('${id}')">+ Ajouter</button></div>
-      ${ivs.length?ivs.map(i=>`<div class="eint np" onclick="openMImod('${i.id}')"><div class="pt-int" style="background:${i.type==='VGP'?'var(--in)':i.type==='reparation'?'var(--da)':'var(--ok)'}"></div><div class="info-int"><div class="dt-int">${fdt(i.date)} · ${i.heures||'—'}h</div><div class="tit-int">${lblTy(i.type)}</div>${i.notes?`<div class="ss-int">${i.notes}</div>`:''}<div class="pcs-int">${(i.piecesChangees||[]).map(pid=>{const p=BD.pieces.find(x=>x.id===pid);return p?`<span class="bdg bl">${p.nom}</span>`:'';}).join('')}</div></div></div>`).join(''):`<p style="color:var(--tx3);font-size:13px;padding:6px 0">Aucune intervention</p>`}
-    </div>
+
+    <div style="height:60px"></div>
   </div>`;
 }
 
@@ -2389,23 +2516,218 @@ async function savStockAdj(){
 }
 
 // ── Livraisons ────────────────────────────────────────────────────────
+let LIV_TAB = 'receptions'; // 'receptions' | 'commandes'
+
 function pgLiv(){
+  const rOn = LIV_TAB==='receptions'?' on':'';
+  const cOn = LIV_TAB==='commandes'?' on':'';
   const livs=[...BD.livraisons].sort((a,b)=>new Date(b.date)-new Date(a.date));
-  return`<div class="ent"><h1>Réceptions</h1></div><div class="pg on">
+  if(!BD.commandes) BD.commandes = [];
+  const cmds=[...BD.commandes].sort((a,b)=>new Date(b.date)-new Date(a.date));
+
+  const recepHtml = `
     <div class="carte" style="border:2px dashed var(--acc);background:var(--acc-l)">
       <div style="font-size:14px;font-weight:700;color:var(--acc);margin-bottom:4px">📦 Nouvelle réception</div>
-      <div style="font-size:13px;color:var(--tx2);margin-bottom:12px;line-height:1.5">Saisissez la référence reçue — le stock est mis à jour automatiquement.</div>
+      <div style="font-size:13px;color:var(--tx2);margin-bottom:12px;line-height:1.5">Saisissez une réception manuelle ou importez une commande via son numéro.</div>
       <button class="btn bp" onclick="openML()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Saisir une réception</button>
     </div>
     <div class="ts">Historique <span style="font-weight:400;color:var(--tx3);font-size:10px;text-transform:none;letter-spacing:0">(appuyer pour modifier)</span></div>
     ${livs.length?livs.map(l=>`<div class="eliv" style="cursor:pointer" onclick="openMLEdit('${l.id}')">
       <div class="eliv-ent"><div class="eliv-nom">${l.nom}</div><div class="eliv-dt">${fdt(l.date)}</div></div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
-        <div style="font-size:12px;color:var(--tx2)">Réf : <b>${l.ref}</b>${l.fourn?' · '+l.fourn:''}</div>
+        <div style="font-size:12px;color:var(--tx2)">Réf : <b>${l.ref}</b>${l.fourn?' · '+l.fourn:''}${l.numCommande?` · <span style="color:var(--in);font-weight:700">BC#${l.numCommande}</span>`:''}</div>
         <span style="font-size:13px;font-weight:700;font-family:var(--mo);color:var(--ok);background:var(--ok-bg);border:1px solid var(--ok-b);border-radius:6px;padding:2px 10px">+${l.qte}</span>
       </div>
-    </div>`).join(''):`<div class="vide" style="padding:32px 16px"><h3>Aucune réception</h3></div>`}
+    </div>`).join(''):`<div class="vide" style="padding:32px 16px"><h3>Aucune réception</h3></div>`}`;
+
+  const cmdHtml = `
+    <div class="carte" style="border:2px dashed var(--in);background:var(--in-bg)">
+      <div style="font-size:14px;font-weight:700;color:var(--in);margin-bottom:4px">🛒 Nouvelle commande</div>
+      <div style="font-size:13px;color:var(--tx2);margin-bottom:12px;line-height:1.5">Créez un bon de commande avec un numéro unique. Vous pourrez le réceptionner ensuite.</div>
+      <button class="btn" style="background:var(--in);color:#fff" onclick="ouvrirNouvelleCommande()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Créer une commande</button>
+    </div>
+    <div class="ts">Bons de commande</div>
+    ${cmds.length ? cmds.map(c => {
+      const nbRef = (c.lignes||[]).length;
+      const nbRecus = (c.lignes||[]).filter(l=>l.recu).length;
+      const stCmd = nbRecus===nbRef&&nbRef>0?'ok':nbRecus>0?'wa':'';
+      const stLbl = nbRecus===nbRef&&nbRef>0?'Réceptionné':nbRecus>0?`${nbRecus}/${nbRef} reçu`:'En attente';
+      return `<div class="eliv" style="cursor:pointer" onclick="ouvrirDetailCommande('${c.id}')">
+        <div class="eliv-ent">
+          <div class="eliv-nom">BC #${c.numero} <span style="font-size:11px;font-weight:400;color:var(--tx3)">${c.fournisseur||''}</span></div>
+          <div class="eliv-dt">${fdt(c.date)}</div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+          <div style="font-size:12px;color:var(--tx2)">${nbRef} référence${nbRef>1?'s':''}</div>
+          <span class="bdg ${stCmd||'in'}">${stLbl}</span>
+        </div>
+      </div>`;
+    }).join('') : `<div class="vide" style="padding:32px 16px"><h3>Aucune commande</h3></div>`}`;
+
+  return `<div class="ent">
+    <div><h1>Réceptions</h1></div>
+    <div class="ent-act" id="liv-act"></div>
+  </div>
+  <div class="sub-nav" style="position:sticky;top:57px;z-index:49">
+    <div class="sub-ni${rOn}" onclick="LIV_TAB='receptions';render()">📦 Réceptions</div>
+    <div class="sub-ni${cOn}" onclick="LIV_TAB='commandes';render()">🛒 Commandes</div>
+  </div>
+  <div class="pg on">
+    ${LIV_TAB==='receptions' ? recepHtml : cmdHtml}
   </div>`;
+}
+
+// ── COMMANDES ────────────────────────────────────────────────────────
+let CMD_EDIT_ID = null;
+let CMD_LIGNES = []; // [{ref, nom, qte, recu}]
+
+function _genNumCommande() {
+  const n = (BD.commandes||[]).length + 1;
+  const y = new Date().getFullYear().toString().slice(-2);
+  return `${y}-${String(n).padStart(3,'0')}`;
+}
+
+function ouvrirNouvelleCommande() { ouvrirModalCommande(null); }
+
+function ouvrirDetailCommande(id) {
+  const c = (BD.commandes||[]).find(x=>x.id===id);
+  if(!c) return;
+  ouvrirModalCommande(c);
+}
+
+function ouvrirModalCommande(c) {
+  CMD_EDIT_ID = c ? c.id : null;
+  CMD_LIGNES = c ? JSON.parse(JSON.stringify(c.lignes||[])) : [];
+  document.getElementById('mc-tit').textContent = c ? `BC #${c.numero}` : 'Nouvelle commande';
+  document.getElementById('mc-num').value = c ? c.numero : _genNumCommande();
+  document.getElementById('mc-date').value = c ? c.date : new Date().toISOString().split('T')[0];
+  document.getElementById('mc-fourn').value = c ? (c.fournisseur||'') : '';
+  document.getElementById('del-mc').style.display = c ? 'block' : 'none';
+  document.getElementById('mc-recep-btn').style.display = c && CMD_LIGNES.length ? 'block' : 'none';
+  // Remplir datalist refs
+  const dl = document.getElementById('mc-l-ref-list');
+  if(dl) dl.innerHTML = BD.pieces.map(p=>`<option value="${p.ref}">${p.nom}</option>`).join('');
+  renderCmdLignes();
+  om('mc');
+}
+
+function renderCmdLignes() {
+  const el = document.getElementById('mc-lignes'); if(!el) return;
+  if(!CMD_LIGNES.length) { el.innerHTML='<div style="color:var(--tx3);font-size:13px;padding:8px 0">Aucune référence — ajoutez des lignes ci-dessous</div>'; return; }
+  el.innerHTML = CMD_LIGNES.map((l,i) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--brd)">
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:6px">
+          ${l.recu ? '<span style="color:var(--ok);font-size:14px">✓</span>' : '<span style="color:var(--tx3);font-size:14px">○</span>'}
+          <div>
+            <div style="font-size:13px;font-weight:700">${l.nom}</div>
+            <div style="font-size:11px;color:var(--tx3);font-family:monospace">${l.ref} · ${l.qte} unité${l.qte>1?'s':''}</div>
+          </div>
+        </div>
+      </div>
+      ${!l.recu ? `<button onclick="CMD_LIGNES.splice(${i},1);renderCmdLignes()" style="width:28px;height:28px;border-radius:8px;border:1px solid var(--da-b);background:var(--da-bg);color:var(--da);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">×</button>` : ''}
+    </div>`).join('');
+}
+
+function ajouterLigneCmd() {
+  const ref = document.getElementById('mc-l-ref')?.value.trim();
+  const nom = document.getElementById('mc-l-nom')?.value.trim();
+  const qte = parseInt(document.getElementById('mc-l-qte')?.value)||1;
+  if(!ref||!nom){toast('Référence et désignation requises');return;}
+  CMD_LIGNES.push({ref, nom, qte, recu:false});
+  document.getElementById('mc-l-ref').value='';
+  document.getElementById('mc-l-nom').value='';
+  document.getElementById('mc-l-qte').value='1';
+  document.getElementById('mc-recep-btn').style.display='block';
+  renderCmdLignes();
+}
+
+function onCmdRefChange(val) {
+  const p = BD.pieces.find(x=>x.ref.toLowerCase()===val.trim().toLowerCase());
+  if(p) { const el=document.getElementById('mc-l-nom'); if(el) el.value=p.nom; }
+}
+
+async function savCommande() {
+  const numero = document.getElementById('mc-num')?.value.trim();
+  const date   = document.getElementById('mc-date')?.value;
+  const fourn  = document.getElementById('mc-fourn')?.value.trim();
+  if(!numero){toast('Numéro de commande requis');return;}
+  if(!CMD_LIGNES.length){toast('Ajoutez au moins une référence');return;}
+  if(!BD.commandes) BD.commandes=[];
+
+  if(CMD_EDIT_ID) {
+    const c=BD.commandes.find(x=>x.id===CMD_EDIT_ID);
+    if(c){ Object.assign(c,{numero,date,fournisseur:fourn,lignes:CMD_LIGNES}); }
+  } else {
+    BD.commandes.push({id:'CMD-'+Date.now(), numero, date, fournisseur:fourn, lignes:CMD_LIGNES});
+  }
+  if(await save()){toast('Commande enregistrée ✓');fm('mc');render();}
+}
+
+async function delCommande() {
+  if(!CMD_EDIT_ID||!confirm('Supprimer cette commande ?'))return;
+  BD.commandes=(BD.commandes||[]).filter(x=>x.id!==CMD_EDIT_ID);
+  if(await save()){toast('Commande supprimée');fm('mc');render();}
+}
+
+// Réceptionner une commande : cochage des lignes + mise à jour stock
+function ouvrirReceptionCommande() {
+  const c=(BD.commandes||[]).find(x=>x.id===CMD_EDIT_ID); if(!c) return;
+  fm('mc');
+  // Ouvrir modal de réception avec pré-remplissage depuis la commande
+  const nonRecus = (c.lignes||[]).filter(l=>!l.recu);
+  if(!nonRecus.length){toast('Toutes les références sont déjà réceptionnées');return;}
+  _ouvrirReceptionCmd(c, nonRecus);
+}
+
+function _ouvrirReceptionCmd(cmd, lignes) {
+  let overlay = document.getElementById('_inline-overlay');
+  if(!overlay){overlay=document.createElement('div');overlay.id='_inline-overlay';overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:600;display:flex;align-items:flex-end;justify-content:center';document.body.appendChild(overlay);}
+  const today = new Date().toISOString().split('T')[0];
+  overlay.innerHTML=`<div style="background:var(--sur);border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:22px 18px 44px;box-shadow:0 -20px 60px rgba(0,0,0,.2);max-height:85vh;overflow-y:auto">
+    <div style="width:40px;height:4px;border-radius:2px;background:var(--brd2);margin:0 auto 18px"></div>
+    <div style="font-size:15px;font-weight:700;margin-bottom:4px">Réceptionner BC #${cmd.numero}</div>
+    <div style="font-size:12px;color:var(--tx3);margin-bottom:16px">Cochez les références reçues</div>
+    <div style="margin-bottom:14px">
+      ${lignes.map((l,i)=>`
+        <label style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--brd);cursor:pointer">
+          <input type="checkbox" id="rcmd-${i}" style="width:18px;height:18px;accent-color:var(--acc);flex-shrink:0"/>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:700">${l.nom}</div>
+            <div style="font-size:11px;color:var(--tx3);font-family:monospace">${l.ref} · ${l.qte} unité${l.qte>1?'s':''}</div>
+          </div>
+        </label>`).join('')}
+    </div>
+    <input type="date" id="rcmd-date" value="${today}" style="width:100%;background:var(--sur2);border:1px solid var(--brd);border-radius:var(--r2);padding:10px 12px;font-size:14px;font-family:var(--fn);margin-bottom:14px"/>
+    <div style="display:flex;gap:10px">
+      <button onclick="document.getElementById('_inline-overlay').remove()" style="flex:1;padding:12px;border-radius:var(--r2);border:1px solid var(--brd);background:var(--sur2);font-family:var(--fn);font-size:14px;font-weight:600;cursor:pointer">Annuler</button>
+      <button onclick="_validerReceptionCmd('${cmd.id}')" style="flex:2;padding:12px;border-radius:var(--r2);border:none;background:var(--acc);color:#fff;font-family:var(--fn);font-size:14px;font-weight:700;cursor:pointer">Valider la réception</button>
+    </div>
+  </div>`;
+  overlay.onclick=e=>{if(e.target===overlay)overlay.remove();};
+}
+
+async function _validerReceptionCmd(cmdId) {
+  const cmd=(BD.commandes||[]).find(x=>x.id===cmdId); if(!cmd) return;
+  const date=document.getElementById('rcmd-date')?.value||new Date().toISOString().split('T')[0];
+  const nonRecus=cmd.lignes.filter(l=>!l.recu);
+  let nbReceptionnes=0;
+  nonRecus.forEach((l,i)=>{
+    const cb=document.getElementById(`rcmd-${i}`);
+    if(cb?.checked){
+      l.recu=true;
+      // Mise à jour stock
+      const p=BD.pieces.find(x=>x.ref.toLowerCase()===l.ref.toLowerCase());
+      if(p) p.stock=(p.stock||0)+l.qte;
+      // Créer entrée dans livraisons
+      if(!BD.livraisons) BD.livraisons=[];
+      BD.livraisons.push({id:'L-'+Date.now()+'-'+i, ref:l.ref, nom:l.nom, qte:l.qte, date, numCommande:cmd.numero});
+      nbReceptionnes++;
+    }
+  });
+  if(!nbReceptionnes){toast('Aucune référence cochée');return;}
+  document.getElementById('_inline-overlay')?.remove();
+  if(await save()){toast(`${nbReceptionnes} référence${nbReceptionnes>1?'s':''} réceptionnée${nbReceptionnes>1?'s':''} ✓`);render();}
 }
 
 // ── FAB ───────────────────────────────────────────────────────────────
@@ -6449,11 +6771,75 @@ async function exportXlsHeuresPersonnel() {
   const finDate = new Date(an, mo, 1);
   const fin = `${finDate.getFullYear()}-${String(finDate.getMonth()+1).padStart(2,'0')}-01`;
   const ptgMois = POINTAGES.filter(p => p.date_jour >= debut && p.date_jour < fin);
-  await _exportServeur('heures_personnel', {data: {pointages: ptgMois, personnel: PERSONNEL_DATA, mois: PERSO_HEURES_MOIS}});
+
+  // Agréger heures par personne
+  const heuresMap = {};
+  ptgMois.forEach(pt => {
+    (pt.lignes||[]).forEach(l => {
+      if (!l.nom) return;
+      if (!heuresMap[l.nom]) heuresMap[l.nom] = {heures:0, gd:0, panier:0};
+      heuresMap[l.nom].heures += parseFloat(l.heures)||0;
+      if (l.gd) heuresMap[l.nom].gd++;
+      if (l.panier) heuresMap[l.nom].panier++;
+    });
+  });
+
+  const nomMois = new Date(an, mo-1, 1).toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+
+  // Essayer l'export serveur d'abord
+  try {
+    const resp = await fetch(`/api/export/heures_personnel`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({auteur: USER?.nom||'—', data:{pointages:ptgMois, personnel:PERSONNEL_DATA, mois:PERSO_HEURES_MOIS}})
+    });
+    if (resp.ok) {
+      const blob = await resp.blob();
+      const cd = resp.headers.get('Content-Disposition')||'';
+      const match = cd.match(/filename="?([^"]+)"?/);
+      const filename = match ? match[1] : `heures-personnel-${PERSO_HEURES_MOIS}.xlsx`;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href=url; a.download=filename;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url); toast('Export Excel ✓'); return;
+    }
+  } catch(e) {}
+
+  // Fallback client-side : CSV
+  const rows = [
+    [`Heures Personnel — ${nomMois}`],
+    [`Exporté par`, USER?.nom||'—', `le`, new Date().toLocaleDateString('fr-FR')],
+    [],
+    ['Nom', 'Poste', 'Heures', 'Grands déplacements', 'Paniers repas']
+  ];
+
+  // Personnel connu
+  const vus = new Set();
+  PERSONNEL_DATA.forEach(p => {
+    const nom = `${p.prenom||''} ${p.nom}`.trim();
+    const d = heuresMap[nom] || {heures:0, gd:0, panier:0};
+    rows.push([nom, p.poste||'—', d.heures.toFixed(1), d.gd, d.panier]);
+    vus.add(nom);
+  });
+  // Personnes dans pointages non dans personnel
+  Object.entries(heuresMap).forEach(([nom, d]) => {
+    if (!vus.has(nom)) rows.push([nom, '—', d.heures.toFixed(1), d.gd, d.panier]);
+  });
+
+  const total = Object.values(heuresMap).reduce((s,d)=>s+d.heures,0);
+  rows.push([], ['TOTAL', '', total.toFixed(1), '', '']);
+
+  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(';')).join('\n');
+  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download=`heures-personnel-${PERSO_HEURES_MOIS}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('Export CSV ✓ (ouvrir avec Excel)');
 }
 
 async function initPersonnel() {
   await Promise.all([chargerPersonnel(), chargerPointages()]);
+  _enrichirPersonnelCompetences();
   renderPersonnelContent();
 }
 
@@ -6517,7 +6903,21 @@ function ouvrirDetailPersonnel(id) {
 function ouvrirNouveauPersonnel() { ouvrirModalPersonnel(null); }
 
 // Durées par défaut pour les CACES (en mois)
-const CACES_DUREES = {'CACES 1':60,'CACES 2':60,'CACES 3':60,'CACES 4':60,'CACES 5':60,'CACES 6':60,'CACES 7':60,'CACES 8':60,'CACES 9':60,'SST':24,'Habilitation électrique':36,'AIPR':60,'PRAP':36};
+const CACES_DUREES = {
+  // Engins de chantier R482 (ex R372) — travaux spéciaux
+  'CACES R482 A':60,'CACES R482 B1':60,'CACES R482 B2':60,'CACES R482 C1':60,
+  'CACES R482 C2':60,'CACES R482 D':60,'CACES R482 E':60,'CACES R482 F':60,'CACES R482 G':60,
+  // Grues mobiles R483
+  'CACES R483 A':60,'CACES R483 B':60,
+  // Plateformes élévatrices R486
+  'CACES R486 A':60,'CACES R486 B':60,'CACES R486 C':60,
+  // Chariots R489 (si besoin chantier)
+  'CACES R489 1A':60,'CACES R489 1B':60,'CACES R489 3':60,'CACES R489 4':60,'CACES R489 5':60,
+  // Grues à tour R487
+  'CACES R487 A':60,'CACES R487 B':60,
+  // Sécurité
+  'SST':24,'AIPR':60,'PRAP BTP':36,'Travail en hauteur':36
+};
 let COMP_EDIT = []; // compétences en cours d'édition
 
 function ouvrirModalPersonnel(p) {
@@ -6630,9 +7030,31 @@ async function savPersonnel() {
   try {
     const r = await fetch('/api/personnel',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
     const d = await r.json();
-    if (d.ok) { toast(PERSO_EDIT_ID?'Employé modifié ✓':'Employé ajouté ✓'); fm('mperso'); await chargerPersonnel(); renderPersonnelContent(); }
-    else toast('Erreur : '+(d.erreur||'inconnue'));
+    if (d.ok) {
+      // Sauvegarder aussi les compétences dans BD (stockage fiable)
+      if (!BD.competencesPersonnel) BD.competencesPersonnel = {};
+      const pid = PERSO_EDIT_ID || d.id || nom;
+      BD.competencesPersonnel[pid] = COMP_EDIT;
+      await save();
+      toast(PERSO_EDIT_ID?'Employé modifié ✓':'Employé ajouté ✓');
+      fm('mperso');
+      await chargerPersonnel();
+      // Enrichir avec compétences depuis BD
+      _enrichirPersonnelCompetences();
+      renderPersonnelContent();
+    } else toast('Erreur : '+(d.erreur||'inconnue'));
   } catch(e) { toast('Erreur réseau'); }
+}
+
+function _enrichirPersonnelCompetences() {
+  if (!BD.competencesPersonnel) return;
+  PERSONNEL_DATA.forEach(p => {
+    const key = String(p.id);
+    if (BD.competencesPersonnel[key]) p.competences = BD.competencesPersonnel[key];
+    else if (BD.competencesPersonnel[`${p.prenom||''} ${p.nom}`.trim()]) {
+      p.competences = BD.competencesPersonnel[`${p.prenom||''} ${p.nom}`.trim()];
+    }
+  });
 }
 
 async function delPersonnel() {
@@ -6840,15 +7262,19 @@ async function delPersonnel() {
     <!-- Ajout compétence -->
     <div style="background:var(--sur2);border-radius:var(--r2);padding:12px;border:1px solid var(--brd)">
       <div style="font-size:11px;font-weight:700;color:var(--tx3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.8px">Ajouter une compétence</div>
-      <input id="comp-nom" list="comp-suggestions" placeholder="CACES 3, SST, Habilitation électrique…"
+      <input id="comp-nom" list="comp-suggestions" placeholder="CACES R482 B1, SST, AIPR…"
         style="width:100%;background:var(--sur);border:1px solid var(--brd);border-radius:var(--r3);padding:9px 12px;font-size:13px;font-family:var(--fn);color:var(--tx);margin-bottom:8px"
         oninput="onCompNomChange(this.value)"/>
       <datalist id="comp-suggestions">
-        <option value="CACES 1"/><option value="CACES 2"/><option value="CACES 3"/>
-        <option value="CACES 4"/><option value="CACES 5"/><option value="CACES 6"/>
-        <option value="CACES 7"/><option value="CACES 8"/><option value="CACES 9"/>
-        <option value="SST"/><option value="Habilitation électrique"/>
-        <option value="AIPR"/><option value="PRAP"/>
+        <option value="CACES R482 A"/><option value="CACES R482 B1"/><option value="CACES R482 B2"/>
+        <option value="CACES R482 C1"/><option value="CACES R482 C2"/><option value="CACES R482 D"/>
+        <option value="CACES R482 E"/><option value="CACES R482 F"/><option value="CACES R482 G"/>
+        <option value="CACES R483 A"/><option value="CACES R483 B"/>
+        <option value="CACES R486 A"/><option value="CACES R486 B"/><option value="CACES R486 C"/>
+        <option value="CACES R489 1A"/><option value="CACES R489 1B"/><option value="CACES R489 3"/>
+        <option value="CACES R487 A"/><option value="CACES R487 B"/>
+        <option value="SST"/><option value="AIPR"/><option value="PRAP BTP"/>
+        <option value="Travail en hauteur"/>
       </datalist>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
         <div><label style="font-size:10px;font-weight:700;color:var(--tx3);display:block;margin-bottom:4px">Date d'obtention</label>
