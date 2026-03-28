@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -135,7 +133,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);min-height:100vh
 @media(max-width:480px){.fab{right:16px}}
 
 /* ── MODALES ── */
-.fmod{position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:200;display:none;align-items:flex-end;justify-content:center}
+.fmod{position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:500;display:none;align-items:flex-end;justify-content:center}
 .fmod.on{display:flex}
 .mod{background:var(--sur);border-radius:24px 24px 0 0;width:100%;max-width:480px;max-height:92vh;overflow-y:auto;padding:22px 18px 44px;box-shadow:0 -20px 60px rgba(0,0,0,.18)}
 .poignee{width:32px;height:3px;background:var(--brd2);border-radius:2px;margin:0 auto 16px}
@@ -1035,6 +1033,25 @@ input:focus, select:focus, textarea:focus {
 .home-map-info { flex:1;min-width:0; }
 .home-map-nom { font-size:13px;font-weight:700;color:var(--tx); }
 .home-map-loc { font-size:11px;color:var(--tx3);margin-top:1px; }
+/* ── PLANNING GANTT HOME ── */
+.gantt-wrap { background:var(--sur);border:1px solid var(--brd);border-radius:18px;overflow:hidden;box-shadow:var(--sh2);margin-bottom:14px; }
+.gantt-header { padding:14px 16px 10px;display:flex;align-items:center;justify-content:space-between; }
+.gantt-title { font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:1.2px; }
+.gantt-months { display:flex;font-size:9px;color:var(--tx3);font-weight:600;letter-spacing:.5px;margin-bottom:6px;padding:0 16px; }
+.gantt-month { flex:1;text-align:center;text-transform:uppercase; }
+.gantt-row { display:flex;align-items:center;padding:5px 16px;gap:10px;border-top:1px solid var(--brd); }
+.gantt-row:first-child { border-top:none; }
+.gantt-nom { font-size:12px;font-weight:600;color:var(--tx);width:90px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.gantt-track { flex:1;height:22px;background:var(--sur2);border-radius:6px;position:relative;overflow:hidden; }
+.gantt-bar { position:absolute;height:100%;border-radius:6px;display:flex;align-items:center;padding:0 6px; }
+.gantt-bar-lbl { font-size:9px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.gantt-bar.en_cours { background:var(--ok); }
+.gantt-bar.a_venir { background:var(--in); }
+.gantt-bar.termine { background:var(--brd2); }
+.gantt-nav { display:flex;gap:4px; }
+.gantt-nav button { width:26px;height:26px;border-radius:8px;border:1px solid var(--brd);background:var(--sur);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--tx2); }
+.gantt-nav button:hover { background:var(--sur2); }
+
 .home-alerts-list {
   background:var(--sur);border:1px solid var(--brd);
   border-radius:18px;overflow:hidden;box-shadow:var(--sh2);
@@ -1256,44 +1273,40 @@ function fab() {
 // HOME MAP
 // ══════════════════════════════════════════════════════════════════
 function initHomeMap() {
-  const chantiersEnCours = CHANTIERS_LIST.filter(c => getStatutChantier(c) === 'en_cours');
-  if (!chantiersEnCours.length) return;
+  renderGanttHome();
   const mapEl = document.getElementById('home-map');
-  if (!mapEl || typeof L === 'undefined') return;
+  if (!mapEl || typeof L === 'undefined' || !CHANTIERS_LIST.length) return;
+  // Couleurs par statut
+  const couleur = {en_cours:'#16803C', a_venir:'#4338CA', termine:'#8A8680'};
   try {
-    const map = L.map('home-map', {zoomControl:true, attributionControl:false, scrollWheelZoom:false});
+    const map = L.map('home-map', {zoomControl:false, attributionControl:false, scrollWheelZoom:false});
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19}).addTo(map);
     const markers = [];
-    const withCoords = chantiersEnCours.filter(c => c.lat && c.lng);
-    withCoords.forEach(c => {
-      const m = L.marker([c.lat, c.lng]).addTo(map).bindPopup(`<b>${c.nom}</b><br>${c.localisation||''}`);
+    // Tous les chantiers avec coords
+    CHANTIERS_LIST.filter(c => c.lat && c.lng).forEach(c => {
+      const st = getStatutChantier(c);
+      const icon = L.divIcon({html:`<div style="width:12px;height:12px;border-radius:50%;background:${couleur[st]||'#888'};border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)"></div>`,className:'',iconSize:[12,12],iconAnchor:[6,6]});
+      const m = L.marker([c.lat, c.lng], {icon}).addTo(map).bindPopup(`<b>${c.nom}</b><br><small>${c.localisation||''}</small>`);
       markers.push(m);
     });
     // Géocoder ceux sans coords
-    chantiersEnCours.filter(c => !c.lat && c.localisation).forEach(c => {
+    CHANTIERS_LIST.filter(c => !c.lat && c.localisation).forEach(c => {
       fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(c.localisation)}&format=json&limit=1`)
         .then(r=>r.json()).then(data => {
           if (data?.[0] && map) {
-            const m = L.marker([parseFloat(data[0].lat), parseFloat(data[0].lon)]).addTo(map)
-              .bindPopup(`<b>${c.nom}</b><br>${c.localisation}`);
+            const st = getStatutChantier(c);
+            const icon = L.divIcon({html:`<div style="width:12px;height:12px;border-radius:50%;background:${couleur[st]||'#888'};border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)"></div>`,className:'',iconSize:[12,12],iconAnchor:[6,6]});
+            const m = L.marker([parseFloat(data[0].lat), parseFloat(data[0].lon)], {icon}).addTo(map)
+              .bindPopup(`<b>${c.nom}</b><br><small>${c.localisation}</small>`);
             markers.push(m);
-            if (markers.length > 1) {
-              const g = new L.featureGroup(markers);
-              map.fitBounds(g.getBounds().pad(0.25));
-            } else {
-              map.setView(m.getLatLng(), 13);
-            }
+            if (markers.length > 1) { map.fitBounds(new L.featureGroup(markers).getBounds().pad(0.2)); }
+            else { map.setView(m.getLatLng(), 12); }
           }
         }).catch(()=>{});
     });
-    if (markers.length === 1) {
-      map.setView(markers[0].getLatLng(), 13);
-    } else if (markers.length > 1) {
-      const group = new L.featureGroup(markers);
-      map.fitBounds(group.getBounds().pad(0.25));
-    } else if (!chantiersEnCours.some(c => c.localisation)) {
-      map.setView([46.6, 1.9], 5);
-    }
+    if (markers.length === 1) map.setView(markers[0].getLatLng(), 12);
+    else if (markers.length > 1) map.fitBounds(new L.featureGroup(markers).getBounds().pad(0.2));
+    else map.setView([46.6, 1.9], 5);
   } catch(e) { console.warn('Home map error:', e); }
 }
 
@@ -1776,7 +1789,11 @@ function buildNav(){
 }
 
 function nav(p){
-  PAGE = p; DET = null; render(); buildNav();
+  PAGE = p; DET = null;
+  // Réinitialise les états de sous-navigation pour revenir à la liste
+  if(p === 'chantier') CHANTIER_DETAIL = null;
+  if(p === 'parcmat') DET = null;
+  render(); buildNav();
 }
 function render(){
   if(!BD)return;
@@ -1840,6 +1857,8 @@ function toast(msg,dur=2800){
 }
 
 // ── Accueil ──────────────────────────────────────────────────────────
+let GANTT_OFFSET = 0; // décalage mois pour navigation planning
+
 function pgHome(){
   const now = new Date();
 
@@ -1848,7 +1867,7 @@ function pgHome(){
   const nbRep = machinesAlert.length;
   const nbUrgent = BD.machines.filter(m => stMach(m) === 'da').length;
 
-  // 2. Chantiers en cours
+  // 2. Chantiers
   const chantiersEnCours = CHANTIERS_LIST.filter(c => getStatutChantier(c) === 'en_cours');
   const nbChantiers = chantiersEnCours.length;
 
@@ -1858,6 +1877,17 @@ function pgHome(){
   lundi.setHours(0,0,0,0);
   const recepSem = (BD.livraisons||[]).filter(l => new Date(l.date) >= lundi);
   const nbRecep = recepSem.length;
+
+  // 4. Alertes entretiens + VGP en retard + formations
+  const entretiensEnRetard = BD.machines.filter(m => stMach(m) === 'da').length;
+  const vgpEnRetard = BD.machines.filter(m => stVgp(m) === 'da').length;
+  const now60 = new Date(); now60.setDate(now60.getDate() + 60);
+  let formationsExpiring = 0;
+  (PERSONNEL_DATA || []).forEach(p => {
+    (p.competences||[]).forEach(c => {
+      if (c.date_fin && new Date(c.date_fin) <= now60) formationsExpiring++;
+    });
+  });
 
   return `
   <div class="ent">
@@ -1879,7 +1909,6 @@ function pgHome(){
 
     <!-- ── 3 KPIs ── -->
     <div class="home-kpi-grid">
-
       <div class="home-kpi-card ${nbUrgent>0?'danger':''}" onclick="nav('parcmat')">
         <div class="home-kpi-icon ${nbUrgent>0?'da':'ok'}">
           <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" width="22" height="22">
@@ -1918,29 +1947,103 @@ function pgHome(){
       </div>
     </div>
 
-    <!-- ── CARTE CHANTIERS EN COURS ── -->
-    ${chantiersEnCours.length > 0 ? `
+    <!-- ── ALERTES ── -->
+    ${(entretiensEnRetard > 0 || vgpEnRetard > 0 || formationsExpiring > 0) ? `
+    <div style="background:var(--da-bg);border:1px solid var(--da-b);border-radius:14px;padding:12px 16px;display:flex;flex-direction:column;gap:6px">
+      <div style="font-size:10px;font-weight:700;color:var(--da);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">⚠️ Alertes</div>
+      ${entretiensEnRetard>0?`<div style="font-size:13px;color:var(--da);font-weight:600;cursor:pointer" onclick="nav('parcmat')">🔧 ${entretiensEnRetard} entretien${entretiensEnRetard>1?'s':''} en retard</div>`:''}
+      ${vgpEnRetard>0?`<div style="font-size:13px;color:var(--da);font-weight:600;cursor:pointer" onclick="nav('parcmat')">📋 ${vgpEnRetard} VGP expirée${vgpEnRetard>1?'s':''}</div>`:''}
+      ${formationsExpiring>0?`<div style="font-size:13px;color:var(--wa);font-weight:600;cursor:pointer" onclick="nav('personnel')">🎓 ${formationsExpiring} formation${formationsExpiring>1?'s':''} à renouveler (dans 60j)</div>`:''}
+    </div>` : ''}
+
+    <!-- ── PLANNING GLOBAL (GANTT) ── -->
+    <div class="gantt-wrap" id="gantt-home"></div>
+
+    <!-- ── CARTE GLOBALE TOUS LES CHANTIERS ── -->
+    ${CHANTIERS_LIST.length > 0 ? `
     <div class="home-map-card">
-      <div id="home-map" style="width:100%;height:260px;background:var(--sur2)"></div>
+      <div id="home-map" style="width:100%;height:240px;background:var(--sur2)"></div>
       <div class="home-map-list">
-        ${chantiersEnCours.map(c => `
-          <div class="home-map-row" onclick="ouvrirChantierDetail(${c.id})">
-            <div class="home-map-dot"></div>
+        ${CHANTIERS_LIST.slice(0,5).map(c => {
+          const st = getStatutChantier(c);
+          const dot = st==='en_cours'?'var(--ok)':st==='a_venir'?'var(--in)':'var(--brd2)';
+          return `<div class="home-map-row" onclick="ouvrirChantierDetail(${c.id})">
+            <div class="home-map-dot" style="background:${dot};box-shadow:0 0 0 3px ${dot}22"></div>
             <div class="home-map-info">
               <div class="home-map-nom">${c.nom}</div>
               <div class="home-map-loc">${c.localisation||'Localisation non renseignée'}</div>
             </div>
             <svg viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg>
-          </div>`).join('')}
+          </div>`;
+        }).join('')}
+        ${CHANTIERS_LIST.length>5?`<div style="padding:10px 16px;font-size:12px;color:var(--tx3);text-align:center">${CHANTIERS_LIST.length-5} autres chantiers…</div>`:''}
       </div>
     </div>` : `
     <div style="background:var(--sur);border:1px solid var(--brd);border-radius:18px;padding:32px;text-align:center;color:var(--tx3)">
       <div style="font-size:32px;margin-bottom:8px">🏗️</div>
-      <div style="font-size:13px;font-weight:600">Aucun chantier en cours</div>
+      <div style="font-size:13px;font-weight:600">Aucun chantier</div>
     </div>`}
 
     <div style="height:60px"></div>
   </div>`;
+}
+
+function renderGanttHome() {
+  const el = document.getElementById('gantt-home');
+  if (!el || !CHANTIERS_LIST.length) { if(el) el.style.display='none'; return; }
+
+  const now = new Date();
+  // Fenêtre de 4 mois centrée sur le mois actuel + GANTT_OFFSET
+  const startRef = new Date(now.getFullYear(), now.getMonth() + GANTT_OFFSET, 1);
+  const nbMois = 4;
+  const endRef = new Date(startRef.getFullYear(), startRef.getMonth() + nbMois, 1);
+  const totalMs = endRef - startRef;
+
+  // Filtrer les chantiers qui sont dans la fenêtre
+  const chantiers = CHANTIERS_LIST.filter(c => {
+    if (!c.date_debut) return false;
+    const d = new Date(c.date_debut+'T12:00:00');
+    const f = c.date_fin ? new Date(c.date_fin+'T12:00:00') : new Date(d.getFullYear(), d.getMonth()+3, d.getDate());
+    return d < endRef && f > startRef;
+  });
+
+  // En-têtes mois
+  const moisLabels = [];
+  for (let i=0; i<nbMois; i++) {
+    const m = new Date(startRef.getFullYear(), startRef.getMonth()+i, 1);
+    moisLabels.push(m.toLocaleDateString('fr-FR',{month:'short'}));
+  }
+
+  const rows = chantiers.map(c => {
+    const d = new Date(c.date_debut+'T12:00:00');
+    const f = c.date_fin ? new Date(c.date_fin+'T12:00:00') : new Date(d.getFullYear(), d.getMonth()+3, d.getDate());
+    const left = Math.max(0, (d - startRef) / totalMs * 100);
+    const right = Math.min(100, (f - startRef) / totalMs * 100);
+    const width = Math.max(2, right - left);
+    const st = getStatutChantier(c);
+    return `<div class="gantt-row">
+      <div class="gantt-nom" title="${c.nom}">${c.nom}</div>
+      <div class="gantt-track">
+        <div class="gantt-bar ${st}" style="left:${left.toFixed(1)}%;width:${width.toFixed(1)}%">
+          <span class="gantt-bar-lbl">${width>15?c.nom:''}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="gantt-header">
+      <div class="gantt-title">📅 Planning des chantiers</div>
+      <div class="gantt-nav">
+        <button onclick="GANTT_OFFSET--;renderGanttHome()">‹</button>
+        <button onclick="GANTT_OFFSET=0;renderGanttHome()" title="Aujourd'hui" style="font-size:10px;font-weight:700">•</button>
+        <button onclick="GANTT_OFFSET++;renderGanttHome()">›</button>
+      </div>
+    </div>
+    <div class="gantt-months" style="padding:0 16px 0 calc(90px + 26px)">
+      ${moisLabels.map(m=>`<div class="gantt-month">${m}</div>`).join('')}
+    </div>
+    ${chantiers.length ? rows : '<div style="padding:20px;text-align:center;color:var(--tx3);font-size:13px">Aucun chantier sur cette période</div>'}`;
 }
 
 // ── Parc ──────────────────────────────────────────────────────────────
@@ -2088,8 +2191,10 @@ function pageMach(id){
       ${m.poids?`<div class="li"><span class="li-k">Poids</span><span class="li-v">${m.poids} kg</span></div>`:''}
     </div>
     <div class="carte"><div class="carte-ent"><div class="carte-tit">Heures moteur</div><button class="btn bp np" style="width:auto;padding:7px 14px;font-size:13px" onclick="openMH('${id}')">+ Saisir</button></div>
-      <div class="li"><span class="li-k">Heures actuelles</span><span class="li-v" style="font-size:20px;font-weight:700">${m.heures}h</span></div>
-      <div class="li"><span class="li-k">Dernier entretien</span><span class="li-v">${m.hEntretien}h</span></div>
+      <div class="li"><span class="li-k">Heures actuelles</span><span class="li-v" style="display:flex;align-items:center;gap:8px"><span style="font-size:20px;font-weight:700">${m.heures}h</span><button onclick="inlineEdit('${id}','heures','number','Heures actuelles',${m.heures})" style="width:24px;height:24px;border-radius:6px;border:1px solid var(--brd);background:var(--sur2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="2" width="12" height="12"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button></span></div>
+      <div class="li"><span class="li-k">Heures à l'achat</span><span class="li-v" style="display:flex;align-items:center;gap:8px"><span>${m.hAchat||'—'}h</span><button onclick="inlineEdit('${id}','hAchat','number','Heures à l\\'achat',${m.hAchat||0})" style="width:24px;height:24px;border-radius:6px;border:1px solid var(--brd);background:var(--sur2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="2" width="12" height="12"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button></span></div>
+      <div class="li"><span class="li-k">Dernier entretien</span><span class="li-v" style="display:flex;align-items:center;gap:8px"><span>${m.hEntretien}h</span><button onclick="inlineEdit('${id}','hEntretien','number','Dernier entretien (heures)',${m.hEntretien})" style="width:24px;height:24px;border-radius:6px;border:1px solid var(--brd);background:var(--sur2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="2" width="12" height="12"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button></span></div>
+      <div class="li"><span class="li-k">Seuil entretien</span><span class="li-v" style="display:flex;align-items:center;gap:8px"><span>${seuil}h</span><button onclick="inlineEdit('${id}','seuil','number','Seuil entretien (heures)',${seuil})" style="width:24px;height:24px;border-radius:6px;border:1px solid var(--brd);background:var(--sur2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="2" width="12" height="12"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button></span></div>
       <div class="li"><span class="li-k">Depuis dernier entretien</span><span class="li-v" style="color:var(--${s})">${d}h / ${seuil}h</span></div>
       <div style="margin-top:12px;display:flex;flex-direction:column;gap:6px">
         <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--tx3)"><span>Usure</span><span style="font-weight:700;color:var(--${s})">${Math.round(pct*100)}%</span></div>
@@ -2097,7 +2202,7 @@ function pageMach(id){
       </div>
     </div>
     <div class="carte"><div class="carte-ent"><div class="carte-tit">VGP</div>${vgp?`<span class="bdg ${vgp.st}">${vgp.lbl}</span>`:''}</div>
-      <div class="li"><span class="li-k">Date VGP prochaine</span><span class="li-v">${fdt(m.vgp)}</span></div>
+      <div class="li"><span class="li-k">Date dernière VGP</span><span class="li-v" style="display:flex;align-items:center;gap:8px"><span>${fdt(m.vgp)}</span><button onclick="inlineEdit('${id}','vgp','date','Date VGP','${m.vgp||''}')" style="width:24px;height:24px;border-radius:6px;border:1px solid var(--brd);background:var(--sur2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="2" width="12" height="12"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button></span></div>
       <button class="btn bs np" style="margin-top:12px" onclick="printMach('${id}')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Imprimer fiche machine</button>
     </div>
     <div class="carte"><div class="carte-ent"><div class="carte-tit">Usure des pièces</div></div>${puH}</div>
@@ -2576,6 +2681,43 @@ async function savH(){
   if(v<m.heures&&!confirm(`${v}h < ${m.heures}h actuelles. Confirmer ?`))return;
   m.heures=v;
   if(await save()){fm('mh');render();toast('Heures mises à jour ✓');}
+}
+
+// ── Inline edit — modification rapide d'un champ machine ──────────────
+function inlineEdit(machId, champ, type, label, valActuelle) {
+  const m = BD.machines.find(x => x.id === machId); if (!m) return;
+  // Créer un mini-modal inline
+  let overlay = document.getElementById('_inline-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = '_inline-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:600;display:flex;align-items:flex-end;justify-content:center';
+    document.body.appendChild(overlay);
+  }
+  overlay.innerHTML = `<div style="background:var(--sur);border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:24px 20px 40px;box-shadow:0 -20px 60px rgba(0,0,0,.2)">
+    <div style="width:40px;height:4px;border-radius:2px;background:var(--brd2);margin:0 auto 20px"></div>
+    <div style="font-size:15px;font-weight:700;margin-bottom:16px">${label}</div>
+    <input id="_inline-inp" type="${type}" value="${valActuelle}"
+      style="width:100%;background:var(--sur2);border:1.5px solid var(--brd);border-radius:var(--r2);padding:12px 14px;font-size:16px;font-family:var(--fn);color:var(--tx);outline:none"
+      onfocus="this.style.borderColor='var(--acc)'" onblur="this.style.borderColor='var(--brd)'"
+      onkeydown="if(event.key==='Enter')_inlineSave('${machId}','${champ}')"/>
+    <div style="display:flex;gap:10px;margin-top:14px">
+      <button onclick="document.getElementById('_inline-overlay').remove()" style="flex:1;padding:12px;border-radius:var(--r2);border:1px solid var(--brd);background:var(--sur2);font-family:var(--fn);font-size:14px;font-weight:600;cursor:pointer">Annuler</button>
+      <button onclick="_inlineSave('${machId}','${champ}')" style="flex:2;padding:12px;border-radius:var(--r2);border:none;background:var(--acc);color:#fff;font-family:var(--fn);font-size:14px;font-weight:700;cursor:pointer">Enregistrer</button>
+    </div>
+  </div>`;
+  overlay.onclick = e => { if(e.target===overlay) overlay.remove(); };
+  setTimeout(() => document.getElementById('_inline-inp')?.focus(), 50);
+}
+
+async function _inlineSave(machId, champ) {
+  const inp = document.getElementById('_inline-inp'); if (!inp) return;
+  const m = BD.machines.find(x => x.id === machId); if (!m) return;
+  const val = champ === 'vgp' ? inp.value : (parseFloat(inp.value) || 0);
+  if (champ !== 'vgp' && val < 0) { toast('Valeur invalide'); return; }
+  m[champ] = val;
+  document.getElementById('_inline-overlay')?.remove();
+  if (await save()) { render(); toast(`${champ} mis à jour ✓`); }
 }
 
 // ── LIVRAISONS ────────────────────────────────────────────────────────
@@ -6190,22 +6332,129 @@ function renderTotalBody() {
 // ══════════════════════════════════════════════════════════════════
 let PERSONNEL_DATA = [];
 let PERSO_EDIT_ID  = null;
+let PERSONNEL_TAB = 'liste'; // 'liste' | 'heures'
+let PERSO_HEURES_MOIS = ''; // YYYY-MM sélectionné
 
 function pgPersonnel() {
+  const ptOn  = PERSONNEL_TAB==='liste' ? ' on' : '';
+  const heOn  = PERSONNEL_TAB==='heures' ? ' on' : '';
   return `<div class="ent"><div><h1>Personnel</h1></div><div class="ent-act" id="perso-act"></div></div>
+  <div class="sub-nav" style="position:sticky;top:57px;z-index:49">
+    <div class="sub-ni${ptOn}" onclick="switchPersonnelTab('liste')">👷 Liste</div>
+    <div class="sub-ni${heOn}" onclick="switchPersonnelTab('heures')">⏱ Heures</div>
+  </div>
   <div class="pg on">
-    <div class="search-bar">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input id="perso-search" placeholder="Rechercher un employé…" oninput="filtrerPersonnel()"/>
-    </div>
-    <div id="perso-liste"><div class="spin-c"><div class="spin"></div>Chargement…</div></div>
+    <div id="perso-content"></div>
     <div style="height:80px"></div>
   </div>`;
 }
 
+function switchPersonnelTab(tab) {
+  PERSONNEL_TAB = tab;
+  document.querySelectorAll('.sub-nav .sub-ni').forEach(el => {
+    el.classList.toggle('on', el.textContent.includes(tab==='liste'?'Liste':'Heures'));
+  });
+  renderPersonnelContent();
+}
+
+function renderPersonnelContent() {
+  const el = document.getElementById('perso-content');
+  if (!el) return;
+  if (PERSONNEL_TAB === 'liste') {
+    el.innerHTML = `<div class="search-bar">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="perso-search" placeholder="Rechercher un employé…" oninput="filtrerPersonnel()"/>
+    </div>
+    <div id="perso-liste"></div>`;
+    renderPersonnel(PERSONNEL_DATA);
+    const actEl = document.getElementById('perso-act');
+    const isAdmin = USER?.role === 'admin' || USER?.role === 'rh';
+    if (actEl && isAdmin) actEl.innerHTML = `<div class="ico-btn" onclick="ouvrirNouveauPersonnel()" title="Nouveau personnel">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" width="17" height="17"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    </div>`;
+  } else {
+    renderHeuresPersonnel();
+    const actEl = document.getElementById('perso-act');
+    if (actEl) actEl.innerHTML = `<div class="ico-btn" onclick="exportXlsHeuresPersonnel()" title="Exporter Excel">${XLS_ICO}</div>`;
+  }
+}
+
+function renderHeuresPersonnel() {
+  const el = document.getElementById('perso-content');
+  if (!el) return;
+  const now = new Date();
+  if (!PERSO_HEURES_MOIS) PERSO_HEURES_MOIS = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+
+  // Calcul heures par personne pour le mois sélectionné
+  const [an, mo] = PERSO_HEURES_MOIS.split('-').map(Number);
+  const debut = `${PERSO_HEURES_MOIS}-01`;
+  const finDate = new Date(an, mo, 1);
+  const fin = `${finDate.getFullYear()}-${String(finDate.getMonth()+1).padStart(2,'0')}-01`;
+
+  const ptgMois = POINTAGES.filter(p => p.date_jour >= debut && p.date_jour < fin);
+
+  // Agréger par nom
+  const heuresMap = {};
+  ptgMois.forEach(pt => {
+    (pt.lignes||[]).forEach(l => {
+      if (!l.nom) return;
+      heuresMap[l.nom] = (heuresMap[l.nom]||0) + (parseFloat(l.heures)||0);
+    });
+  });
+
+  const nomMois = new Date(an, mo-1, 1).toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+
+  const rows = PERSONNEL_DATA.map(p => {
+    const nom = `${p.prenom||''} ${p.nom}`.trim();
+    const h = heuresMap[nom] || 0;
+    const st = h === 0 ? '' : h >= 140 ? 'ok' : h >= 70 ? 'wa' : 'da';
+    return {nom, h, st, poste: p.poste||'—', id: p.id};
+  }).sort((a,b) => b.h - a.h);
+
+  // Aussi les personnes dans les pointages mais pas dans PERSONNEL_DATA
+  Object.keys(heuresMap).forEach(nom => {
+    if (!rows.find(r => r.nom === nom)) rows.push({nom, h: heuresMap[nom], st:'in', poste:'—', id:null});
+  });
+
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+      <input type="month" id="perso-mois" value="${PERSO_HEURES_MOIS}"
+        style="flex:1;background:var(--sur);border:1px solid var(--brd);border-radius:var(--r2);padding:10px 12px;font-family:var(--fn);font-size:14px;color:var(--tx)"
+        onchange="PERSO_HEURES_MOIS=this.value;renderHeuresPersonnel()"/>
+    </div>
+    <div style="background:var(--sur);border:1px solid var(--brd);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh2)">
+      <div style="padding:12px 16px;border-bottom:1px solid var(--brd);display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:1px">Heures — ${nomMois}</div>
+        <div style="font-size:11px;color:var(--tx3)">${Object.values(heuresMap).reduce((a,b)=>a+b,0).toFixed(1)}h total</div>
+      </div>
+      ${rows.length === 0 ? `<div style="padding:24px;text-align:center;color:var(--tx3);font-size:13px">Aucun pointage ce mois</div>` :
+        rows.map(r => `
+        <div style="display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid var(--brd)" class="perso-h-row">
+          <div style="width:34px;height:34px;border-radius:50%;background:var(--sur2);border:1px solid var(--brd);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--tx3);flex-shrink:0">${(r.nom[0]||'?').toUpperCase()}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:700;color:var(--tx)">${r.nom}</div>
+            <div style="font-size:11px;color:var(--tx3)">${r.poste}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:18px;font-weight:700;font-family:var(--mo);color:${r.h===0?'var(--tx3)':r.st==='ok'?'var(--ok)':r.st==='wa'?'var(--wa)':'var(--tx)'}">${r.h.toFixed(1)}h</div>
+          </div>
+        </div>`).join('')}
+    </div>`;
+}
+
+async function exportXlsHeuresPersonnel() {
+  if (!PERSO_HEURES_MOIS) return;
+  const [an, mo] = PERSO_HEURES_MOIS.split('-').map(Number);
+  const debut = `${PERSO_HEURES_MOIS}-01`;
+  const finDate = new Date(an, mo, 1);
+  const fin = `${finDate.getFullYear()}-${String(finDate.getMonth()+1).padStart(2,'0')}-01`;
+  const ptgMois = POINTAGES.filter(p => p.date_jour >= debut && p.date_jour < fin);
+  await _exportServeur('heures_personnel', {data: {pointages: ptgMois, personnel: PERSONNEL_DATA, mois: PERSO_HEURES_MOIS}});
+}
+
 async function initPersonnel() {
-  await chargerPersonnel();
-  document.getElementById('fab').style.display = 'flex';
+  await Promise.all([chargerPersonnel(), chargerPointages()]);
+  renderPersonnelContent();
 }
 
 async function chargerPersonnel() {
@@ -6215,7 +6464,6 @@ async function chargerPersonnel() {
     PERSONNEL_DATA = await r.json();
     if (PERSONNEL_DATA.erreur) PERSONNEL_DATA = [];
   } catch(e) { PERSONNEL_DATA = []; }
-  renderPersonnel(PERSONNEL_DATA);
 }
 
 function filtrerPersonnel() {
@@ -6233,14 +6481,25 @@ function renderPersonnel(liste) {
   }
   el.innerHTML = liste.map(p => {
     const initiale = ((p.prenom||'')[0]||(p.nom||'')[0]||'?').toUpperCase();
+    const comps = p.competences||[];
+    const now = new Date();
+    const compBadges = comps.slice(0,3).map(c => {
+      const exp = c.date_fin ? new Date(c.date_fin) : null;
+      const jours = exp ? Math.round((exp-now)/864e5) : null;
+      const st = !exp ? '' : jours < 0 ? 'da' : jours < 60 ? 'wa' : 'ok';
+      const bg = st==='da'?'var(--da-bg)':st==='wa'?'var(--wa-bg)':st==='ok'?'var(--ok-bg)':'var(--sur2)';
+      const col = st==='da'?'var(--da)':st==='wa'?'var(--wa)':st==='ok'?'var(--ok)':'var(--tx3)';
+      return `<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;background:${bg};color:${col}">${c.nom}</span>`;
+    }).join('');
     return `<div class="perso-card" onclick="ouvrirDetailPersonnel(${p.id})">
       <div class="perso-card-top">
         <div class="perso-avatar">${initiale}</div>
-        <div>
+        <div style="flex:1;min-width:0">
           <div class="perso-nom">${p.prenom||''} ${p.nom}</div>
           <div class="perso-poste">${p.poste||'Poste non défini'}${p.type_contrat ? ` <span style="font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;background:${p.type_contrat==='CDI'?'var(--ok-bg)':p.type_contrat==='CDD'?'var(--wa-bg)':'var(--in-bg)'};color:${p.type_contrat==='CDI'?'var(--ok)':p.type_contrat==='CDD'?'var(--wa)':'var(--in)'}">${p.type_contrat}</span>` : ''}</div>
         </div>
       </div>
+      ${comps.length ? `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px">${compBadges}${comps.length>3?`<span style="font-size:10px;color:var(--tx3)">+${comps.length-3}</span>`:''}</div>` : ''}
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">
         ${p.adresse?`<span style="font-size:11px;color:var(--tx3)">📍 ${p.adresse}</span>`:''}
         ${p.urgence_nom?`<span style="font-size:11px;color:var(--tx3)">🚨 ${p.urgence_nom}</span>`:''}
@@ -6257,9 +6516,14 @@ function ouvrirDetailPersonnel(id) {
 
 function ouvrirNouveauPersonnel() { ouvrirModalPersonnel(null); }
 
+// Durées par défaut pour les CACES (en mois)
+const CACES_DUREES = {'CACES 1':60,'CACES 2':60,'CACES 3':60,'CACES 4':60,'CACES 5':60,'CACES 6':60,'CACES 7':60,'CACES 8':60,'CACES 9':60,'SST':24,'Habilitation électrique':36,'AIPR':60,'PRAP':36};
+let COMP_EDIT = []; // compétences en cours d'édition
+
 function ouvrirModalPersonnel(p) {
   const isAdmin = USER?.role === 'admin' || USER?.role === 'rh';
   PERSO_EDIT_ID = p ? p.id : null;
+  COMP_EDIT = JSON.parse(JSON.stringify(p?.competences||[]));
   document.getElementById('mperso-tit').textContent   = p ? 'Fiche employé' : 'Nouvel employé';
   document.getElementById('mperso-nom').value         = p ? p.nom    : '';
   document.getElementById('mperso-prenom').value      = p ? (p.prenom||'') : '';
@@ -6273,7 +6537,77 @@ function ouvrirModalPersonnel(p) {
   if (coutWrap) coutWrap.style.display = isAdmin ? 'flex' : 'none';
   if (isAdmin) document.getElementById('mperso-cout').value = p&&p.cout_horaire!=null ? p.cout_horaire : '';
   document.getElementById('del-mperso').style.display = (p && isAdmin) ? 'flex' : 'none';
+  renderCompEdit();
   om('mperso');
+}
+
+function renderCompEdit() {
+  const el = document.getElementById('mperso-comp-list'); if (!el) return;
+  const now = new Date();
+  el.innerHTML = COMP_EDIT.map((c,i) => {
+    const exp = c.date_fin ? new Date(c.date_fin) : null;
+    const jours = exp ? Math.round((exp-now)/864e5) : null;
+    const st = !exp ? 'ok' : jours < 0 ? 'da' : jours < 60 ? 'wa' : 'ok';
+    const stLbl = !exp ? '' : jours < 0 ? ` · Expirée` : ` · ${jours}j restants`;
+    return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--brd)">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:700;color:var(--tx)">${c.nom}</div>
+        <div style="font-size:11px;color:var(--${st})">${c.date_obtention?'Obtenu le '+fdt(c.date_obtention):''}${c.date_fin?' → Valide jusqu\'au '+fdt(c.date_fin):''}${stLbl}</div>
+        ${c.duree_mois?`<div style="font-size:10px;color:var(--tx3)">Durée : ${c.duree_mois} mois</div>`:''}
+      </div>
+      <button onclick="COMP_EDIT.splice(${i},1);renderCompEdit()" style="width:28px;height:28px;border-radius:8px;border:1px solid var(--da-b);background:var(--da-bg);color:var(--da);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">×</button>
+    </div>`;
+  }).join('') || '<div style="color:var(--tx3);font-size:13px;padding:8px 0">Aucune compétence</div>';
+}
+
+function ajouterCompetence() {
+  const nomInp = document.getElementById('comp-nom');
+  const dateObtInp = document.getElementById('comp-date-obt');
+  const dateFinInp = document.getElementById('comp-date-fin');
+  const dureeInp = document.getElementById('comp-duree');
+  const nom = nomInp?.value.trim(); if (!nom) { toast('Nom de compétence requis'); return; }
+  COMP_EDIT.push({
+    nom,
+    date_obtention: dateObtInp?.value || null,
+    date_fin: dateFinInp?.value || null,
+    duree_mois: parseInt(dureeInp?.value)||null
+  });
+  if (nomInp) nomInp.value = '';
+  if (dateObtInp) dateObtInp.value = '';
+  if (dateFinInp) dateFinInp.value = '';
+  if (dureeInp) dureeInp.value = '';
+  renderCompEdit();
+}
+
+function onCompNomChange(val) {
+  // Remplit durée auto pour CACES
+  const dureeInp = document.getElementById('comp-duree');
+  const dateObtInp = document.getElementById('comp-date-obt');
+  const dateFinInp = document.getElementById('comp-date-fin');
+  const nomUp = val.trim().toUpperCase();
+  // Cherche correspondance CACES*
+  let duree = null;
+  for (const [k,v] of Object.entries(CACES_DUREES)) {
+    if (nomUp.startsWith(k.toUpperCase()) || nomUp === k.toUpperCase()) { duree = v; break; }
+  }
+  if (duree && dureeInp) dureeInp.value = duree;
+  // Calcule date fin si date obtention renseignée et durée dispo
+  if (duree && dateObtInp?.value && dateFinInp) {
+    const d = new Date(dateObtInp.value);
+    d.setMonth(d.getMonth() + duree);
+    dateFinInp.value = d.toISOString().split('T')[0];
+  }
+}
+
+function onCompDateObtChange(val) {
+  const dureeInp = document.getElementById('comp-duree');
+  const dateFinInp = document.getElementById('comp-date-fin');
+  const duree = parseInt(dureeInp?.value)||null;
+  if (duree && val && dateFinInp) {
+    const d = new Date(val);
+    d.setMonth(d.getMonth() + duree);
+    dateFinInp.value = d.toISOString().split('T')[0];
+  }
 }
 
 async function savPersonnel() {
@@ -6290,12 +6624,13 @@ async function savPersonnel() {
     urgence_tel: document.getElementById('mperso-urgtel').value.trim(),
     notes:       document.getElementById('mperso-notes').value.trim(),
     cout_horaire: isAdmin ? (parseFloat(document.getElementById('mperso-cout').value)||null) : null,
+    competences: COMP_EDIT,
     role: USER?.role || 'chef', cree_par: USER?.nom || ''
   };
   try {
     const r = await fetch('/api/personnel',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
     const d = await r.json();
-    if (d.ok) { toast(PERSO_EDIT_ID?'Employé modifié ✓':'Employé ajouté ✓'); fm('mperso'); await chargerPersonnel(); }
+    if (d.ok) { toast(PERSO_EDIT_ID?'Employé modifié ✓':'Employé ajouté ✓'); fm('mperso'); await chargerPersonnel(); renderPersonnelContent(); }
     else toast('Erreur : '+(d.erreur||'inconnue'));
   } catch(e) { toast('Erreur réseau'); }
 }
@@ -6304,7 +6639,7 @@ async function delPersonnel() {
   if (!PERSO_EDIT_ID || !confirm('Supprimer cet employé ?')) return;
   const role = USER?.role || 'chef';
   await fetch(`/api/personnel/${PERSO_EDIT_ID}?role=${encodeURIComponent(role)}`,{method:'DELETE'});
-  toast('Employé supprimé'); fm('mperso'); await chargerPersonnel();
+  toast('Employé supprimé'); fm('mperso'); await chargerPersonnel(); renderPersonnelContent();
 }
 
 </script>
@@ -6497,6 +6832,41 @@ async function delPersonnel() {
   <div class="gch"><label>Contact urgence — Nom</label><input id="mperso-urgnom" placeholder="Marie Martin (épouse)"/></div>
   <div class="gch"><label>Contact urgence — Téléphone</label><input id="mperso-urgtel" type="tel" placeholder="06 00 00 00 00"/></div>
   <div class="gch"><label>Notes</label><textarea id="mperso-notes" placeholder="Informations complémentaires…"></textarea></div>
+
+  <!-- ── Compétences / Formations ── -->
+  <div style="margin-top:8px">
+    <div style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Compétences & Formations</div>
+    <div id="mperso-comp-list" style="margin-bottom:12px"></div>
+    <!-- Ajout compétence -->
+    <div style="background:var(--sur2);border-radius:var(--r2);padding:12px;border:1px solid var(--brd)">
+      <div style="font-size:11px;font-weight:700;color:var(--tx3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.8px">Ajouter une compétence</div>
+      <input id="comp-nom" list="comp-suggestions" placeholder="CACES 3, SST, Habilitation électrique…"
+        style="width:100%;background:var(--sur);border:1px solid var(--brd);border-radius:var(--r3);padding:9px 12px;font-size:13px;font-family:var(--fn);color:var(--tx);margin-bottom:8px"
+        oninput="onCompNomChange(this.value)"/>
+      <datalist id="comp-suggestions">
+        <option value="CACES 1"/><option value="CACES 2"/><option value="CACES 3"/>
+        <option value="CACES 4"/><option value="CACES 5"/><option value="CACES 6"/>
+        <option value="CACES 7"/><option value="CACES 8"/><option value="CACES 9"/>
+        <option value="SST"/><option value="Habilitation électrique"/>
+        <option value="AIPR"/><option value="PRAP"/>
+      </datalist>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+        <div><label style="font-size:10px;font-weight:700;color:var(--tx3);display:block;margin-bottom:4px">Date d'obtention</label>
+          <input id="comp-date-obt" type="date" onchange="onCompDateObtChange(this.value)"
+            style="width:100%;background:var(--sur);border:1px solid var(--brd);border-radius:var(--r3);padding:8px 10px;font-size:12px;font-family:var(--fn);color:var(--tx)"/></div>
+        <div><label style="font-size:10px;font-weight:700;color:var(--tx3);display:block;margin-bottom:4px">Date de validité</label>
+          <input id="comp-date-fin" type="date"
+            style="width:100%;background:var(--sur);border:1px solid var(--brd);border-radius:var(--r3);padding:8px 10px;font-size:12px;font-family:var(--fn);color:var(--tx)"/></div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
+        <label style="font-size:10px;font-weight:700;color:var(--tx3);white-space:nowrap">Durée validité (mois)</label>
+        <input id="comp-duree" type="number" min="1" placeholder="ex: 60"
+          style="width:80px;background:var(--sur);border:1px solid var(--brd);border-radius:var(--r3);padding:8px 10px;font-size:12px;font-family:var(--fn);color:var(--tx)"/>
+      </div>
+      <button onclick="ajouterCompetence()" style="width:100%;padding:9px;border-radius:var(--r2);border:none;background:var(--acc);color:#fff;font-family:var(--fn);font-size:13px;font-weight:700;cursor:pointer">+ Ajouter</button>
+    </div>
+  </div>
+
   <div class="rbtn np">
     <button class="btn bd" id="del-mperso" onclick="delPersonnel()" style="display:none">🗑 Supprimer</button>
     <button class="btn bs" onclick="fm('mperso')">Annuler</button>
