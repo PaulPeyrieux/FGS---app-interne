@@ -1113,6 +1113,7 @@ input:focus, select:focus, textarea:focus {
 
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 // ══════════════════════════════════════════════════════════════════
@@ -1826,14 +1827,14 @@ function buildNav(){
     {p:'accueil',    label:'Accueil',    svg:svgAccueil},
     {p:'parcmat',    label:'Parc mat.',  svg:svgParc},
     {p:'chantier',   label:'Chantier',   svg:svgChantier},
-    {p:'livraisons', label:'Réceptions', svg:svgLiv},
+    {p:'magasin',    label:'Magasin',    svg:svgLiv},
     {p:'personnel',  label:'Personnel',  svg:svgPersonnel},
     {p:'biblio',     label:'Prix',       svg:svgBiblio},
   ] : [
     {p:'accueil',    label:'Accueil',    svg:svgAccueil},
     {p:'anomalie',   label:'Anomalie',   svg:svgAno},
     {p:'chantier',   label:'Chantier',   svg:svgChantier},
-    {p:'livraisons', label:'Réceptions', svg:svgLiv},
+    {p:'magasin',    label:'Magasin',    svg:svgLiv},
     {p:'personnel',  label:'Personnel',  svg:svgPersonnel},
   ];
   navEl.innerHTML = items.map(function(it){
@@ -1873,7 +1874,8 @@ function render(){
 
   if(PAGE==='accueil'){m.innerHTML=pgHome();setTimeout(initHomeMap,100);}
   else if(PAGE==='parcmat'){m.innerHTML=pgParcMat();renderParcMatContent();}
-  else if(PAGE==='livraisons')m.innerHTML=pgLiv();
+  else if(PAGE==='magasin'){m.innerHTML=pgMagasin();initMagasin();}
+  else if(PAGE==='livraisons'){m.innerHTML=pgMagasin();initMagasin();} // compat alias
   else if(PAGE==='chantier'){m.innerHTML=pgChantier();initChantierTab();}
   else if(PAGE==='anomalie'){m.innerHTML=pgAnomalie();chargerAnomalies();}
   else if(PAGE==='personnel'){m.innerHTML=pgPersonnel();initPersonnel();}
@@ -1992,7 +1994,7 @@ function pgHome(){
         </div>
       </div>
 
-      <div class="home-kpi-card" onclick="nav('livraisons')">
+      <div class="home-kpi-card" onclick="nav('magasin')">
         <div class="home-kpi-icon blue">
           <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" width="22" height="22">
             <path d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
@@ -2109,8 +2111,6 @@ function pgParcMat(){
   var p = PARCMAT_TAB;
   var tabParc  = '<div class="sub-ni'+(p==='parc'?' on':'')+'" onclick="switchParcMatTab(\'parc\')">🏗 Parc</div>';
   var tabEnt   = '<div class="sub-ni'+(p==='entretien'?' on':'')+'" onclick="switchParcMatTab(\'entretien\')">🔧 Entretiens</div>';
-  var tabPc    = '<div class="sub-ni'+(p==='pieces'?' on':'')+'" onclick="switchParcMatTab(\'pieces\')">📦 Pièces</div>';
-  var tabCmp   = '<div class="sub-ni'+(p==='compat'?' on':'')+'" onclick="switchParcMatTab(\'compat\')">🔗 Compat.</div>';
   var tabAno   = isAdmin ? '<div class="sub-ni'+(p==='anomalies'?' on':'')+'" onclick="switchParcMatTab(\'anomalies\')">⚠️ Anomalies</div>' : '';
   return '<div class="ent"><div><h1>Parc matériel</h1>'
     + modifBadge('parcmat')
@@ -2118,7 +2118,7 @@ function pgParcMat(){
     + (p==='parc' ? '<div class="ico-btn np" onclick="exportXlsParc()" title="Exporter Excel">'+XLS_ICO+'</div>' : '')
     + '</div></div>'
     + '<div class="pg on"><div class="sub-nav">'
-    + tabParc + tabEnt + tabPc + tabCmp + tabAno
+    + tabParc + tabEnt + tabAno
     + '</div><div id="parcmat-content"></div><div style="height:80px"></div></div>';
 }
 
@@ -2126,14 +2126,13 @@ function switchParcMatTab(tab){
   PARCMAT_TAB = tab;
   // Update sub-nav
   var nis = document.querySelectorAll('.sub-nav .sub-ni');
-  var tabs = ['parc','entretien','pieces','compat','anomalies'];
+  var tabs = ['parc','entretien','anomalies'];
   nis.forEach(function(el,i){ el.classList.toggle('on', tabs[i]===tab); });
   // Update header export button
   var act = document.getElementById('parcmat-act');
   if(act) {
     if(tab==='parc') act.innerHTML = '<div class="ico-btn np" onclick="exportXlsParc()" title="Exporter Excel">'+XLS_ICO+'</div>';
     else if(tab==='entretien') act.innerHTML = '<div class="ico-btn np" onclick="exportXlsEntretiens()" title="Exporter Excel">'+XLS_ICO+'</div>';
-    else if(tab==='pieces') act.innerHTML = '<div class="ico-btn np" onclick="exportXlsPieces()" title="Exporter Excel">'+XLS_ICO+'</div>';
     else act.innerHTML = '';
   }
   renderParcMatContent();
@@ -2145,7 +2144,7 @@ function renderParcMatContent(){
   if(!el) return;
   var fabEl = document.getElementById('fab');
   // Masquer FAB sur onglets lecture seule
-  if(fabEl) fabEl.style.display = (PARCMAT_TAB==='anomalies'||PARCMAT_TAB==='compat') ? 'none' : 'flex';
+  if(fabEl) fabEl.style.display = (PARCMAT_TAB==='anomalies') ? 'none' : 'flex';
   // Update action buttons in header
   var act = document.getElementById('parcmat-act');
   if(act) act.innerHTML = '';
@@ -2154,8 +2153,6 @@ function renderParcMatContent(){
     el.innerHTML = renderEntContent();
     if(act) act.innerHTML = '<div class="ico-btn np" onclick="exportXlsEntretiens()" title="Exporter Excel">'+XLS_ICO+'</div>';
   }
-  else if(PARCMAT_TAB==='pieces') el.innerHTML = renderPcContent();
-  else if(PARCMAT_TAB==='compat') el.innerHTML = renderCompatContent();
   else if(PARCMAT_TAB==='anomalies') renderAdminAnomalies(el);
 }
 
@@ -2213,9 +2210,8 @@ function renderCompatContent(){
     +'</div>';
 }
 function rechercherCompat(){
-  var el = document.getElementById('parcmat-content');
+  var el = document.getElementById('magasin-content') || document.getElementById('parcmat-content');
   if(el) el.innerHTML = renderCompatContent();
-  // Re-focus input
   setTimeout(function(){ var i=document.getElementById('compat-q'); if(i){i.focus();i.select();} },50);
 }
 
@@ -2607,8 +2603,392 @@ async function savStockAdj(){
   }
 }
 
+// ══════════════════════════════════════════════════════════════════
+// MODULE MAGASIN (Stock, Commande, Compatibilité, Réception)
+// ══════════════════════════════════════════════════════════════════
+
+let MAGASIN_TAB = 'stock'; // 'stock' | 'commande' | 'compat' | 'reception'
+
+function pgMagasin(){
+  const sOn = MAGASIN_TAB==='stock'     ?' on':'';
+  const cOn = MAGASIN_TAB==='commande'  ?' on':'';
+  const cpOn= MAGASIN_TAB==='compat'    ?' on':'';
+  const rOn = MAGASIN_TAB==='reception' ?' on':'';
+  return `<div class="ent">
+    <div><h1>Magasin</h1>${modifBadge('magasin')}</div>
+    <div class="ent-act" id="magasin-act"></div>
+  </div>
+  <div class="sub-nav" style="position:sticky;top:57px;z-index:49">
+    <div class="sub-ni${sOn}"  onclick="switchMagasinTab('stock')">📦 Stock</div>
+    <div class="sub-ni${cOn}"  onclick="switchMagasinTab('commande')">🛒 Commande</div>
+    <div class="sub-ni${cpOn}" onclick="switchMagasinTab('compat')">🔗 Compat.</div>
+    <div class="sub-ni${rOn}"  onclick="switchMagasinTab('reception')">✅ Réception</div>
+  </div>
+  <div class="pg on">
+    <div id="magasin-content"></div>
+    <div style="height:80px"></div>
+  </div>`;
+}
+
+function initMagasin(){
+  renderMagasinContent();
+}
+
+function switchMagasinTab(tab){
+  MAGASIN_TAB = tab;
+  document.querySelectorAll('.sub-nav .sub-ni').forEach((el,i)=>{
+    const tabs=['stock','commande','compat','reception'];
+    el.classList.toggle('on', tabs[i]===tab);
+  });
+  renderMagasinContent();
+  updateFabLabel();
+}
+
+function renderMagasinContent(){
+  const el = document.getElementById('magasin-content');
+  if(!el) return;
+  const fabEl = document.getElementById('fab');
+  const actEl = document.getElementById('magasin-act');
+  if(fabEl) fabEl.style.display = (MAGASIN_TAB==='compat'||MAGASIN_TAB==='reception') ? 'none' : 'flex';
+  if(actEl) actEl.innerHTML = '';
+
+  if(MAGASIN_TAB==='stock'){
+    if(actEl) actEl.innerHTML = `<div class="ico-btn np" onclick="exportXlsPieces()" title="Exporter Excel">${XLS_ICO}</div>`;
+    el.innerHTML = renderStockContent();
+  } else if(MAGASIN_TAB==='commande'){
+    el.innerHTML = renderCommandeContent();
+    setTimeout(()=>{ if(document.getElementById('cmd-overlay-inner')) renderCommandesInline(); }, 50);
+  } else if(MAGASIN_TAB==='compat'){
+    el.innerHTML = renderCompatContent();
+  } else if(MAGASIN_TAB==='reception'){
+    el.innerHTML = renderReceptionContent();
+  }
+}
+
+// ── Sous-onglet STOCK ─────────────────────────────────────────────
+function renderStockContent(){
+  if(!BD.pieces.length) return '<div class="vide"><h3>Aucune pièce</h3><p>Ajoutez des pièces via le bouton +</p></div>';
+  const rows = BD.pieces.map(p=>{
+    const besoins = calculerBesoinsPiece(p.id);
+    const manque  = Math.max(besoins.besoin-(p.stock||0), 0);
+    return `<div class="epc">
+      <div class="epc-ent" onclick="openMPmod('${p.id}')" style="cursor:pointer">
+        <div>
+          <div class="epc-nom">${p.nom}</div>
+          <div class="epc-ref">${p.ref}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+          <span class="bdg ${p.stock>0?'ok':'da'}">${p.stock||0} en stock</span>
+          ${manque>0?`<span class="bdg da" style="font-size:10px">⚠ ${manque} à commander</span>`:''}
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--tx3);margin-bottom:10px">
+        Durée de vie : <b style="color:var(--tx)">${p.dureeVal} ${p.dureeUnite}</b>
+        ${besoins.engins.length?` · Utilisée sur <b style="color:var(--tx)">${besoins.engins.length} engin${besoins.engins.length>1?'s':''}</b>`:''}
+      </div>
+      ${p.notes?`<div style="font-size:12px;color:var(--tx3);margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--brd)">${p.notes}</div>`:''}
+      <div style="display:flex;align-items:center;gap:8px;padding-top:8px;border-top:1px solid var(--brd)">
+        <button onclick="event.stopPropagation();openStockAdj('${p.id}',-1)" style="width:36px;height:36px;border-radius:var(--r2);border:1.5px solid var(--da);background:var(--da-bg);color:var(--da);font-size:20px;font-weight:700;cursor:pointer;line-height:1">−</button>
+        <div style="flex:1;text-align:center;font-family:var(--mo);font-size:18px;font-weight:700;cursor:pointer" onclick="event.stopPropagation();openStockModal('${p.id}')">${p.stock||0}</div>
+        <button onclick="event.stopPropagation();openStockAdj('${p.id}',+1)" style="width:36px;height:36px;border-radius:var(--r2);border:1.5px solid var(--ok);background:var(--ok-bg);color:var(--ok);font-size:20px;font-weight:700;cursor:pointer;line-height:1">+</button>
+        <button onclick="event.stopPropagation();openMPmod('${p.id}')" style="width:36px;height:36px;border-radius:var(--r2);border:1px solid var(--brd);background:var(--sur2);cursor:pointer;display:flex;align-items:center;justify-content:center" title="Modifier">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--tx2)" stroke-width="2" width="14" height="14"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+  return rows;
+}
+
+// ── Sous-onglet COMMANDE ──────────────────────────────────────────
+function renderCommandeContent(){
+  if(!BD.commandes) BD.commandes=[];
+  const {manquants} = calculerBesoins();
+  const cmdBadge = manquants>0
+    ? `<span style="background:#fff;color:var(--acc);border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px">${manquants}</span>`
+    : '';
+
+  const cmds=[...BD.commandes].sort((a,b)=>new Date(b.date)-new Date(a.date));
+
+  return `<div class="carte" style="border:2px dashed var(--in);background:var(--in-bg);margin-bottom:12px">
+    <div style="font-size:14px;font-weight:700;color:var(--in);margin-bottom:4px">🛒 Besoins automatiques${cmdBadge}</div>
+    <div style="font-size:13px;color:var(--tx2);margin-bottom:12px;line-height:1.5">Calculé : 1 pièce de réserve par machine utilisant la même référence.</div>
+    <button class="btn" style="background:var(--in);color:#fff" onclick="ouvrirNouvelleCommandeAuto()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Créer un bon de commande
+    </button>
+  </div>
+  <div class="ts">Bons de commande existants</div>
+  ${cmds.length ? cmds.map(c=>{
+    const nbRef  = (c.lignes||[]).length;
+    const nbRecus= (c.lignes||[]).filter(l=>l.recu).length;
+    const stCmd  = nbRecus===nbRef&&nbRef>0?'ok':nbRecus>0?'wa':'in';
+    const stLbl  = nbRecus===nbRef&&nbRef>0?'Réceptionné':nbRecus>0?`${nbRecus}/${nbRef} reçu`:'En attente';
+    return `<div class="eliv" style="cursor:pointer;margin-bottom:8px" onclick="ouvrirDetailCommande('${c.id}')">
+      <div class="eliv-ent">
+        <div class="eliv-nom">BC #${c.numero} <span style="font-size:11px;font-weight:400;color:var(--tx3)">${c.fournisseur||''}</span></div>
+        <div class="eliv-dt">${fdt(c.date)}</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+        <div style="font-size:12px;color:var(--tx2)">${nbRef} référence${nbRef>1?'s':''}</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span class="bdg ${stCmd}">${stLbl}</span>
+          <button onclick="event.stopPropagation();imprimerBonCommande('${c.id}')" style="padding:4px 10px;border-radius:var(--r3);border:1px solid var(--brd);background:var(--sur2);font-size:11px;font-weight:600;cursor:pointer;color:var(--tx2)">🖨 PDF+QR</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('') : '<div class="vide" style="padding:32px 16px"><h3>Aucune commande</h3></div>'}`;
+}
+
+function ouvrirNouvelleCommandeAuto(){
+  // Pré-remplir avec les manquants
+  const lignes=[];
+  BD.pieces.forEach(p=>{
+    const b=calculerBesoinsPiece(p.id);
+    if(b.besoin===0) return;
+    const manque=Math.max(b.besoin-(p.stock||0),0);
+    if(manque>0) lignes.push({ref:p.ref, nom:p.nom, qte:manque, recu:false});
+  });
+  CMD_LIGNES = lignes;
+  CMD_EDIT_ID = null;
+  document.getElementById('mc-tit').textContent='Nouveau bon de commande';
+  document.getElementById('mc-num').value=_genNumCommande();
+  document.getElementById('mc-date').value=new Date().toISOString().split('T')[0];
+  document.getElementById('mc-fourn').value='';
+  document.getElementById('del-mc').style.display='none';
+  document.getElementById('mc-recep-btn').style.display= lignes.length?'block':'none';
+  const dl=document.getElementById('mc-l-ref-list');
+  if(dl) dl.innerHTML=BD.pieces.map(p=>`<option value="${p.ref}">${p.nom}</option>`).join('');
+  renderCmdLignes();
+  om('mc');
+}
+
+function imprimerBonCommande(cmdId){
+  const c=(BD.commandes||[]).find(x=>x.id===cmdId);
+  if(!c){toast('Commande introuvable');return;}
+  _imprimerBCAvecQR(c);
+}
+
+async function _imprimerBCAvecQR(cmd){
+  const date = new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'});
+  const qrData = `BC:${cmd.numero}|DATE:${cmd.date}|FOURN:${cmd.fournisseur||''}`;
+  const rows = (cmd.lignes||[]).map(l=>`
+    <tr style="${l.recu?'background:#f0fdf4':''}">
+      <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-weight:600">${l.nom}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-family:monospace;font-size:11px;color:#666">${l.ref}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;text-align:center;font-weight:700">${l.qte}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;text-align:center;color:${l.recu?'#16a34a':'#9ca3af'}">${l.recu?'✓ Reçu':'—'}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;width:100px"></td>
+    </tr>`).join('');
+
+  const w=window.open('','_blank','width=900,height=700');
+  w.document.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"/>
+  <title>BC #${cmd.numero} — FGS</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:10pt;color:#1a1a2e;padding:24px}
+    @page{size:A4;margin:1.5cm}@media print{.no-print{display:none}}
+    .header{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:16px;border-bottom:3px solid #C1321D;margin-bottom:18px}
+    .logo-fgs{font-size:22pt;font-weight:900;color:#C1321D;letter-spacing:-1px}
+    h2{font-size:9pt;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#C1321D;margin:16px 0 8px;padding-bottom:4px;border-bottom:2px solid #fee2e2}
+    table{width:100%;border-collapse:collapse}th{background:#C1321D;color:#fff;padding:8px 12px;text-align:left;font-size:9pt;font-weight:700}
+    .print-btn{position:fixed;bottom:20px;right:20px;background:#C1321D;color:#fff;border:none;border-radius:40px;padding:12px 20px;font-size:13px;font-weight:700;cursor:pointer}
+    #qrcode{display:inline-block;padding:8px;background:#fff;border:1px solid #ddd;border-radius:8px}
+  </style></head><body>
+  <div class="header">
+    <div>
+      <div class="logo-fgs">FGS</div>
+      <div style="font-size:10pt;color:#555;margin-top:3px">FGS Travaux Spéciaux</div>
+      <div style="font-size:13pt;font-weight:700;margin-top:6px">Bon de Commande</div>
+    </div>
+    <div style="text-align:right">
+      <div id="qrcode"></div>
+      <div style="font-size:9pt;color:#888;margin-top:4px">Scannez pour réceptionner</div>
+    </div>
+  </div>
+  <table style="width:auto;margin-bottom:16px;border-collapse:collapse">
+    <tr><td style="padding:4px 12px 4px 0;font-weight:700;font-size:10pt">N° Commande :</td><td style="font-size:13pt;font-weight:900;color:#C1321D">BC #${cmd.numero}</td></tr>
+    <tr><td style="padding:4px 12px 4px 0;font-weight:700">Date :</td><td>${fdt(cmd.date)}</td></tr>
+    ${cmd.fournisseur?`<tr><td style="padding:4px 12px 4px 0;font-weight:700">Fournisseur :</td><td>${cmd.fournisseur}</td></tr>`:''}
+    <tr><td style="padding:4px 12px 4px 0;font-weight:700">Établi par :</td><td>${USER?.nom||'—'}</td></tr>
+    <tr><td style="padding:4px 12px 4px 0;font-weight:700">Édité le :</td><td>${date}</td></tr>
+  </table>
+  <h2>Références commandées</h2>
+  <table><thead><tr><th>Désignation</th><th>Référence</th><th style="text-align:center">Qté</th><th style="text-align:center">Statut</th><th>Prix unit. (€ HT)</th></tr></thead>
+  <tbody>${rows}</tbody></table>
+  <div style="margin-top:24px;display:flex;gap:24px">
+    <div style="flex:1;border:1px solid #ddd;border-radius:6px;padding:14px"><div style="font-size:8pt;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:8px">Validé par</div><div style="height:40px"></div><div style="border-top:1px solid #ccc;margin-top:10px;padding-top:6px;font-size:8pt;color:#999;text-align:center">Signature</div></div>
+    <div style="flex:1;border:1px solid #ddd;border-radius:6px;padding:14px"><div style="font-size:8pt;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:8px">Accusé réception fournisseur</div><div style="height:40px"></div><div style="border-top:1px solid #ccc;margin-top:10px;padding-top:6px;font-size:8pt;color:#999;text-align:center">Signature &amp; cachet</div></div>
+  </div>
+  <button class="print-btn no-print" onclick="window.print()">🖨 Imprimer / PDF</button>
+  <script>
+    window.onload=function(){
+      try{
+        new QRCode(document.getElementById('qrcode'),{
+          text:'${qrData}',width:100,height:100,
+          colorDark:'#C1321D',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H
+        });
+      }catch(e){document.getElementById('qrcode').textContent='QR indisponible';}
+    };
+  <\/script>
+</body></html>`);
+  w.document.close();
+}
+
+// ── Sous-onglet RÉCEPTION ─────────────────────────────────────────
+function renderReceptionContent(){
+  return `<div>
+    <div class="carte" style="margin-bottom:14px">
+      <div style="font-size:14px;font-weight:700;margin-bottom:8px">📷 Scanner ou saisir un bon de commande</div>
+      <div style="font-size:13px;color:var(--tx2);margin-bottom:12px">Saisissez le numéro de BC ou scannez son QR code pour le réceptionner.</div>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <input id="recep-num" placeholder="Ex: 25-001" style="flex:1;background:var(--sur2);border:1.5px solid var(--brd);border-radius:var(--r2);padding:11px 14px;font-size:14px;font-family:var(--fn);color:var(--tx);outline:none" onkeydown="if(event.key==='Enter')rechercherBC()"/>
+        <button onclick="rechercherBC()" style="padding:0 18px;background:var(--acc);color:#fff;border:none;border-radius:var(--r2);font-size:13px;font-weight:700;cursor:pointer">Chercher</button>
+      </div>
+      <button onclick="ouvrirScannerQR()" class="btn bs" style="gap:8px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3m4 0v3m0 4h-3m-4 0v-3"/></svg>
+        Scanner le QR code
+      </button>
+    </div>
+    <div id="recep-result"></div>
+    <!-- Scanner caméra -->
+    <div id="scanner-wrap" style="display:none;margin-top:12px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:8px;color:var(--tx)">📸 Caméra — pointez vers le QR code</div>
+      <video id="scanner-video" style="width:100%;border-radius:var(--r);border:2px solid var(--acc)" autoplay playsinline muted></video>
+      <canvas id="scanner-canvas" style="display:none"></canvas>
+      <button onclick="fermerScanner()" class="btn bd np" style="margin-top:8px">✕ Fermer la caméra</button>
+    </div>
+  </div>`;
+}
+
+function rechercherBC(){
+  const num=(document.getElementById('recep-num')?.value||'').trim();
+  if(!num){toast('Saisissez un numéro de BC');return;}
+  _afficherReceptionBC(num);
+}
+
+function _afficherReceptionBC(num){
+  const el=document.getElementById('recep-result');
+  if(!el) return;
+  if(!BD.commandes) BD.commandes=[];
+  const cmd=BD.commandes.find(c=>c.numero===num||c.numero===num.replace(/^BC#?/i,'').trim());
+  if(!cmd){
+    el.innerHTML=`<div class="vide" style="padding:24px"><h3>BC #${num} introuvable</h3><p>Vérifiez le numéro ou créez ce bon de commande.</p></div>`;
+    return;
+  }
+  const nonRecus=(cmd.lignes||[]).filter(l=>!l.recu);
+  if(!nonRecus.length){
+    el.innerHTML=`<div style="background:var(--ok-bg);border:1px solid var(--ok-b);border-radius:var(--r);padding:16px;text-align:center"><div style="font-size:24px;margin-bottom:8px">✅</div><div style="font-size:15px;font-weight:700;color:var(--ok)">BC #${cmd.numero} — Entièrement réceptionné</div><div style="font-size:13px;color:var(--tx3);margin-top:4px">Fournisseur : ${cmd.fournisseur||'—'} · ${fdt(cmd.date)}</div></div>`;
+    return;
+  }
+  el.innerHTML=`<div class="carte">
+    <div style="font-size:15px;font-weight:800;margin-bottom:4px">BC #${cmd.numero}</div>
+    <div style="font-size:12px;color:var(--tx3);margin-bottom:16px">Fournisseur : ${cmd.fournisseur||'—'} · Créé le ${fdt(cmd.date)}</div>
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--tx3);margin-bottom:10px">${nonRecus.length} référence${nonRecus.length>1?'s':''} à réceptionner</div>
+    ${nonRecus.map((l,i)=>`<label style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--brd);cursor:pointer">
+      <input type="checkbox" id="recep-cb-${i}" style="width:20px;height:20px;accent-color:var(--acc);flex-shrink:0"/>
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:700">${l.nom}</div>
+        <div style="font-size:12px;color:var(--tx3);margin-top:2px">${l.ref} · <b>${l.qte} unité${l.qte>1?'s':''}</b></div>
+      </div>
+    </label>`).join('')}
+    <div style="margin-top:14px">
+      <label style="font-size:11px;font-weight:700;color:var(--tx3);display:block;margin-bottom:6px;text-transform:uppercase">Date de réception</label>
+      <input type="date" id="recep-date" value="${new Date().toISOString().split('T')[0]}" style="width:100%;background:var(--sur2);border:1px solid var(--brd);border-radius:var(--r2);padding:10px 12px;font-size:14px;font-family:var(--fn)"/>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:14px">
+      <button onclick="document.getElementById('recep-result').innerHTML=''" style="flex:1;padding:12px;border-radius:var(--r2);border:1px solid var(--brd);background:var(--sur2);font-family:var(--fn);font-size:14px;font-weight:600;cursor:pointer">Annuler</button>
+      <button onclick="_validerReceptionMagasin('${cmd.id}')" style="flex:2;padding:12px;border-radius:var(--r2);border:none;background:var(--acc);color:#fff;font-family:var(--fn);font-size:14px;font-weight:700;cursor:pointer">✅ Valider la réception</button>
+    </div>
+  </div>`;
+}
+
+async function _validerReceptionMagasin(cmdId){
+  const cmd=(BD.commandes||[]).find(x=>x.id===cmdId); if(!cmd) return;
+  const date=document.getElementById('recep-date')?.value||new Date().toISOString().split('T')[0];
+  const nonRecus=cmd.lignes.filter(l=>!l.recu);
+  let nb=0;
+  nonRecus.forEach((l,i)=>{
+    const cb=document.getElementById(`recep-cb-${i}`);
+    if(cb?.checked){
+      l.recu=true;
+      const p=BD.pieces.find(x=>x.ref.toLowerCase()===l.ref.toLowerCase());
+      if(p) p.stock=(p.stock||0)+l.qte;
+      if(!BD.livraisons) BD.livraisons=[];
+      BD.livraisons.push({id:'L-'+Date.now()+'-'+i, ref:l.ref, nom:l.nom, qte:l.qte, date, numCommande:cmd.numero});
+      nb++;
+    }
+  });
+  if(!nb){toast('Aucune référence cochée');return;}
+  if(await save()){
+    trackModif('magasin');
+    toast(`${nb} référence${nb>1?'s':''} réceptionnée${nb>1?'s':''} ✓ — Stock mis à jour`);
+    document.getElementById('recep-result').innerHTML='';
+    document.getElementById('recep-num').value='';
+    // Rafraîchir si sur onglet stock
+  }
+}
+
+// ── Scanner QR Code ───────────────────────────────────────────────
+let _scanStream = null;
+let _scanInterval = null;
+
+function ouvrirScannerQR(){
+  const wrap=document.getElementById('scanner-wrap');
+  if(!wrap){toast('Scanner non disponible sur cette vue');return;}
+  wrap.style.display='block';
+  const video=document.getElementById('scanner-video');
+  const canvas=document.getElementById('scanner-canvas');
+  if(!navigator.mediaDevices?.getUserMedia){toast('Caméra non supportée sur ce navigateur');wrap.style.display='none';return;}
+  navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}})
+    .then(stream=>{
+      _scanStream=stream;
+      video.srcObject=stream;
+      video.play();
+      // Tentative de lecture QR via BarcodeDetector si dispo
+      if('BarcodeDetector' in window){
+        const detector=new BarcodeDetector({formats:['qr_code']});
+        _scanInterval=setInterval(async()=>{
+          try{
+            const barcodes=await detector.detect(video);
+            if(barcodes.length){
+              const raw=barcodes[0].rawValue;
+              fermerScanner();
+              _parseQRCodeBC(raw);
+            }
+          }catch(e){}
+        },500);
+      } else {
+        // Fallback : invite à saisir manuellement
+        toast('Détection QR auto non supportée — saisissez le numéro manuellement');
+      }
+    })
+    .catch(()=>{toast('Impossible d\'accéder à la caméra — vérifiez les permissions');wrap.style.display='none';});
+}
+
+function fermerScanner(){
+  if(_scanInterval){clearInterval(_scanInterval);_scanInterval=null;}
+  if(_scanStream){_scanStream.getTracks().forEach(t=>t.stop());_scanStream=null;}
+  const wrap=document.getElementById('scanner-wrap');
+  if(wrap) wrap.style.display='none';
+  const video=document.getElementById('scanner-video');
+  if(video) video.srcObject=null;
+}
+
+function _parseQRCodeBC(raw){
+  // Format: BC:25-001|DATE:2025-01-01|FOURN:xxx
+  let num=raw;
+  const match=raw.match(/BC:([^|]+)/);
+  if(match) num=match[1];
+  // Sinon on essaie directement
+  if(document.getElementById('recep-num')) document.getElementById('recep-num').value=num;
+  _afficherReceptionBC(num);
+  toast(`QR scanné : BC #${num}`);
+}
+
 // ── Livraisons ────────────────────────────────────────────────────────
 let LIV_TAB = 'receptions'; // 'receptions' | 'commandes'
+
 
 function pgLiv(){
   const rOn = LIV_TAB==='receptions'?' on':'';
@@ -2753,13 +3133,24 @@ async function savCommande() {
   } else {
     BD.commandes.push({id:'CMD-'+Date.now(), numero, date, fournisseur:fourn, lignes:CMD_LIGNES});
   }
-  if(await save()){trackModif('livraisons');toast('Commande enregistrée ✓');fm('mc');render();}
+  if(await save()){
+    trackModif('magasin');
+    toast('Commande enregistrée ✓');
+    fm('mc');
+    PAGE='magasin'; MAGASIN_TAB='commande';
+    render();
+  }
 }
 
 async function delCommande() {
   if(!CMD_EDIT_ID||!confirm('Supprimer cette commande ?'))return;
   BD.commandes=(BD.commandes||[]).filter(x=>x.id!==CMD_EDIT_ID);
-  if(await save()){toast('Commande supprimée');fm('mc');render();}
+  if(await save()){
+    toast('Commande supprimée');
+    fm('mc');
+    PAGE='magasin'; MAGASIN_TAB='commande';
+    render();
+  }
 }
 
 // Réceptionner une commande : cochage des lignes + mise à jour stock
@@ -2819,7 +3210,7 @@ async function _validerReceptionCmd(cmdId) {
   });
   if(!nbReceptionnes){toast('Aucune référence cochée');return;}
   document.getElementById('_inline-overlay')?.remove();
-  if(await save()){trackModif('livraisons');toast(`${nbReceptionnes} référence${nbReceptionnes>1?'s':''} réceptionnée${nbReceptionnes>1?'s':''} ✓`);render();}
+  if(await save()){trackModif('magasin');toast(`${nbReceptionnes} référence${nbReceptionnes>1?'s':''} réceptionnée${nbReceptionnes>1?'s':''} ✓`);render();}
 }
 
 // ── FAB label contextuel ──────────────────────────────────────────────
@@ -2831,8 +3222,12 @@ function updateFabLabel(){
     else if(PARCMAT_TAB==='entretien') lbl.textContent='Nouvelle intervention';
     else if(PARCMAT_TAB==='pieces')    lbl.textContent='Nouvelle pièce';
     else lbl.textContent='';
-  } else if(PAGE==='livraisons'){
-    lbl.textContent = LIV_TAB==='commandes' ? 'Nouvelle commande' : 'Nouvelle réception';
+  } else if(PAGE==='magasin' || PAGE==='livraisons'){
+    if(MAGASIN_TAB==='stock')          lbl.textContent='Nouvelle pièce';
+    else if(MAGASIN_TAB==='commande')  lbl.textContent='Nouvelle commande';
+    else if(MAGASIN_TAB==='reception') lbl.textContent='';
+    else if(MAGASIN_TAB==='compat')    lbl.textContent='';
+    else lbl.textContent='';
   } else if(PAGE==='chantier')   lbl.textContent='Nouveau chantier';
   else if(PAGE==='anomalie')     lbl.textContent='Nouvelle anomalie';
   else if(PAGE==='personnel')    lbl.textContent='Nouvel employé';
@@ -2843,13 +3238,16 @@ function updateFabLabel(){
 // ── FAB ───────────────────────────────────────────────────────────────
 function fab(){
   if(PAGE==='biblio'){ ouvrirNouvelleEntreeBiblio(); return; }
+  if(PAGE==='magasin' || PAGE==='livraisons'){
+    if(MAGASIN_TAB==='stock') openMP();
+    else if(MAGASIN_TAB==='commande') ouvrirNouvelleCommande();
+    return;
+  }
   if(PAGE==='parcmat'){
     if(PARCMAT_TAB==='parc')openMM();
     else if(PARCMAT_TAB==='entretien')openMI();
-    else if(PARCMAT_TAB==='pieces')openMP();
     else if(PARCMAT_TAB==='anomalies'){}
-  } else if(PAGE==='livraisons')openML();
-  else if(PAGE==='chantier')chantierFab();
+  } else if(PAGE==='chantier')chantierFab();
   else if(PAGE==='anomalie')ouvrirNouvelleAnomalie();
   else if(PAGE==='personnel')ouvrirNouveauPersonnel();
 }
@@ -2941,12 +3339,18 @@ async function savPiece(){
   const d={nom,ref,dureeVal:parseInt(V('p-dv'))||0,dureeUnite:V('p-du'),stock:parseInt(V('p-st'))||0,notes:V('p-no').trim()||null,machinesCompatibles:getSelMachines(),machinesAussiCompatibles:getSelMachinesAlt()};
   if(MOD_ID)Object.assign(BD.pieces.find(x=>x.id===MOD_ID),d);
   else BD.pieces.push({id:'P-'+Date.now(),...d});
-  if(await save()){trackModif('parcmat');toast(MOD_ID?'Pièce mise à jour ✓':'Pièce ajoutée ✓');fm('mp');render();}
+  if(await save()){
+    trackModif('magasin');
+    toast(MOD_ID?'Pièce mise à jour ✓':'Pièce ajoutée ✓');
+    fm('mp');
+    if(PAGE==='magasin'||PAGE==='livraisons'){MAGASIN_TAB='stock';}
+    render();
+  }
 }
 async function delPiece(){
   if(!confirm('Supprimer cette pièce ?'))return;
   BD.pieces=BD.pieces.filter(x=>x.id!==MOD_ID);
-  if(await save()){fm('mp');render();toast('Pièce supprimée');}
+  if(await save()){fm('mp');if(PAGE==='magasin'||PAGE==='livraisons'){MAGASIN_TAB='stock';}render();toast('Pièce supprimée');}
 }
 
 // ── INTERVENTIONS CRUD ────────────────────────────────────────────────
@@ -3238,7 +3642,7 @@ async function savLiv(){
     Object.assign(ancien, {ref, nom, qte:qt, fourn:V('l-fo').trim()||null, date});
     if(await save()){
       toast(delta>0 ? `Stock +${delta} : ${p?.nom||ref} ✓` : delta<0 ? `Stock ${delta} : ${p?.nom||ref} ✓` : 'Réception mise à jour ✓');
-      fm('ml'); render();
+      fm('ml'); PAGE='magasin'; MAGASIN_TAB='stock'; render();
     }
   } else {
     // ── MODE CRÉATION ─────────────────────────────────────────────
@@ -3246,7 +3650,7 @@ async function savLiv(){
     BD.livraisons.push({id:'L-'+Date.now(), ref, nom, qte:qt, fourn:V('l-fo').trim()||null, date});
     if(await save()){
       toast(p ? `Stock mis à jour : ${p.nom} — ${p.stock} en stock ✓` : `Réception enregistrée (réf "${ref}" non trouvée dans le catalogue)`);
-      fm('ml'); render();
+      fm('ml'); PAGE='magasin'; MAGASIN_TAB='stock'; render();
     }
   }
 }
@@ -3256,13 +3660,12 @@ async function delLiv(){
   const l = (BD.livraisons||[]).find(x=>x.id===MOD_LIV);
   if(!l){toast('Introuvable');return;}
   if(!confirm(`Supprimer la réception de ${l.qte}× "${l.nom}" du ${fdt(l.date)} ?\n\nLe stock sera diminué en conséquence.`)) return;
-  // Déduire la quantité du stock
   const p = BD.pieces.find(x=>x.ref.toLowerCase()===(l.ref||'').toLowerCase());
   if(p) p.stock = Math.max(0, (p.stock||0) - l.qte);
   BD.livraisons = BD.livraisons.filter(x=>x.id!==MOD_LIV);
   if(await save()){
     toast(`Réception supprimée${p?' — Stock : '+p.stock+' en stock':''}`);
-    fm('ml'); render();
+    fm('ml'); PAGE='magasin'; MAGASIN_TAB='stock'; render();
   }
 }
 
