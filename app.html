@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -2248,7 +2247,7 @@ function pgParcMat(){
   return '<div class="ent"><div><h1>Parc matériel</h1>'
     + modifBadge('parcmat')
     + '</div><div class="ent-act" id="parcmat-act">'
-    + (p==='parc' ? '<div class="ico-btn np" onclick="exportXlsParc()" title="Exporter Excel">'+XLS_ICO+'</div>' : '')
+    + (p==='parc' ? '<div class="ico-btn np" onclick="exportParcPDF()" title="Exporter PDF">'+PDF_ICO+'</div><div class="ico-btn np" onclick="exportXlsParc()" title="Exporter Excel">'+XLS_ICO+'</div>' : '')
     + '</div></div>'
     + '<div class="pg on"><div class="sub-nav">'
     + tabParc + tabEnt + tabAno
@@ -2264,8 +2263,8 @@ function switchParcMatTab(tab){
   // Update header export button
   var act = document.getElementById('parcmat-act');
   if(act) {
-    if(tab==='parc') act.innerHTML = '<div class="ico-btn np" onclick="exportXlsParc()" title="Exporter Excel">'+XLS_ICO+'</div>';
-    else if(tab==='entretien') act.innerHTML = '<div class="ico-btn np" onclick="exportXlsEntretiens()" title="Exporter Excel">'+XLS_ICO+'</div>';
+    if(tab==='parc') act.innerHTML = '<div class="ico-btn np" onclick="exportParcPDF()" title="Exporter PDF">'+PDF_ICO+'</div><div class="ico-btn np" onclick="exportXlsParc()" title="Exporter Excel">'+XLS_ICO+'</div>';
+    else if(tab==='entretien') act.innerHTML = '<div class="ico-btn np" onclick="exportEntretiensPDF()" title="Exporter PDF">'+PDF_ICO+'</div><div class="ico-btn np" onclick="exportXlsEntretiens()" title="Exporter Excel">'+XLS_ICO+'</div>';
     else act.innerHTML = '';
   }
   renderParcMatContent();
@@ -2281,10 +2280,13 @@ function renderParcMatContent(){
   // Update action buttons in header
   var act = document.getElementById('parcmat-act');
   if(act) act.innerHTML = '';
-  if(PARCMAT_TAB==='parc')      el.innerHTML = renderParcContent();
+  if(PARCMAT_TAB==='parc'){
+    el.innerHTML = renderParcContent();
+    if(act) act.innerHTML = '<div class="ico-btn np" onclick="exportParcPDF()" title="Exporter PDF">'+PDF_ICO+'</div><div class="ico-btn np" onclick="exportXlsParc()" title="Exporter Excel">'+XLS_ICO+'</div>';
+  }
   else if(PARCMAT_TAB==='entretien') {
     el.innerHTML = renderEntContent();
-    if(act) act.innerHTML = '<div class="ico-btn np" onclick="exportXlsEntretiens()" title="Exporter Excel">'+XLS_ICO+'</div>';
+    if(act) act.innerHTML = '<div class="ico-btn np" onclick="exportEntretiensPDF()" title="Exporter PDF">'+PDF_ICO+'</div><div class="ico-btn np" onclick="exportXlsEntretiens()" title="Exporter Excel">'+XLS_ICO+'</div>';
   }
   else if(PARCMAT_TAB==='anomalies') renderAdminAnomalies(el);
 }
@@ -2938,8 +2940,8 @@ function pgMagasin(){
   <div class="sub-nav" style="position:sticky;top:57px;z-index:49">
     <div class="sub-ni${sOn}"  onclick="switchMagasinTab('stock')">📦 Stock</div>
     <div class="sub-ni${cOn}"  onclick="switchMagasinTab('commande')">🛒 Commande</div>
-    <div class="sub-ni${cpOn}" onclick="switchMagasinTab('compat')">🔗 Compat.</div>
     <div class="sub-ni${rOn}"  onclick="switchMagasinTab('reception')">✅ Réception</div>
+    <div class="sub-ni${cpOn}" onclick="switchMagasinTab('compat')">🔗 Compat.</div>
   </div>
   <div class="pg on">
     <div id="magasin-content"></div>
@@ -2970,15 +2972,18 @@ function renderMagasinContent(){
   if(actEl) actEl.innerHTML = '';
 
   if(MAGASIN_TAB==='stock'){
-    if(actEl) actEl.innerHTML = `<div class="ico-btn np" onclick="exportXlsPieces()" title="Exporter Excel">${XLS_ICO}</div>`;
+    if(actEl) actEl.innerHTML = `<div class="ico-btn np" onclick="exportStockPDF()" title="Exporter PDF">${PDF_ICO}</div><div class="ico-btn np" onclick="exportXlsPieces()" title="Exporter Excel">${XLS_ICO}</div>`;
     el.innerHTML = renderStockContent();
   } else if(MAGASIN_TAB==='commande'){
+    if(actEl) actEl.innerHTML = `<div class="ico-btn np" onclick="exportCommandesPDF()" title="Exporter PDF">${PDF_ICO}</div><div class="ico-btn np" onclick="exportXlsCommandes()" title="Exporter Excel">${XLS_ICO}</div>`;
     el.innerHTML = renderCommandeContent();
     setTimeout(()=>{ if(document.getElementById('cmd-overlay-inner')) renderCommandesInline(); }, 50);
-  } else if(MAGASIN_TAB==='compat'){
-    el.innerHTML = renderCompatContent();
   } else if(MAGASIN_TAB==='reception'){
+    if(actEl) actEl.innerHTML = `<div class="ico-btn np" onclick="exportReceptionsPDF()" title="Exporter PDF">${PDF_ICO}</div><div class="ico-btn np" onclick="exportXlsReceptions()" title="Exporter Excel">${XLS_ICO}</div>`;
     el.innerHTML = renderReceptionContent();
+  } else if(MAGASIN_TAB==='compat'){
+    if(actEl) actEl.innerHTML = `<div class="ico-btn np" onclick="exportCompatPDF()" title="Exporter PDF">${PDF_ICO}</div><div class="ico-btn np" onclick="exportXlsCompat()" title="Exporter Excel">${XLS_ICO}</div>`;
+    el.innerHTML = renderCompatContent();
   }
 }
 
@@ -5196,6 +5201,228 @@ async function _exportServeur(type, payload) {
     console.error(e);
     toast('Erreur réseau : ' + e.message);
   }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// EXPORTS PDF PROFESSIONNELS — cartouche FGS
+// ══════════════════════════════════════════════════════════════════
+
+const PDF_ICO = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>`;
+
+function _cartouchePDF(titre, sousTitre=''){
+  const d = new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'});
+  return `
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:18px 24px 14px;background:#1a1a2e;color:#fff;margin-bottom:0">
+    <div style="display:flex;align-items:center;gap:16px">
+      <img src="${LOGO}" style="height:52px;width:52px;object-fit:contain;border-radius:6px;background:#fff;padding:3px"/>
+      <div>
+        <div style="font-size:9pt;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:#C1321D;margin-bottom:2px">FGS Travaux Spéciaux</div>
+        <div style="font-size:16pt;font-weight:800;letter-spacing:-.3px">${titre}</div>
+        ${sousTitre?`<div style="font-size:9pt;color:#aaa;margin-top:2px">${sousTitre}</div>`:''}
+      </div>
+    </div>
+    <div style="text-align:right;font-size:8.5pt;color:#aaa;line-height:2">
+      <div><b style="color:#fff">Date :</b> ${d}</div>
+      <div><b style="color:#fff">Édité par :</b> ${USER?.nom||'—'}</div>
+    </div>
+  </div>
+  <div style="height:4px;background:linear-gradient(90deg,#C1321D,#E85A4F,#C1321D)"></div>`;
+}
+
+function _ouvrirFenetrePDF(html, titre){
+  const w = window.open('','_blank','width=1000,height=750');
+  w.document.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"/>
+  <title>${titre} — FGS</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:Arial,sans-serif;font-size:9.5pt;color:#1a1a2e;background:#f5f5f5}
+    @page{size:A4;margin:0}
+    @media print{body{background:#fff}.no-print{display:none!important}html,body{width:210mm}}
+    .page{background:#fff;max-width:210mm;margin:0 auto;box-shadow:0 0 20px rgba(0,0,0,.1)}
+    .body-wrap{padding:20px 24px}
+    table{width:100%;border-collapse:collapse;margin-top:10px}
+    th{background:#C1321D;color:#fff;padding:8px 10px;text-align:left;font-size:8.5pt;font-weight:700;letter-spacing:.3px}
+    td{padding:7px 10px;border-bottom:1px solid #eee;font-size:9pt;vertical-align:middle}
+    tr:nth-child(even) td{background:#fafafa}
+    tr:hover td{background:#fff3f3}
+    .section-title{font-size:8pt;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#C1321D;padding:10px 0 6px;border-bottom:2px solid #C1321D;margin:14px 0 8px}
+    .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:8pt;font-weight:700}
+    .badge-ok{background:#dcfce7;color:#16a34a}
+    .badge-da{background:#fee2e2;color:#C1321D}
+    .badge-wa{background:#fef3c7;color:#b45309}
+    .footer{padding:12px 24px;background:#f8f8f8;border-top:1px solid #eee;display:flex;justify-content:space-between;font-size:8pt;color:#888;margin-top:8px}
+    .print-btn{position:fixed;bottom:20px;right:20px;background:#C1321D;color:#fff;border:none;border-radius:40px;padding:12px 22px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(193,50,29,.4);z-index:99}
+    .print-btn:hover{background:#a93226}
+  </style>
+  </head><body>
+  <div class="page">
+    ${html}
+    <div class="footer"><span>FGS Travaux Spéciaux — Document confidentiel</span><span>Généré le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</span></div>
+  </div>
+  <button class="print-btn no-print" onclick="window.print()">🖨 Imprimer / PDF</button>
+  </body></html>`);
+  w.document.close();
+}
+
+// ── PDF Parc machines ──────────────────────────────────────────────────────
+function exportParcPDF(){
+  const rows = BD.machines.map((m,i)=>{
+    const s=stMach(m);
+    const stLbl=s==='ok'?'À jour':s==='wa'?'À prévoir':'En retard';
+    const stCls=s==='ok'?'badge-ok':s==='wa'?'badge-wa':'badge-da';
+    const vgp=infoVgp(m);
+    return `<tr>
+      <td style="font-weight:700">${m.nom}</td>
+      <td>${m.modele||'—'}</td>
+      <td>${ncat(m.catId)}</td>
+      <td>${m.serie||'—'}</td>
+      <td>${m.site||'—'}</td>
+      <td>${m.annee||'—'}</td>
+      <td style="text-align:right;font-family:monospace;font-weight:700">${m.heures}h</td>
+      <td style="text-align:center"><span class="badge ${stCls}">${stLbl}</span></td>
+      <td style="text-align:center">${vgp?`<span class="badge ${vgp.st==='ok'?'badge-ok':vgp.st==='wa'?'badge-wa':'badge-da'}">${vgp.lbl}</span>`:'—'}</td>
+    </tr>`;
+  }).join('');
+  const html = `${_cartouchePDF('Parc Matériel',`${BD.machines.length} engin${BD.machines.length>1?'s':''}`)}<div class="body-wrap">
+  <div class="section-title">Liste des engins</div>
+  <table><thead><tr>
+    <th>Nom</th><th>Modèle</th><th>Catégorie</th><th>N° Parc</th><th>Site</th><th>Année</th><th>Heures</th><th>Entretien</th><th>VGP</th>
+  </tr></thead><tbody>${rows||'<tr><td colspan="9" style="text-align:center;color:#888;padding:20px">Aucune machine</td></tr>'}</tbody></table>
+  </div>`;
+  _ouvrirFenetrePDF(html, 'Parc Matériel');
+}
+
+// ── PDF Entretiens ────────────────────────────────────────────────────────
+function exportEntretiensPDF(){
+  const ivs=[...BD.interventions].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const rows = ivs.map(i=>{
+    const m=BD.machines.find(x=>x.id===i.machineId);
+    const pcs=(i.piecesChangees||[]).map(pid=>{const p=BD.pieces.find(x=>x.id===pid);return p?p.nom:'';}).filter(Boolean).join(', ')||'—';
+    const typLbl=i.type==='entretien'?'Entretien préventif':i.type==='reparation'?'Réparation':i.type==='VGP'?'VGP':'Remplacement';
+    return `<tr>
+      <td>${fdt(i.date)}</td>
+      <td style="font-weight:700">${m?m.nom:'—'}</td>
+      <td>${typLbl}</td>
+      <td style="text-align:right;font-family:monospace">${i.heures||'—'}h</td>
+      <td>${i.notes||'—'}</td>
+      <td>${pcs}</td>
+    </tr>`;
+  }).join('');
+  const html = `${_cartouchePDF('Historique Entretiens',`${ivs.length} intervention${ivs.length>1?'s':''}`)}<div class="body-wrap">
+  <table><thead><tr><th>Date</th><th>Machine</th><th>Type</th><th>Heures</th><th>Notes</th><th>Pièces</th></tr></thead>
+  <tbody>${rows||'<tr><td colspan="6" style="text-align:center;color:#888;padding:20px">Aucune intervention</td></tr>'}</tbody></table>
+  </div>`;
+  _ouvrirFenetrePDF(html, 'Entretiens');
+}
+
+// ── PDF Stock pièces ──────────────────────────────────────────────────────
+function exportStockPDF(){
+  const rows = BD.pieces.map(p=>{
+    const b=calculerBesoinsPiece(p.id);
+    const manque=Math.max(b.besoin-(p.stock||0),0);
+    const stCls=(p.stock||0)===0?'badge-da':manque>0?'badge-wa':'badge-ok';
+    const stLbl=(p.stock||0)===0?'Rupture':manque>0?`Manque ${manque}`:'OK';
+    return `<tr>
+      <td style="font-weight:700">${p.nom}</td>
+      <td style="font-family:monospace;font-size:8.5pt;color:#666">${p.ref}</td>
+      <td style="text-align:center;font-weight:700;font-family:monospace">${p.stock||0}</td>
+      <td style="text-align:center">${b.besoin||'—'}</td>
+      <td style="text-align:center"><span class="badge ${stCls}">${stLbl}</span></td>
+      <td>${p.dureeVal?p.dureeVal+' '+p.dureeUnite:'—'}</td>
+      <td style="font-size:8.5pt;color:#666">${b.engins.map(m=>m.nom).join(', ')||'—'}</td>
+    </tr>`;
+  }).join('');
+  const html = `${_cartouchePDF('Stock Pièces',`${BD.pieces.length} référence${BD.pieces.length>1?'s':''}`)}<div class="body-wrap">
+  <table><thead><tr><th>Pièce</th><th>Référence</th><th style="text-align:center">Stock</th><th style="text-align:center">Besoin</th><th style="text-align:center">Statut</th><th>Durée vie</th><th>Machines</th></tr></thead>
+  <tbody>${rows||'<tr><td colspan="7" style="text-align:center;color:#888;padding:20px">Aucune pièce</td></tr>'}</tbody></table>
+  </div>`;
+  _ouvrirFenetrePDF(html, 'Stock');
+}
+
+// ── Excel Commandes ───────────────────────────────────────────────────────
+async function exportXlsCommandes(){
+  await _exportServeur('commandes', {bd: BD});
+}
+
+// ── PDF Compatibilité ──────────────────────────────────────────────────────
+function exportCompatPDF(){
+  const rows = BD.machines.map(m=>{
+    const principales = BD.pieces.filter(p=>(p.machinesCompatibles||[]).includes(m.id)||(m.piecesAssociees||[]).some(pa=>pa.pieceId===p.id));
+    const alternatives = BD.pieces.filter(p=>(p.machinesAussiCompatibles||[]).includes(m.id)&&!principales.find(pc=>pc.id===p.id));
+    if(!principales.length&&!alternatives.length) return '';
+    const toRow=(p,type)=>`<tr>
+      <td style="font-weight:700">${m.nom}</td>
+      <td style="font-size:8.5pt;color:#555">${m.modele||''}${m.serie?' · N°'+m.serie:''}</td>
+      <td style="font-weight:600">${p.nom}</td>
+      <td style="font-family:monospace;font-size:8.5pt;color:#666">${p.ref}</td>
+      <td style="text-align:center"><span class="badge ${type==='Principale'?'badge-ok':'badge-wa'}">${type}</span></td>
+      <td style="text-align:center;font-family:monospace;font-weight:700">${p.stock||0}</td>
+      <td>${p.dureeVal?p.dureeVal+' '+p.dureeUnite:'—'}</td>
+    </tr>`;
+    return principales.map(p=>toRow(p,'Principale')).join('')+alternatives.map(p=>toRow(p,'Alternative')).join('');
+  }).join('');
+  const html = `${_cartouchePDF('Compatibilité Pièces / Machines')}<div class="body-wrap">
+  <table><thead><tr><th>Machine</th><th>Modèle</th><th>Pièce</th><th>Référence</th><th style="text-align:center">Type</th><th style="text-align:center">Stock</th><th>Durée vie</th></tr></thead>
+  <tbody>${rows||'<tr><td colspan="7" style="text-align:center;color:#888;padding:20px">Aucune compatibilité définie</td></tr>'}</tbody></table>
+  </div>`;
+  _ouvrirFenetrePDF(html, 'Compatibilité');
+}
+
+async function exportXlsCompat(){
+  await _exportServeur('compat', {bd: BD});
+}
+
+// ── PDF Réceptions ─────────────────────────────────────────────────────────
+function exportReceptionsPDF(){
+  const livs=[...BD.livraisons||[]].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const rows = livs.map(l=>`<tr>
+    <td>${fdt(l.date)}</td>
+    <td style="font-weight:700">${l.nom}</td>
+    <td style="font-family:monospace;font-size:8.5pt;color:#666">${l.ref}</td>
+    <td style="text-align:center;font-weight:700;font-family:monospace">+${l.qte}</td>
+    <td>${l.fourn||'—'}</td>
+    <td>${l.numCommande?'BC #'+l.numCommande:'—'}</td>
+  </tr>`).join('');
+  const html = `${_cartouchePDF('Historique Réceptions',`${livs.length} réception${livs.length>1?'s':''}`)}<div class="body-wrap">
+  <table><thead><tr><th>Date</th><th>Pièce</th><th>Référence</th><th style="text-align:center">Qté reçue</th><th>Fournisseur</th><th>Bon de commande</th></tr></thead>
+  <tbody>${rows||'<tr><td colspan="6" style="text-align:center;color:#888;padding:20px">Aucune réception</td></tr>'}</tbody></table>
+  </div>`;
+  _ouvrirFenetrePDF(html, 'Réceptions');
+}
+
+async function exportXlsReceptions(){
+  await _exportServeur('receptions', {bd: BD});
+}
+
+// ── PDF Personnel ─────────────────────────────────────────────────────────
+function exportPersonnelPDF(){
+  const liste = PERSONNEL_DATA||[];
+  const now = new Date();
+  const rows = liste.map(p=>{
+    const comps = (p.competences||[]);
+    const expired = comps.filter(c=>c.date_fin&&new Date(c.date_fin)<now).length;
+    const soon = comps.filter(c=>{if(!c.date_fin)return false;const d=(new Date(c.date_fin)-now)/864e5;return d>=0&&d<60;}).length;
+    const compLbl = comps.length===0?'—':`${comps.length} compétence${comps.length>1?'s':''}${expired>0?` · <span style="color:#C1321D;font-weight:700">${expired} expirée${expired>1?'s':''}</span>`:''}${soon>0?` · <span style="color:#b45309;font-weight:700">${soon} à renouveler</span>`:''}`;
+    const contratCls=p.type_contrat==='CDI'?'badge-ok':p.type_contrat==='CDD'?'badge-wa':p.type_contrat==='Apprenti'?'':'badge-da';
+    const contratStyle=p.type_contrat==='Apprenti'?'background:#F3E8FF;color:#7C3AED':'';
+    return `<tr>
+      <td style="font-weight:700">${p.prenom||''} ${p.nom}</td>
+      <td>${p.poste||'—'}</td>
+      <td style="text-align:center"><span class="badge ${contratCls}" style="${contratStyle}">${p.type_contrat||'—'}</span></td>
+      <td>${p.site||'—'}</td>
+      <td>${compLbl}</td>
+      <td>${p.urgence_nom?p.urgence_nom+(p.urgence_tel?' · '+p.urgence_tel:''):'—'}</td>
+    </tr>`;
+  }).join('');
+  const html = `${_cartouchePDF('Liste du Personnel',`${liste.length} employé${liste.length>1?'s':''}`)}<div class="body-wrap">
+  <table><thead><tr><th>Nom</th><th>Poste</th><th style="text-align:center">Contrat</th><th>Site</th><th>Compétences / Habilitations</th><th>Urgence</th></tr></thead>
+  <tbody>${rows||'<tr><td colspan="6" style="text-align:center;color:#888;padding:20px">Aucun employé</td></tr>'}</tbody></table>
+  </div>`;
+  _ouvrirFenetrePDF(html, 'Personnel');
+}
+
+async function exportXlsPersonnel(){
+  await _exportServeur('personnel', {bd: BD});
 }
 
 // ── Export Parc machines ──────────────────────────────────────────────────────
@@ -7597,9 +7824,7 @@ function renderPersonnelContent() {
     renderPersonnel(PERSONNEL_DATA);
     const actEl = document.getElementById('perso-act');
     const isAdmin = USER?.role === 'admin' || USER?.role === 'rh';
-    if (actEl && isAdmin) actEl.innerHTML = `<div class="ico-btn" onclick="ouvrirNouveauPersonnel()" title="Nouveau personnel">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" width="17" height="17"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-    </div>`;
+    if (actEl) actEl.innerHTML = `<div class="ico-btn np" onclick="exportPersonnelPDF()" title="Exporter PDF">${PDF_ICO}</div><div class="ico-btn np" onclick="exportXlsPersonnel()" title="Exporter Excel">${XLS_ICO}</div>${isAdmin?`<div class="ico-btn" onclick="ouvrirNouveauPersonnel()" title="Nouveau personnel"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" width="17" height="17"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>`:''}`;
   } else {
     renderHeuresPersonnel();
     const actEl = document.getElementById('perso-act');
@@ -7793,7 +8018,7 @@ function renderPersonnel(liste) {
         <div class="perso-avatar">${initiale}</div>
         <div style="flex:1;min-width:0">
           <div class="perso-nom">${p.prenom||''} ${p.nom}</div>
-          <div class="perso-poste">${p.poste||'Poste non défini'}${p.type_contrat ? ` <span style="font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;background:${p.type_contrat==='CDI'?'var(--ok-bg)':p.type_contrat==='CDD'?'var(--wa-bg)':'var(--in-bg)'};color:${p.type_contrat==='CDI'?'var(--ok)':p.type_contrat==='CDD'?'var(--wa)':'var(--in)'}">${p.type_contrat}</span>` : ''}</div>
+          <div class="perso-poste">${p.poste||'Poste non défini'}${p.type_contrat ? ` <span style="font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;background:${p.type_contrat==='CDI'?'var(--ok-bg)':p.type_contrat==='CDD'?'var(--wa-bg)':p.type_contrat==='Apprenti'?'#F3E8FF':'var(--in-bg)'};color:${p.type_contrat==='CDI'?'var(--ok)':p.type_contrat==='CDD'?'var(--wa)':p.type_contrat==='Apprenti'?'#7C3AED':'var(--in)'}">${p.type_contrat}</span>` : ''}</div>
         </div>
       </div>
       ${comps.length ? `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px">${compBadges}${comps.length>3?`<span style="font-size:10px;color:var(--tx3)">+${comps.length-3}</span>`:''}</div>` : ''}
@@ -8156,6 +8381,7 @@ async function delPersonnel() {
       <option value="CDI">CDI</option>
       <option value="CDD">CDD</option>
       <option value="Intérimaire">Intérimaire</option>
+      <option value="Apprenti">Apprenti</option>
     </select>
   </div>
   <div class="gch" id="mperso-cout-wrap" style="display:none"><label>Coût horaire (€/h) — admin uniquement</label><input id="mperso-cout" type="number" step="0.01" placeholder="18.50"/></div>
