@@ -336,6 +336,50 @@ textarea{resize:vertical;min-height:72px}
 .subtab{flex:1;padding:11px 0;text-align:center;font-size:13px;font-weight:600;color:var(--tx3);cursor:pointer;border-bottom:2.5px solid transparent;margin-bottom:-2px;transition:all .15s}
 .subtab.on{color:var(--acc);border-bottom-color:var(--acc)}
 .subtab:hover{color:var(--tx)}
+/* ── TODO LIST ── */
+.todo-kanban{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.todo-col{background:var(--sur2);border:1px solid var(--brd);border-radius:var(--r);padding:10px;min-height:120px}
+.todo-col-title{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;padding:4px 8px;border-radius:6px;display:flex;align-items:center;gap:5px}
+.todo-col-todo{color:#f59e0b!important;background:#fef3c7!important}
+.todo-col-done{color:#16a34a!important;background:#dcfce7!important}
+.todo-card{background:var(--sur);border:1px solid var(--brd);border-radius:var(--r2);padding:10px 36px 8px 10px;margin-bottom:8px;cursor:pointer;transition:all .15s;position:relative;box-shadow:var(--sh2)}
+.todo-card:hover{border-color:var(--acc);box-shadow:var(--sh)}
+.todo-card.done{opacity:.65;border-color:var(--ok-b);background:var(--ok-bg)}
+.todo-card-title{font-size:13px;font-weight:700;margin-bottom:4px;line-height:1.3}
+.todo-card-desc{font-size:11px;color:var(--tx3);margin-bottom:5px;line-height:1.4}
+.todo-card-meta{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+.todo-tag{font-size:10px;padding:2px 7px;border-radius:8px;font-weight:600;white-space:nowrap}
+.todo-tag-who{background:var(--in-bg);color:var(--in);border:1px solid var(--in-b)}
+.todo-tag-date{background:var(--sur2);color:var(--tx3);border:1px solid var(--brd)}
+.todo-tag-late{background:var(--da-bg);color:var(--da);border:1px solid var(--da-b)}
+.todo-tag-done{background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok-b)}
+.todo-check-btn{position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:50%;border:2px solid var(--brd);background:var(--sur);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;font-size:14px;line-height:1}
+.todo-check-btn:hover{border-color:var(--ok);background:var(--ok-bg)}
+.todo-check-btn.done{border-color:var(--ok);background:var(--ok);color:#fff}
+.todo-empty{text-align:center;padding:18px 0;color:var(--tx3);font-size:12px}
+.todo-progress{height:5px;border-radius:3px;background:var(--brd);margin-bottom:12px;overflow:hidden}
+.todo-progress-bar{height:100%;background:linear-gradient(90deg,var(--acc),var(--ok));border-radius:3px;transition:width .4s}
+/* ── ACCUEIL CHANTIER ── */
+.accueil-hero{background:linear-gradient(135deg,var(--acc) 0%,#7c1a0e 100%);border-radius:var(--r);padding:20px 16px;margin-bottom:14px;color:#fff;text-align:center}
+.accueil-hero-title{font-size:18px;font-weight:800;letter-spacing:-.3px;margin-bottom:4px}
+.accueil-hero-sub{font-size:12px;opacity:.85}
+.accueil-sign-card{background:var(--sur);border:2px dashed var(--acc);border-radius:var(--r);padding:20px 16px;margin-bottom:14px;text-align:center;cursor:pointer;transition:all .2s}
+.accueil-sign-card:hover{background:var(--acc-l);border-style:solid}
+.accueil-sign-ico{font-size:36px;margin-bottom:8px}
+.accueil-sign-label{font-size:14px;font-weight:700;color:var(--acc);margin-bottom:3px}
+.accueil-sign-sub{font-size:11px;color:var(--tx3)}
+.accueil-sig-item{background:var(--sur);border:1px solid var(--brd);border-radius:var(--r2);padding:12px 14px;display:flex;align-items:center;gap:12px;box-shadow:var(--sh2)}
+.accueil-sig-item.new-entry{border-color:var(--ok-b);background:var(--ok-bg);animation:fadeIn .4s}
+.accueil-sig-avatar{width:38px;height:38px;border-radius:50%;background:var(--acc-l);border:2px solid var(--acc);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:var(--acc);flex-shrink:0}
+.accueil-sig-info{flex:1;min-width:0}
+.accueil-sig-name{font-size:13px;font-weight:700;margin-bottom:2px}
+.accueil-sig-meta{font-size:11px;color:var(--tx3)}
+.accueil-sig-badge{font-size:10px;padding:2px 8px;border-radius:8px;font-weight:700;margin-top:3px;display:inline-block}
+.badge-interim{background:#fef3c7;color:#b45309;border:1px solid #fcd34d}
+.badge-ouvrier{background:#dbeafe;color:#1d4ed8;border:1px solid #93c5fd}
+.badge-chef{background:#f0fdf4;color:#15803d;border:1px solid #86efac}
+.badge-visiteur{background:#f3e8ff;color:#7c3aed;border:1px solid #c4b5fd}
+
 
 /* ── ADMIN CHANTIER SELECTOR ── */
 .chantier-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-bottom:0}
@@ -1951,12 +1995,14 @@ function buildNav(){
     {p:'magasin',    label:'Magasin',    svg:svgLiv},
     {p:'personnel',  label:'Personnel',  svg:svgPersonnel},
     {p:'biblio',     label:'Prix',       svg:svgBiblio},
+    {p:'accueil_ch', label:'Accueil Ch.',svg:'<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 11l-4 4-2-2"/></svg>'},
   ] : [
     {p:'accueil',    label:'Accueil',    svg:svgAccueil},
     {p:'anomalie',   label:'Anomalie',   svg:svgAno},
     {p:'chantier',   label:'Chantier',   svg:svgChantier},
     {p:'magasin',    label:'Magasin',    svg:svgLiv},
     {p:'personnel',  label:'Personnel',  svg:svgPersonnel},
+    {p:'accueil_ch', label:'Accueil Ch.',svg:'<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 11l-4 4-2-2"/></svg>'},
   ];
   navEl.innerHTML = items.map(function(it){
     var cls = 'ni' + (PAGE===it.p ? ' on' : '');
@@ -1998,6 +2044,7 @@ function render(){
   else if(PAGE==='magasin'){m.innerHTML=pgMagasin();initMagasin();}
   else if(PAGE==='livraisons'){m.innerHTML=pgMagasin();initMagasin();} // compat alias
   else if(PAGE==='chantier'){m.innerHTML=pgChantier();initChantierTab();}
+  else if(PAGE==='accueil_ch'){m.innerHTML=pgAccueilChantier();initAccueilChantier();}
   else if(PAGE==='anomalie'){m.innerHTML=pgAnomalie();chargerAnomalies();}
   else if(PAGE==='personnel'){m.innerHTML=pgPersonnel();initPersonnel();}
   else if(PAGE==='biblio'){m.innerHTML=pgBiblio();initBiblio();}
@@ -6567,6 +6614,7 @@ function renderChantierDetail(chantier) {
   const totOn  = isAdmin ? (CHANTIER_TAB==='total' ? ' on' : '') : '';
   const ptOn   = CHANTIER_TAB==='pointage'   ? ' on' : '';
   const livOn  = CHANTIER_TAB==='livraisons' ? ' on' : '';
+  const tdOn   = CHANTIER_TAB==='taches'     ? ' on' : '';
   const totalTabHtml = isAdmin
     ? `<div class="sub-ni${totOn}" data-tab="total" onclick="switchChantierTab('total')">💰 Total</div>`
     : '';
@@ -6610,6 +6658,7 @@ function renderChantierDetail(chantier) {
       <div class="sub-nav">
         <div class="sub-ni${ptOn}"  data-tab="pointage"   onclick="switchChantierTab('pointage')">📋 Pointage</div>
         <div class="sub-ni${livOn}" data-tab="livraisons" onclick="switchChantierTab('livraisons')">🚚 Livraisons</div>
+        <div class="sub-ni${tdOn}"  data-tab="taches"     onclick="switchChantierTab('taches')">✅ Tâches</div>
         ${totalTabHtml}
       </div>
       <div id="chantier-content"></div>
@@ -6677,6 +6726,8 @@ function renderChantierContent() {
     renderChantierPointage();
   } else if (CHANTIER_TAB === 'total') {
     renderChantierTotal();
+  } else if (CHANTIER_TAB === 'taches') {
+    renderTodoList();
   } else {
     renderChantierLivraisons();
   }
@@ -6688,7 +6739,7 @@ function updateChantierActions() {
   if (!el) return;
   const isAdmin = USER?.role === 'admin' || USER?.role === 'rh';
   const fabEl = document.getElementById('fab');
-  if (fabEl) fabEl.style.display = CHANTIER_TAB === 'total' ? 'none' : 'flex';
+  if (fabEl) fabEl.style.display = (CHANTIER_TAB === 'total') ? 'none' : 'flex';
   if (!CHANTIER_DETAIL) { el.innerHTML = ''; return; }
   if (!isAdmin) {
     if (CHANTIER_TAB === 'livraisons') {
@@ -6718,8 +6769,338 @@ function chantierFab() {
     return;
   }
   if (CHANTIER_TAB === 'pointage') nouveauPointage();
+  else if (CHANTIER_TAB === 'taches') ouvrirModalTodo(null);
   else nouvelleLivChantier();
 }
+
+
+// ================================================================
+// TODO LIST PAR CHANTIER
+// ================================================================
+let TODOS = [];
+function _todosKey(ch){return'fgs_todos_'+(ch||'').replace(/\s+/g,'_');}
+function _loadTodos(ch){try{const r=localStorage.getItem(_todosKey(ch));TODOS=r?JSON.parse(r):[];}catch(e){TODOS=[];}}
+function _saveTodos(ch){try{localStorage.setItem(_todosKey(ch),JSON.stringify(TODOS));}catch(e){}}
+
+function renderTodoList(){
+  const el=document.getElementById('chantier-content');
+  if(!el||!CHANTIER_DETAIL)return;
+  _loadTodos(CHANTIER_DETAIL.nom);
+  const pending=TODOS.filter(t=>!t.done), done=TODOS.filter(t=>t.done);
+  const pct=TODOS.length?Math.round(done.length/TODOS.length*100):0;
+  const today=new Date().toISOString().slice(0,10);
+  function card(t){
+    const late=!t.done&&t.date_fin&&t.date_fin<today;
+    const fd=t.date_fin?new Date(t.date_fin+'T12:00:00').toLocaleDateString('fr-FR',{day:'2-digit',month:'short'}):'';
+    const fd2=t.date_debut?new Date(t.date_debut+'T12:00:00').toLocaleDateString('fr-FR',{day:'2-digit',month:'short'}):'';
+    return `<div class="todo-card${t.done?' done':''}" onclick="ouvrirModalTodo('${t.id}')">
+      <div class="todo-check-btn${t.done?' done':''}" onclick="event.stopPropagation();toggleTodo('${t.id}')" title="${t.done?'Rouvrir':'Fait'}">${t.done?'\u2713':'\u25cb'}</div>
+      <div class="todo-card-title">${t.titre}</div>
+      ${t.desc?`<div class="todo-card-desc">${t.desc}</div>`:''}
+      <div class="todo-card-meta">
+        ${t.responsable?`<span class="todo-tag todo-tag-who">\ud83d\udc64 ${t.responsable}</span>`:''}
+        ${(fd2||fd)?`<span class="todo-tag ${late?'todo-tag-late':'todo-tag-date'}">${fd2?fd2+' \u2192 ':''}${fd||'\u221e'}${late?' \u26a0\ufe0f':''}</span>`:''}
+        ${t.done?`<span class="todo-tag todo-tag-done">\u2713 ${t.done_par||'\u2014'}</span>`:''}
+      </div>
+    </div>`;
+  }
+  el.innerHTML=`<div style="padding:12px 0 0">
+    ${TODOS.length?`<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;padding:0 2px">
+      <div class="todo-progress" style="flex:1"><div class="todo-progress-bar" style="width:${pct}%"></div></div>
+      <div style="font-size:12px;font-weight:700;color:var(--tx2);white-space:nowrap">${done.length}/${TODOS.length} &middot; ${pct}%</div>
+    </div>`:''}
+    <div class="todo-kanban">
+      <div class="todo-col">
+        <div class="todo-col-title todo-col-todo">\ud83d\udccb A faire <span style="background:rgba(0,0,0,.1);border-radius:8px;padding:0 6px">${pending.length}</span></div>
+        ${pending.length?pending.map(card).join(''):'<div class="todo-empty">\ud83c\udf89 Rien a faire !</div>'}
+      </div>
+      <div class="todo-col">
+        <div class="todo-col-title todo-col-done">\u2705 Termine <span style="background:rgba(0,0,0,.1);border-radius:8px;padding:0 6px">${done.length}</span></div>
+        ${done.length?done.map(card).join(''):'<div class="todo-empty">Aucune tache terminee</div>'}
+      </div>
+    </div>
+    <div style="height:80px"></div>
+  </div>`;
+}
+
+function toggleTodo(id){
+  if(!CHANTIER_DETAIL)return;
+  const t=TODOS.find(x=>x.id===id);if(!t)return;
+  t.done=!t.done;
+  if(t.done){t.done_par=USER?.nom||USER?.identifiant||'\u2014';t.done_le=new Date().toISOString();}
+  else{t.done_par='';t.done_le='';}
+  _saveTodos(CHANTIER_DETAIL.nom);
+  renderTodoList();
+  toast(t.done?'\u2705 Tache terminee':'\ud83d\udd04 Tache reouverte');
+}
+
+function ouvrirModalTodo(id){
+  if(!CHANTIER_DETAIL)return;
+  _loadTodos(CHANTIER_DETAIL.nom);
+  const t=id?TODOS.find(x=>x.id===id):null;
+  const pers=(PERSONNEL_DATA||[]).map(p=>`<option value="${p.prenom} ${p.nom}">${p.prenom} ${p.nom}</option>`).join('');
+  const ptPerso=[...new Set((POINTAGES||[]).filter(p=>p.chantier===CHANTIER_DETAIL?.nom).flatMap(p=>(p.lignes||[]).map(l=>l.nom)).filter(Boolean))].map(n=>`<option value="${n}">${n}</option>`).join('');
+  document.getElementById('modal-overlay').innerHTML=`
+    <div class="modal" style="max-width:400px">
+      <div class="modal-head"><div class="modal-title">${t?'Modifier':'Nouvelle tache'}</div><div class="modal-close" onclick="cm()">\u2715</div></div>
+      <div class="modal-body">
+        <input type="hidden" id="td-id" value="${t?.id||''}"/>
+        <div class="fi"><label class="fi-l">Titre *</label><input id="td-titre" class="fi-i" placeholder="Ex: Verifier etaiements zone A" value="${t?.titre||''}"/></div>
+        <div class="fi"><label class="fi-l">Description</label><textarea id="td-desc" class="fi-i" rows="2" style="resize:vertical">${t?.desc||''}</textarea></div>
+        <div class="fi"><label class="fi-l">Responsable</label>
+          <input id="td-resp" class="fi-i" list="td-rl" placeholder="Nom" value="${t?.responsable||''}"/>
+          <datalist id="td-rl">${ptPerso}${pers}</datalist></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div class="fi"><label class="fi-l">Debut</label><input id="td-debut" type="date" class="fi-i" value="${t?.date_debut||''}"/></div>
+          <div class="fi"><label class="fi-l">Fin prevue</label><input id="td-fin" type="date" class="fi-i" value="${t?.date_fin||''}"/></div>
+        </div>
+        ${t?`<div class="fi"><label class="fi-l">Statut</label><select id="td-done" class="fi-i">
+          <option value="0" ${!t.done?'selected':''}>A faire</option>
+          <option value="1" ${t.done?'selected':''}>Termine</option>
+        </select></div>`:''}
+        <div style="display:flex;gap:8px;margin-top:4px">
+          ${t?`<button class="btn bd" style="flex:1;color:var(--da);border-color:var(--da-b)" onclick="supprimerTodo('${t.id}')">Supprimer</button>`:''}
+          <button class="btn ba" style="flex:2" onclick="saveTodo()">Enregistrer</button>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('modal-overlay').style.display='flex';
+}
+
+function saveTodo(){
+  if(!CHANTIER_DETAIL)return;
+  const id=document.getElementById('td-id').value;
+  const titre=document.getElementById('td-titre').value.trim();
+  if(!titre){toast('Titre obligatoire');return;}
+  const doneEl=document.getElementById('td-done');
+  const isDone=doneEl?doneEl.value==='1':false;
+  if(id){
+    const t=TODOS.find(x=>x.id===id);
+    if(t){
+      t.titre=titre;t.desc=document.getElementById('td-desc').value.trim();
+      t.responsable=document.getElementById('td-resp').value.trim();
+      t.date_debut=document.getElementById('td-debut').value;t.date_fin=document.getElementById('td-fin').value;
+      if(isDone&&!t.done){t.done=true;t.done_par=USER?.nom||'\u2014';t.done_le=new Date().toISOString();}
+      else if(!isDone){t.done=false;t.done_par='';t.done_le='';}
+    }
+  }else{
+    TODOS.push({id:'td_'+Date.now(),chantier:CHANTIER_DETAIL.nom,titre,
+      desc:document.getElementById('td-desc').value.trim(),
+      responsable:document.getElementById('td-resp').value.trim(),
+      date_debut:document.getElementById('td-debut').value,date_fin:document.getElementById('td-fin').value,
+      done:false,done_par:'',done_le:'',cree_par:USER?.nom||'\u2014',cree_le:new Date().toISOString()});
+  }
+  _saveTodos(CHANTIER_DETAIL.nom);cm();renderTodoList();toast('Tache enregistree');
+}
+
+function supprimerTodo(id){
+  if(!confirm('Supprimer cette tache ?'))return;
+  TODOS=TODOS.filter(x=>x.id!==id);
+  _saveTodos(CHANTIER_DETAIL.nom);cm();renderTodoList();toast('Tache supprimee');
+}
+
+// ================================================================
+// ACCUEIL CHANTIER
+// ================================================================
+let ACCUEIL_DATA=[];
+function _accKey(){return'fgs_accueil_v1';}
+function _loadAccueil(){try{const r=localStorage.getItem(_accKey());ACCUEIL_DATA=r?JSON.parse(r):[];}catch(e){ACCUEIL_DATA=[];}}
+function _saveAccueil(){try{localStorage.setItem(_accKey(),JSON.stringify(ACCUEIL_DATA));}catch(e){}}
+
+function pgAccueilChantier(){return`<div id="accueil-ch-main"></div>`;}
+function initAccueilChantier(){_loadAccueil();renderAccueilChantier();}
+
+function renderAccueilChantier(){
+  const el=document.getElementById('accueil-ch-main');if(!el)return;
+  const today=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+  const chantiers=[...new Set(ACCUEIL_DATA.map(s=>s.chantier).filter(Boolean))];
+  const filterCh=window._accueilFilterCh||'';
+  const sigs=ACCUEIL_DATA.filter(s=>!filterCh||s.chantier===filterCh).sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const bCls={interim:'badge-interim',ouvrier:'badge-ouvrier',chef:'badge-chef',visiteur:'badge-visiteur'};
+  const bLbl={interim:'Interimaire',ouvrier:'Ouvrier',chef:'Chef de chantier',visiteur:'Visiteur'};
+  el.innerHTML=`
+  <div class="ent">
+    <div><h1>Accueil Chantier</h1></div>
+    <div class="ent-act">
+      <div class="ico-btn" onclick="exportAccueilPDF()" title="Exporter">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" width="17" height="17"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      </div>
+    </div>
+  </div>
+  <div class="pg on" style="gap:12px">
+    <div class="accueil-hero">
+      <div style="font-size:32px;margin-bottom:6px">\ud83e\uddb7</div>
+      <div class="accueil-hero-title">Livret d'Accueil FGS</div>
+      <div class="accueil-hero-sub">Travaux Speciaux &mdash; Fondations &amp; Geotechnique</div>
+      <div style="font-size:11px;opacity:.7;margin-top:4px">${today}</div>
+    </div>
+    <div class="accueil-pdf-btn" onclick="afficherLivretAccueil()">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" width="22" height="22" style="color:var(--da);flex-shrink:0"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="currentColor"/><polyline points="14 2 14 8 20 8" stroke="currentColor"/></svg>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:700;color:var(--tx)">Livret d'accueil securite</div>
+        <div style="font-size:11px;color:var(--tx3)">Regles, consignes et informations FGS &mdash; Cliquer pour consulter</div>
+      </div>
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" width="16" height="16" style="color:var(--tx3)"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+    <div class="accueil-sign-card" onclick="ouvrirModalAccueil()">
+      <div class="accueil-sign-ico">\u270d\ufe0f</div>
+      <div class="accueil-sign-label">Enregistrer une arrivee</div>
+      <div class="accueil-sign-sub">Nouveau sur le chantier ? Cliquez ici</div>
+    </div>
+    ${chantiers.length>1?`<div class="sem-pills">
+      ${['','...tous',...chantiers].filter((v,i)=>i<2||chantiers.includes(v)).map((c,i)=>{
+        const lbl=i===0?'Tous':c;
+        return `<div class="sem-pill${filterCh===c?' on':''}" onclick="window._accueilFilterCh='${c}';renderAccueilChantier()">${lbl}</div>`;
+      }).join('')}
+    </div>`:''}
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--tx3);margin-bottom:4px">${sigs.length} accueil${sigs.length>1?'s':''} enregistre${sigs.length>1?'s':''}</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      ${sigs.length?sigs.map(s=>{
+        const dt=new Date(s.date).toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'});
+        const ini=(s.prenom?.[0]||'')+(s.nom?.[0]||'');
+        const isAdmin2=USER?.role==='admin'||USER?.role==='rh';
+        return `<div class="accueil-sig-item" id="sig-${s.id}">
+          <div class="accueil-sig-avatar">${ini}</div>
+          <div class="accueil-sig-info">
+            <div class="accueil-sig-name">${s.prenom} ${s.nom}</div>
+            <div class="accueil-sig-meta">${s.chantier||'\u2014'} &middot; ${s.entreprise||'FGS'} &middot; ${dt}</div>
+            <span class="accueil-sig-badge ${bCls[s.type]||'badge-ouvrier'}">${bLbl[s.type]||s.type}</span>
+          </div>
+          ${isAdmin2?`<div class="ico-btn" style="width:28px;height:28px" onclick="supprimerAccueil('${s.id}')">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" width="14" height="14"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+          </div>`:''}
+        </div>`;
+      }).join(''):'<div style="text-align:center;padding:24px;color:var(--tx3);font-size:13px">Aucun accueil enregistre</div>'}
+    </div>
+    <div style="height:80px"></div>
+  </div>`;
+}
+
+function ouvrirModalAccueil(){
+  _loadAccueil();
+  const chList=(CHANTIERS_LIST||[]).map(c=>`<option value="${c.nom}">${c.nom}</option>`).join('');
+  const today=new Date().toISOString().slice(0,10);
+  document.getElementById('modal-overlay').innerHTML=`
+    <div class="modal" style="max-width:420px">
+      <div class="modal-head"><div class="modal-title">Accueil chantier</div><div class="modal-close" onclick="cm()">\u2715</div></div>
+      <div class="modal-body">
+        <p style="font-size:12px;color:var(--tx2);background:var(--da-bg);border:1px solid var(--da-b);border-radius:8px;padding:8px 12px;margin-bottom:12px">
+          En confirmant, vous certifiez avoir <b>lu et compris le livret d'accueil FGS</b>.
+        </p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div class="fi"><label class="fi-l">Prenom *</label><input id="ac-prenom" class="fi-i" placeholder="Prenom"/></div>
+          <div class="fi"><label class="fi-l">Nom *</label><input id="ac-nom" class="fi-i" placeholder="NOM"/></div>
+        </div>
+        <div class="fi"><label class="fi-l">Type *</label>
+          <select id="ac-type" class="fi-i">
+            <option value="interim">Interimaire</option>
+            <option value="ouvrier">Ouvrier / Compagnon</option>
+            <option value="chef">Chef de chantier</option>
+            <option value="visiteur">Visiteur / Sous-traitant</option>
+          </select></div>
+        <div class="fi"><label class="fi-l">Chantier *</label>
+          <input id="ac-chantier" class="fi-i" list="ac-chl" placeholder="Chantier" value="${CHANTIER_DETAIL?.nom||''}"/>
+          <datalist id="ac-chl">${chList}</datalist></div>
+        <div class="fi"><label class="fi-l">Entreprise / Agence</label>
+          <input id="ac-entreprise" class="fi-i" placeholder="FGS, Randstad..." value="FGS Travaux Speciaux"/></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div class="fi"><label class="fi-l">Tel</label><input id="ac-tel" class="fi-i" type="tel" placeholder="06 ..."/></div>
+          <div class="fi"><label class="fi-l">Date naissance</label><input id="ac-naissance" class="fi-i" type="date"/></div>
+        </div>
+        <div class="fi"><label class="fi-l">N&deg; Securite sociale</label>
+          <input id="ac-nss" class="fi-i" placeholder="X XX XX XX XXX XXX XX"/></div>
+        <div class="fi"><label class="fi-l">Urgence (nom &middot; tel)</label>
+          <input id="ac-urgence" class="fi-i" placeholder="Prenom NOM - 06 ..."/></div>
+        <div class="fi"><label class="fi-l">Habilitations / CACES</label>
+          <input id="ac-habilitations" class="fi-i" placeholder="CACES R482, Elec B0..."/></div>
+        <div class="fi"><label class="fi-l">Date d'arrivee</label>
+          <input id="ac-date" class="fi-i" type="date" value="${today}"/></div>
+        <button class="btn ba" style="width:100%;margin-top:8px" onclick="saveAccueil()">Confirmer - J'ai lu le livret</button>
+      </div>
+    </div>`;
+  document.getElementById('modal-overlay').style.display='flex';
+}
+
+function saveAccueil(){
+  const prenom=document.getElementById('ac-prenom').value.trim();
+  const nom=document.getElementById('ac-nom').value.trim();
+  const chantier=document.getElementById('ac-chantier').value.trim();
+  if(!prenom||!nom||!chantier){toast('Prenom, nom et chantier obligatoires');return;}
+  _loadAccueil();
+  const entry={
+    id:'ac_'+Date.now(),prenom,nom,
+    type:document.getElementById('ac-type').value,
+    chantier,entreprise:document.getElementById('ac-entreprise').value.trim(),
+    tel:document.getElementById('ac-tel').value.trim(),
+    naissance:document.getElementById('ac-naissance').value,
+    nss:document.getElementById('ac-nss').value.trim(),
+    urgence:document.getElementById('ac-urgence').value.trim(),
+    habilitations:document.getElementById('ac-habilitations').value.trim(),
+    date:(document.getElementById('ac-date').value||new Date().toISOString().slice(0,10))+'T'+new Date().toTimeString().slice(0,5),
+    enregistre_par:USER?.nom||USER?.identifiant||'\u2014',
+  };
+  ACCUEIL_DATA.unshift(entry);_saveAccueil();cm();renderAccueilChantier();
+  toast('Accueil enregistre !');
+  setTimeout(()=>{const e=document.getElementById('sig-'+entry.id);if(e){e.scrollIntoView({behavior:'smooth'});e.classList.add('new-entry');}},200);
+}
+
+function supprimerAccueil(id){
+  if(!confirm('Supprimer cet enregistrement ?'))return;
+  _loadAccueil();ACCUEIL_DATA=ACCUEIL_DATA.filter(x=>x.id!==id);_saveAccueil();renderAccueilChantier();toast('Supprime');
+}
+
+function afficherLivretAccueil(){
+  document.getElementById('modal-overlay').innerHTML=`
+    <div class="modal" style="max-width:480px;max-height:85vh;overflow-y:auto">
+      <div class="modal-head" style="position:sticky;top:0;background:var(--sur);z-index:1">
+        <div class="modal-title">Livret d'accueil FGS</div><div class="modal-close" onclick="cm()">\u2715</div>
+      </div>
+      <div class="modal-body">
+        <div style="background:linear-gradient(135deg,var(--acc),#7c1a0e);border-radius:var(--r);padding:16px;color:#fff;text-align:center;margin-bottom:16px">
+          <div style="font-size:24px;margin-bottom:4px">\ud83c\udfd7\ufe0f</div>
+          <div style="font-size:16px;font-weight:800">FGS Travaux Speciaux</div>
+          <div style="font-size:11px;opacity:.85">Fondations &middot; Geotechnique &middot; Travaux souterrains</div>
+        </div>
+        <div style="font-size:13px;font-weight:800;color:var(--acc);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">Presentation</div>
+        <p style="font-size:12px;color:var(--tx2);line-height:1.6;margin-bottom:12px">FGS Travaux Speciaux est specialisee dans les <b>fondations speciales, le genie geotechnique et les travaux souterrains</b> : soutenement, injection, projection beton, micro-pieux et ancrages.</p>
+        <div style="font-size:13px;font-weight:800;color:var(--acc);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">EPI Obligatoires</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px">
+          ${['\u26d1\ufe0f Casque','\ud83d\udc5f Chaussures S3','\ud83e\uddba Gilet HV','\ud83e\udd4a Gants','\ud83d\udc53 Lunettes','\ud83c\udfa7 Protection auditive','Masque (beton projete)','\u2693 Harnais (hauteur)'].map(e=>`<div style="background:var(--sur2);border:1px solid var(--brd);border-radius:8px;padding:6px 10px;font-size:11px;font-weight:600">${e}</div>`).join('')}
+        </div>
+        <div style="font-size:13px;font-weight:800;color:var(--acc);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">Regles absolues</div>
+        <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:12px">
+          ${[['\ud83d\udeab','Alcool et drogues strictement interdits'],['\ud83d\udeab','Telephone en marchant interdit sur chantier'],['\u2705','Signaler TOUT incident au chef de chantier IMMEDIATEMENT'],['\u2705','Respecter les balisages et zones d\'exclusion'],['\u2705','Ne jamais travailler sous une charge suspendue'],['\u2705','Porter ses EPI en permanence dans les zones de travaux'],['\u2705','Verifier son materiel avant chaque utilisation'],].map(([i,t])=>`<div style="display:flex;gap:8px;font-size:12px;color:var(--tx2)"><span style="flex-shrink:0">${i}</span><span>${t}</span></div>`).join('')}
+        </div>
+        <div style="font-size:13px;font-weight:800;color:var(--acc);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">Urgences</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px">
+          ${[['15','SAMU'],['17','Police'],['18','Pompiers'],['112','Urgences EU']].map(([n,l])=>`<a href="tel:${n}" style="background:var(--da-bg);border:1px solid var(--da-b);border-radius:8px;padding:8px 10px;display:flex;gap:8px;align-items:center;text-decoration:none"><span style="font-size:16px;font-weight:800;font-family:var(--mo);color:var(--da)">${n}</span><span style="font-size:11px;color:var(--tx2)">${l}</span></a>`).join('')}
+        </div>
+        <div style="background:var(--ok-bg);border:1px solid var(--ok-b);border-radius:var(--r2);padding:10px 14px;font-size:12px;color:var(--ok);font-weight:600;text-align:center">
+          \u2705 En confirmant votre accueil, vous attestez avoir lu et compris ce livret
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('modal-overlay').style.display='flex';
+}
+
+function exportAccueilPDF(){
+  _loadAccueil();
+  if(!ACCUEIL_DATA.length){toast('Aucune donnee');return;}
+  const rows=ACCUEIL_DATA.map(s=>{
+    const dt=new Date(s.date).toLocaleString('fr-FR');
+    const t={interim:'Interimaire',ouvrier:'Ouvrier',chef:'Chef',visiteur:'Visiteur'};
+    return `<tr><td>${s.prenom} ${s.nom}</td><td>${t[s.type]||s.type}</td><td>${s.chantier||'\u2014'}</td><td>${s.entreprise||'\u2014'}</td><td>${s.tel||'\u2014'}</td><td>${s.habilitations||'\u2014'}</td><td>${dt}</td><td>${s.enregistre_par||'\u2014'}</td></tr>`;
+  }).join('');
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><title>Accueil FGS</title>
+  <style>body{font-family:Arial,sans-serif;padding:20px;font-size:12px}h1{color:#C1321D;font-size:16px}table{width:100%;border-collapse:collapse}th{background:#C1321D;color:#fff;padding:7px;text-align:left;font-size:11px}td{padding:6px 7px;border-bottom:1px solid #ddd}tr:nth-child(even)td{background:#f9f9f9}@media print{body{padding:10px}}</style></head>
+  <body><h1>FGS Travaux Speciaux &mdash; Registre d'accueil chantier</h1>
+  <p style="color:#666">Exporte le ${new Date().toLocaleString('fr-FR')} &mdash; ${ACCUEIL_DATA.length} enregistrement(s)</p>
+  <table><thead><tr><th>Nom</th><th>Type</th><th>Chantier</th><th>Entreprise</th><th>Tel</th><th>Habilitations</th><th>Date accueil</th><th>Enregistre par</th></tr></thead><tbody>${rows}</tbody></table>
+  </body></html>`);
+  w.document.close();setTimeout(()=>w.print(),400);
+}
+
 
 // ── Modales Chantier (admin) ──────────────────────────────────────
 function ouvrirNouveauChantier() { ouvrirModalChantier(null); }
