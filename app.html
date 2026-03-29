@@ -1782,6 +1782,8 @@ function fdts(iso){ // format date courte
 // ── BD via API Flask (avec fallback localStorage) ─────────────────────
 const _LS_KEY='fgs_bd_v1';
 let BD=null;
+let _isSaving=false; // sync: empêche de recharger ce qu'on vient de sauvegarder
+let _lastBDHash=null; // sync: hash des données pour détecter les changements
 async function load(){
   try{
     const r=await Promise.race([
@@ -1807,6 +1809,7 @@ async function load(){
 }
 function _emptyBD(){return{machines:[],categories:[],pieces:[],livraisons:[],commandes:[],chantiers:[],personnel:[],anomalies:[],dernieres_modifs:{}};}
 async function save(){
+  _isSaving = true;
   try{
     const r=await Promise.race([
       fetch('/api/bd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(BD)}),
@@ -1814,18 +1817,18 @@ async function save(){
     ]);
     if(!r.ok)throw new Error(r.status);
     try{localStorage.setItem(_LS_KEY,JSON.stringify(BD));}catch(e){}
+    _lastBDHash = _hashBD(BD);
+    setTimeout(()=>{ _isSaving = false; }, 1000);
     return true;
   }catch(e){
     // Sauvegarde locale en fallback
-    try{localStorage.setItem(_LS_KEY,JSON.stringify(BD));toast('💾 Sauvegardé localement');return true;}
-    catch(le){toast('❌ Erreur de sauvegarde');return false;}
+    try{localStorage.setItem(_LS_KEY,JSON.stringify(BD));toast('💾 Sauvegardé localement');_lastBDHash=_hashBD(BD);setTimeout(()=>{_isSaving=false;},1000);return true;}
+    catch(le){_isSaving=false;toast('❌ Erreur de sauvegarde');return false;}
   }
 }
 
 // ── Sync temps réel (polling) ─────────────────────────────────────────
 let _syncInterval = null;
-let _lastBDHash = null;
-let _isSaving = false; // empêche de recharger ce qu'on vient de sauvegarder
 
 function _hashBD(bd){
   // Hash léger : on stringify les clés critiques
@@ -1899,16 +1902,7 @@ function stopSync(){
   if(_syncInterval){ clearInterval(_syncInterval); _syncInterval=null; }
 }
 
-// Patch save() pour bloquer le polling pendant une sauvegarde
-const _origSave = save;
-save = async function(){
-  _isSaving = true;
-  const result = await _origSave.apply(this, arguments);
-  // Après save, mettre à jour le hash pour éviter de recharger notre propre écriture
-  _lastBDHash = _hashBD(BD);
-  setTimeout(()=>{ _isSaving = false; }, 1000);
-  return result;
-};
+
 
 // ── Init ─────────────────────────────────────────────────────────────
 async function init(){
@@ -2718,8 +2712,6 @@ function ouvrirNouvelleReferenceCompat(type){
 }
 
 // Override savPiece pour gérer le contexte "depuis fiche machine"
-const _origSavPiece = window.savPiece;
-
 async function savPieceCompat(){
   const nom=V('p-nom').trim(),ref=V('p-ref').trim();if(!nom||!ref){toast('Nom et référence obligatoires');return;}
   const machId = _COMPAT_MACH_ID;
