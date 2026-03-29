@@ -1728,21 +1728,23 @@ async function login(){
   const lbtn=document.querySelector('.lbtn');
   lbtn.textContent='Connexion…';lbtn.disabled=true;
   let loginOk=false;
+  let serverReachable=false;
 
   // 1. Serveur Render en priorité (comptes créés sur Render)
   try{
     const r=await Promise.race([
       fetch('/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({identifiant:id,mdp:pw})}),
-      new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),3000))
+      new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),5000))
     ]);
+    serverReachable=true; // le serveur a répondu (même si credentials incorrects)
     if(r.ok){
       const data=await r.json();
       if(data.ok){USER={identifiant:id,nom:data.nom||id,role:data.role||'chef'};loginOk=true;}
     }
   }catch(e){/* serveur indisponible → fallback local ci-dessous */}
 
-  // 2. Fallback local uniquement si le serveur est inaccessible
-  if(!loginOk){
+  // 2. Fallback local UNIQUEMENT si le serveur est inaccessible (timeout/réseau)
+  if(!loginOk && !serverReachable){
     const uLocal=LOCAL_USERS.find(x=>x.identifiant===id&&x.mdp===pw);
     if(uLocal){USER={identifiant:uLocal.identifiant,nom:uLocal.nom,role:uLocal.role};loginOk=true;}
   }
