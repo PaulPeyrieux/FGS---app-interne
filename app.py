@@ -1210,6 +1210,10 @@ def export_xlsx(type_export):
             "livraisons_admin": lambda: _export_liv_admin(data, auteur, date_iso),
             "livraisons_chef":  lambda: _export_liv_chef(data, auteur, date_iso),
             "total_chantier":   lambda: _export_total(data, bd, auteur, date_iso),
+            "commandes":        lambda: _export_commandes(bd, auteur, date_iso),
+            "receptions":       lambda: _export_receptions(bd, auteur, date_iso),
+            "compat":           lambda: _export_compat(bd, auteur, date_iso),
+            "personnel":        lambda: _export_personnel(bd, auteur, date_iso),
         }
         if type_export not in handlers:
             return jsonify({"erreur": f"Export inconnu : {type_export}"}), 400
@@ -1844,3 +1848,380 @@ def _export_total(data, bd, auteur, date_iso):
 
     nom = chantier.replace(" ", "-").replace("/", "-")[:20]
     return _send_wb(wb, f"FGS-Total-{nom}-{date_iso}")
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# EXPORT 9 — BONS DE COMMANDE
+# A4 PORTRAIT — 2 feuilles (résumé besoins + détail bons)
+# ══════════════════════════════════════════════════════════════════════════════
+def _export_commandes(bd, auteur, date_iso):
+    pieces   = bd.get("pieces", [])
+    machines = bd.get("machines", [])
+    commandes = bd.get("commandes", [])
+
+    def get_compat_ids(p):
+        ids = set(p.get("machinesCompatibles") or [])
+        for m in machines:
+            if any(pa.get("pieceId") == p.get("id") for pa in (m.get("piecesAssociees") or [])):
+                ids.add(m.get("id"))
+        return ids
+
+    wb = _new_wb()
+
+    # ── Feuille 1 : Besoins actuels ──────────────────────────────────────────
+    COLS_B = ["Référence", "Désignation", "Stock actuel", "Besoin", "À commander", "Machines concernées"]
+    LARG_B = [13, 22, 11, 9, 11, 41]  # = 107
+
+    ws1 = wb.create_sheet("Besoins actuels")
+    _set_cols(ws1, LARG_B)
+    _setup_print(ws1, "landscape")
+    r = _cartouche(ws1, "Analyse des Besoins — Commandes", auteur, len(COLS_B))
+    _entetes(ws1, r, COLS_B)
+    r += 1
+
+    lignes_cmd = []
+    lignes_ok  = []
+    for p in pieces:
+        compat_ids = get_compat_ids(p)
+        besoin = len(compat_ids)
+        if besoin == 0:
+            continue
+        stock  = p.get("stock", 0) or 0
+        manque = max(besoin - stock, 0)
+        noms_m = [m.get("nom", "?") for m in machines if m.get("id") in compat_ids]
+        row_d  = [p.get("ref", "—"), p.get("nom", "—"), stock, besoin,
+                  manque if manque else "✓ OK", ", ".join(noms_m) or "—"]
+        if manque > 0:
+            lignes_cmd.append((row_d, manque))
+        else:
+            lignes_ok.append((row_d, 0))
+
+    lignes_cmd.sort(key=lambda x: -x[1])
+
+    if lignes_cmd:
+        _section(ws1, r, f"À commander — {len(lignes_cmd)} référence(s)", len(COLS_B))
+        r += 1
+        for idx, (row_d, _) in enumerate(lignes_cmd):
+            _ligne(ws1, r, row_d, idx, surbrillance=C_ROUGE_L)
+            r += 1
+
+    if lignes_ok:
+        _section(ws1, r, f"Stocks suffisants — {len(lignes_ok)} référence(s)", len(COLS_B))
+        r += 1
+        for idx, (row_d, _) in enumerate(lignes_ok):
+            _ligne(ws1, r, row_d, idx, surbrillance=C_VERT_L)
+            r += 1
+
+    r += 1
+    total_cmd = sum(x[1] for x in lignes_cmd)
+    _total(ws1, r, [
+        f"Total : {len(lignes_cmd)} réf. à commander · {total_cmd} pièces manquantes",
+        None, None, None, None, None
+    ], len(COLS_B))
+
+    # ── Feuille 2 : Historique bons de commande ───────────────────────────────
+    COLS_H = ["N° BC", "Date", "Fournisseur", "Nb références", "Reçues", "Statut"]
+    LARG_H = [14, 12, 22, 13, 9, 14]  # = 84
+
+    ws2 = wb.create_sheet("Bons de commande")
+    _set_cols(ws2, LARG_H)
+    _setup_print(ws2, "portrait")
+    r = _cartouche(ws2, "Historique des Bons de Commande", auteur, len(COLS_H))
+    _entetes(ws2, r, COLS_H)
+    r += 1
+
+    cmds_sorted = sorted(commandes, key=lambda c: c.get("date", ""), reverse=True)
+    for idx, c in enumerate(cmds_sorted):
+        lignes = c.get("lignes") or []
+        nb_ref = len(lignes)
+        nb_recu = sum(1 for l in lignes if l.get("recu"))
+        if nb_recu == nb_ref and nb_ref > 0:
+            statut = "Réceptionné"
+            surb = C_VERT_L
+        elif nb_recu > 0:
+            statut = f"{nb_recu}/{nb_ref} reçu"
+            surb = C_ORANGE_L
+        else:
+            statut = "En attente"
+            surb = None
+        _ligne(ws2, r, [
+            f"BC #{c.get('numero', '—')}",
+            _date_fr(c.get("date", "")),
+            c.get("fournisseur", "—") or "—",
+            nb_ref, nb_recu, statut,
+        ], idx, surbrillance=surb)
+        r += 1
+
+    # Feuille 3 : Détail des lignes de chaque BC
+    COLS_D = ["N° BC", "Date", "Référence", "Désignation", "Qté commandée", "Reçu"]
+    LARG_D = [13, 11, 14, 28, 13, 9]  # = 88
+
+    ws3 = wb.create_sheet("Détail lignes")
+    _set_cols(ws3, LARG_D)
+    _setup_print(ws3, "portrait")
+    r = _cartouche(ws3, "Détail des Lignes par Bon de Commande", auteur, len(COLS_D))
+    _entetes(ws3, r, COLS_D)
+    r += 1
+
+    idx = 0
+    for c in cmds_sorted:
+        lignes = c.get("lignes") or []
+        num = f"BC #{c.get('numero', '—')}"
+        date_c = _date_fr(c.get("date", ""))
+        for j, l in enumerate(lignes):
+            surb = C_VERT_L if l.get("recu") else None
+            _ligne(ws3, r, [
+                num if j == 0 else "",
+                date_c if j == 0 else "",
+                l.get("ref", "—"),
+                l.get("nom", "—"),
+                l.get("qte", "—"),
+                "✓" if l.get("recu") else "—",
+            ], idx, surbrillance=surb)
+            idx += 1
+            r += 1
+
+    return _send_wb(wb, f"FGS-Commandes-{date_iso}")
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# EXPORT 10 — RÉCEPTIONS
+# A4 PORTRAIT — 1 feuille
+# ══════════════════════════════════════════════════════════════════════════════
+def _export_receptions(bd, auteur, date_iso):
+    livraisons = sorted(bd.get("livraisons", []), key=lambda x: x.get("date", ""), reverse=True)
+
+    COLS = ["Date", "Pièce", "Référence", "Qté reçue", "Fournisseur", "Bon de commande", "Enregistré par"]
+    LARG = [11, 22, 14, 10, 18, 16, 16]  # = 107
+
+    wb = _new_wb()
+    ws = wb.create_sheet("Réceptions")
+    _set_cols(ws, LARG)
+    _setup_print(ws, "landscape")
+
+    r = _cartouche(ws, f"Historique des Réceptions", auteur, len(COLS))
+    _entetes(ws, r, COLS)
+    r += 1
+
+    total_qte = 0
+    for idx, l in enumerate(livraisons):
+        qte = l.get("qte", 0) or 0
+        total_qte += int(qte)
+        _ligne(ws, r, [
+            _date_fr(l.get("date", "")),
+            l.get("nom", "—"),
+            l.get("ref", "—"),
+            qte,
+            l.get("fourn", "—") or "—",
+            f"BC #{l['numCommande']}" if l.get("numCommande") else "—",
+            l.get("cree_par", "—") or "—",
+        ], idx)
+        r += 1
+
+    r += 1
+    _total(ws, r, [
+        f"Total : {len(livraisons)} réception(s) · {total_qte} pièces reçues",
+        None, None, total_qte, None, None, None
+    ], len(COLS))
+
+    return _send_wb(wb, f"FGS-Receptions-{date_iso}")
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# EXPORT 11 — COMPATIBILITÉ PIÈCES / MACHINES
+# A4 PAYSAGE — 1 feuille
+# ══════════════════════════════════════════════════════════════════════════════
+def _export_compat(bd, auteur, date_iso):
+    pieces   = bd.get("pieces", [])
+    machines = bd.get("machines", [])
+
+    COLS = ["Machine", "Modèle", "N° Parc", "Pièce", "Référence", "Type", "Stock", "Durée de vie"]
+    LARG = [18, 14, 9, 20, 13, 11, 8, 14]  # = 107
+
+    wb = _new_wb()
+    ws = wb.create_sheet("Compatibilités")
+    _set_cols(ws, LARG)
+    _setup_print(ws, "landscape")
+
+    r = _cartouche(ws, "Compatibilité Pièces / Machines", auteur, len(COLS))
+    _entetes(ws, r, COLS)
+    r += 1
+
+    idx = 0
+    machines_sorted = sorted(machines, key=lambda m: m.get("nom", ""))
+    for m in machines_sorted:
+        mid = m.get("id")
+        principales = [p for p in pieces if
+                       mid in (p.get("machinesCompatibles") or []) or
+                       any(pa.get("pieceId") == p.get("id") for pa in (m.get("piecesAssociees") or []))]
+        alternatives = [p for p in pieces if
+                        mid in (p.get("machinesAussiCompatibles") or []) and
+                        p not in principales]
+
+        if not principales and not alternatives:
+            continue
+
+        for p in principales:
+            duree = f"{p.get('dureeVal', '—')} {p.get('dureeUnite', '')}" if p.get("dureeVal") else "—"
+            _ligne(ws, r, [
+                m.get("nom", "—"),
+                m.get("modele", "—") or "—",
+                m.get("serie", "—") or "—",
+                p.get("nom", "—"),
+                p.get("ref", "—"),
+                "Principale",
+                p.get("stock", 0) or 0,
+                duree,
+            ], idx, surbrillance=C_VERT_L)
+            idx += 1
+            r += 1
+
+        for p in alternatives:
+            duree = f"{p.get('dureeVal', '—')} {p.get('dureeUnite', '')}" if p.get("dureeVal") else "—"
+            _ligne(ws, r, [
+                m.get("nom", "—"),
+                m.get("modele", "—") or "—",
+                m.get("serie", "—") or "—",
+                p.get("nom", "—"),
+                p.get("ref", "—"),
+                "Alternative",
+                p.get("stock", 0) or 0,
+                duree,
+            ], idx, surbrillance=C_BLEU_L)
+            idx += 1
+            r += 1
+
+    r += 1
+    nb_machines_avec = sum(1 for m in machines if any(
+        mid in (p.get("machinesCompatibles") or []) or
+        any(pa.get("pieceId") == p.get("id") for pa in (m.get("piecesAssociees") or []))
+        for p in pieces for mid in [m.get("id")]
+    ))
+    _total(ws, r, [
+        f"Total : {len(machines)} machine(s) · {len(pieces)} pièce(s) · {idx} association(s)",
+        None, None, None, None, None, None, None
+    ], len(COLS))
+
+    return _send_wb(wb, f"FGS-Compatibilite-{date_iso}")
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# EXPORT 12 — PERSONNEL
+# A4 PAYSAGE — 2 feuilles (liste + habilitations)
+# ══════════════════════════════════════════════════════════════════════════════
+def _export_personnel(bd, auteur, date_iso):
+    from datetime import date as date_cls
+    today = date_cls.today()
+    personnel = bd.get("personnel", [])
+
+    wb = _new_wb()
+
+    # ── Feuille 1 : Liste du personnel ───────────────────────────────────────
+    COLS_L = ["Nom", "Prénom", "Poste", "Contrat", "Site", "Adresse", "Urgence — Nom", "Urgence — Tél."]
+    LARG_L = [16, 14, 16, 10, 12, 22, 16, 12]  # = 118
+
+    ws1 = wb.create_sheet("Personnel")
+    _set_cols(ws1, LARG_L)
+    _setup_print(ws1, "landscape")
+    r = _cartouche(ws1, f"Liste du Personnel ({len(personnel)} employé(s))", auteur, len(COLS_L))
+    _entetes(ws1, r, COLS_L)
+    r += 1
+
+    CONTRAT_SURB = {
+        "CDI": C_VERT_L,
+        "CDD": C_ORANGE_L,
+        "Intérimaire": C_BLEU_L,
+        "Apprenti": "F3E8FF",
+    }
+
+    for idx, p in enumerate(sorted(personnel, key=lambda x: x.get("nom", ""))):
+        surb = CONTRAT_SURB.get(p.get("type_contrat", ""), None)
+        _ligne(ws1, r, [
+            p.get("nom", "—"),
+            p.get("prenom", "—") or "—",
+            p.get("poste", "—") or "—",
+            p.get("type_contrat", "—") or "—",
+            p.get("site", "—") or "—",
+            p.get("adresse", "—") or "—",
+            p.get("urgence_nom", "—") or "—",
+            p.get("urgence_tel", "—") or "—",
+        ], idx, surbrillance=surb)
+        r += 1
+
+    r += 1
+    cdi = sum(1 for p in personnel if p.get("type_contrat") == "CDI")
+    cdd = sum(1 for p in personnel if p.get("type_contrat") == "CDD")
+    int_ = sum(1 for p in personnel if p.get("type_contrat") == "Intérimaire")
+    app_ = sum(1 for p in personnel if p.get("type_contrat") == "Apprenti")
+    _total(ws1, r, [
+        f"Total : {len(personnel)} · CDI: {cdi} · CDD: {cdd} · Intérimaire: {int_} · Apprenti: {app_}",
+        None, None, None, None, None, None, None
+    ], len(COLS_L))
+
+    # ── Feuille 2 : Habilitations & compétences ───────────────────────────────
+    COLS_H = ["Employé", "Poste", "Compétence / Habilitation", "Date obtention", "Date fin validité", "Durée (mois)", "Statut"]
+    LARG_H = [18, 14, 24, 14, 15, 12, 12]  # = 109
+
+    ws2 = wb.create_sheet("Habilitations")
+    _set_cols(ws2, LARG_H)
+    _setup_print(ws2, "landscape")
+    r = _cartouche(ws2, "Habilitations & Compétences du Personnel", auteur, len(COLS_H))
+    _entetes(ws2, r, COLS_H)
+    r += 1
+
+    idx = 0
+    for p in sorted(personnel, key=lambda x: x.get("nom", "")):
+        comps = p.get("competences") or []
+        if not comps:
+            continue
+        nom_complet = f"{p.get('prenom', '')} {p.get('nom', '')}".strip()
+        for j, c in enumerate(comps):
+            df = c.get("date_fin")
+            statut_lbl = ""
+            surb = None
+            if df:
+                try:
+                    d = date_cls.fromisoformat(df)
+                    jours = (d - today).days
+                    if jours < 0:
+                        statut_lbl = f"Expirée ({abs(jours)} j)"
+                        surb = C_ROUGE_L
+                    elif jours < 60:
+                        statut_lbl = f"À renouveler ({jours} j)"
+                        surb = C_ORANGE_L
+                    else:
+                        statut_lbl = f"Valide ({jours} j)"
+                        surb = C_VERT_L
+                except:
+                    statut_lbl = "—"
+            _ligne(ws2, r, [
+                nom_complet if j == 0 else "",
+                p.get("poste", "—") if j == 0 else "",
+                c.get("nom", "—"),
+                _date_fr(c.get("date_obtention", "")) or "—",
+                _date_fr(df) or "—",
+                c.get("duree_mois", "—") or "—",
+                statut_lbl or "Pas de date",
+            ], idx, surbrillance=surb)
+            idx += 1
+            r += 1
+
+    r += 1
+    expired = sum(1 for p in personnel for c in (p.get("competences") or [])
+                  if c.get("date_fin") and (date_cls.fromisoformat(c["date_fin"]) < today
+                  if _safe_date(c["date_fin"]) else False))
+    _total(ws2, r, [
+        f"Total : {idx} habilitation(s)",
+        None, None, None, None, None, None
+    ], len(COLS_H))
+
+    return _send_wb(wb, f"FGS-Personnel-{date_iso}")
+
+
+def _safe_date(s):
+    from datetime import date as date_cls
+    try:
+        date_cls.fromisoformat(s)
+        return True
+    except:
+        return False
