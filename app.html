@@ -1780,11 +1780,12 @@ async function login(){
       fetch('/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({identifiant:id,mdp:pw})}),
       new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),5000))
     ]);
-    serverReachable=true; // le serveur a répondu (même si credentials incorrects)
     if(r.ok){
+      serverReachable=true; // l'API auth a bien répondu (même si credentials incorrects)
       const data=await r.json();
       if(data.ok){USER={identifiant:id,nom:data.nom||id,role:data.role||'chef'};loginOk=true;}
     }
+    // Si r n'est pas ok (404, 500...) → Flask non dispo → fallback local
   }catch(e){/* serveur indisponible → fallback local ci-dessous */}
 
   // 2. Fallback local UNIQUEMENT si le serveur est inaccessible (timeout/réseau)
@@ -1806,7 +1807,7 @@ async function login(){
     setTimeout(()=>e.style.display='none',3000);
   }
 }
-function decon(){ if(!confirm('Se déconnecter ?'))return; USER=null; BD=null; document.getElementById('app').classList.remove('on'); document.getElementById('login').style.display='flex'; document.getElementById('lid').value=''; document.getElementById('lpwd').value=''; }
+function decon(){ if(!confirm('Se déconnecter ?'))return; stopSync(); USER=null; BD=null; document.getElementById('app').classList.remove('on'); document.getElementById('login').style.display='flex'; document.getElementById('lid').value=''; document.getElementById('lpwd').value=''; }
 
 // ── Suivi des modifications ────────────────────────────────────────────
 function trackModif(pageKey){
@@ -2057,8 +2058,8 @@ function stVgp(m){ if(!m.vgp)return'ok'; const d=(new Date(m.vgp)-new Date())/86
 function lblSt(s){return s==='ok'?'À jour':s==='wa'?'À prévoir':'En retard';}
 function infoVgp(m){ if(!m.vgp)return null; const d=Math.round((new Date(m.vgp)-new Date())/864e5); return{d,lbl:d<0?`Expirée il y a ${Math.abs(d)} j`:`Dans ${d} j`,st:d<0?'da':d<7?'da':d<30?'wa':'ok'}; }
 function fdt(d){return d?new Date(d).toLocaleDateString('fr-FR'):'—';}
-function ico(cid){const c=BD.categories.find(x=>x.id===cid);return c?c.icone:'🔧';}
-function ncat(cid){const c=BD.categories.find(x=>x.id===cid);return c?c.nom:'—';}
+function ico(cid){if(!BD||!BD.categories)return'🔧';const c=BD.categories.find(x=>x.id===cid);return c?c.icone:'🔧';}
+function ncat(cid){if(!BD||!BD.categories)return'—';const c=BD.categories.find(x=>x.id===cid);return c?c.nom:'—';}
 function lblTy(t){return{entretien:'Entretien préventif',reparation:'Réparation',VGP:'VGP',remplacement:'Remplacement de pièce'}[t]||t;}
 function usure(m,pa){ const p=BD.pieces.find(x=>x.id===pa.pieceId); if(!p||p.dureeUnite!=='heures')return null; const u=m.heures-pa.heuresInstallation,pct=u/p.dureeVal; return{u,pct,rest:Math.max(p.dureeVal-u,0),st:pct>=1?'da':pct>=.8?'wa':'ok'}; }
 function V(id){return(document.getElementById(id)||{}).value||'';}
@@ -6519,7 +6520,7 @@ async function chargerChantiers() {
       new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),3000))
     ]);
     CHANTIERS_LIST = await r.json();
-    if (CHANTIERS_LIST.erreur) CHANTIERS_LIST = [];
+    if (!Array.isArray(CHANTIERS_LIST) || CHANTIERS_LIST.erreur) CHANTIERS_LIST = [];
   } catch(e) {
     // Fallback : utiliser les chantiers stockés dans BD locale
     CHANTIERS_LIST = BD?.chantiers || [];
